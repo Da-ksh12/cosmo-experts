@@ -88,7 +88,7 @@ def test_history_filters_and_isolation(client):
 
 def test_quote_config_tax_and_catalogue(client):
     doc, p1 = tok(client, "doctor1"), tok(client, "patient1")
-    assert client.get("/api/quote-config", headers=p1).json() == {"tax_percent": 0.0, "payment_options": [], "inclusions": [], "terms": ""}
+    assert client.get("/api/quote-config", headers=p1).json() == {"tax_percent": 0.0, "payment_options": [], "inclusions": [], "terms": "", "validity_days": 30}
     assert client.put("/api/clinic/quote-config", json={"tax_percent": 18}, headers=p1).status_code == 403
     client.put("/api/clinic/quote-config", json={"tax_percent": 18, "payment_options": ["Pay in full"], "inclusions": ["Follow-up visit"]}, headers=doc)
     pid = client.post("/api/clinic/price-items", json={"name": "Peel", "unit_price": 1000, "category": "Skin", "sessions": 4, "duration_min": 30,

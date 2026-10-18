@@ -2,13 +2,16 @@
 // Run: node e2e/p11-notifications.mjs   (stack on :3000/:8000)
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
-import { BASE, api, apiToken, login, reporter } from "./lib.mjs";
+import { BASE, API, api, apiToken, login, reporter } from "./lib.mjs";
 
 const r = reporter("notifications");
 const doc = await apiToken("doctor1"), pat = await apiToken("patient1");
-const docs = (await api("/documents", pat)).body;
-let did = docs[0]?.id;
-if (!did) { r.ok(false, "precondition: patient1 has a document (run the other suites first)"); process.exit(r.done() ? 1 : 0); }
+// own fixture: a small text report, so the test does not depend on other suites having run
+{
+  const fd = new FormData(); fd.append("file", new Blob([["PATHOLOGY LABORATORY - Laboratory Report", "Report Date: 12/01/2024", "Ferritin     8     ng/mL     15 - 150  L", ""].join(String.fromCharCode(10))], { type: "text/plain" }), "notify-fixture.txt");
+  const up = await fetch(API + "/api/documents", { method: "POST", headers: { Authorization: "Bearer " + pat }, body: fd });
+  r.ok(up.status === 200, "fixture: patient1 uploaded a report");
+}
 await api("/notifications/read-all", pat, { method: "POST" });
 
 const b = await chromium.launch();

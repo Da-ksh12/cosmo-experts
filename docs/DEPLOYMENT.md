@@ -60,3 +60,13 @@ Research-model serving needs PyTorch: build with `WITH_TORCH=1`.
 ## Release procedure for a model
 Register (training run) → inspect `Release gates` on the model card → fix or reject → approval record (five requirements) → deploy → monitor → roll back with
 `POST /api/admin/tasks/<task>/rollback`. Gates are evaluated by `training/trainer.py:evaluate_gates`.
+
+## Additional production settings (added 2026-10-18)
+| Variable | Meaning |
+|---|---|
+| `COSMO_REQUIRE_CONSENT=1` | Enforce the privacy-notice acceptance for patients (always on when `COSMO_MODE=production`) |
+| `COSMO_ALLOW_NO_CONSENT=1` | Start in production without an approved notice only if consent is collected by another documented process |
+| `COSMO_ALLOW_LEXICAL=1` | Accept the unvalidated lexical retrieval fallback when the dense embedding model is missing (otherwise production refuses to start) |
+| `COSMO_KB_REVIEW_DAYS` | Re-review period for approved knowledge-base articles in days (default 365, 0 = none); lapsed articles are not used |
+| `COSMO_CONTENT_DIR` | Directory holding `urgent_policy.approved.json` and `consent_notice.approved.json` (see `docs/clinical_review/APPROVAL_PROCEDURE.md`) |
+Quotation validity is a clinic setting (days, default 30, 0 = never) in the clinic workspace.

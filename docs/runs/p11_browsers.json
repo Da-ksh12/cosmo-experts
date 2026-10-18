@@ -1,6 +1,6 @@
 {
   "suite": "browsers",
-  "when": "2026-10-18T04:27:31.125Z",
+  "when": "2026-10-18T07:21:01.489Z",
   "passed": 111,
   "failed": 0,
   "rows": [
@@ -181,17 +181,17 @@
     },
     {
       "pass": true,
-      "check": "iPhone 13: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "check": "iPhone 13: / every touch target is at least 24x24 (16 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "iPhone 13: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "check": "iPhone 13: /ask every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "iPhone 13: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "check": "iPhone 13: /reports every touch target is at least 24x24 (12 targets, 1 under the recommended 44)",
       "detail": []
     },
     {
@@ -286,17 +286,17 @@
     },
     {
       "pass": true,
-      "check": "Pixel 7: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "check": "Pixel 7: / every touch target is at least 24x24 (16 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "Pixel 7: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "check": "Pixel 7: /ask every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "Pixel 7: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "check": "Pixel 7: /reports every touch target is at least 24x24 (12 targets, 1 under the recommended 44)",
       "detail": []
     },
     {
@@ -383,22 +383,22 @@
     },
     {
       "pass": true,
-      "check": "iPad (gen 7): / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "check": "iPad (gen 7): / every touch target is at least 24x24 (16 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "iPad (gen 7): /ask every touch target is at least 24x24 (23 targets, 0 under the recommended 44)",
+      "check": "iPad (gen 7): /ask every touch target is at least 24x24 (20 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "iPad (gen 7): /reports every touch target is at least 24x24 (17 targets, 2 under the recommended 44)",
+      "check": "iPad (gen 7): /reports every touch target is at least 24x24 (14 targets, 1 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "iPad (gen 7): /photo every touch target is at least 24x24 (14 targets, 0 under the recommended 44)",
+      "check": "iPad (gen 7): /photo every touch target is at least 24x24 (15 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
@@ -488,17 +488,17 @@
     },
     {
       "pass": true,
-      "check": "Galaxy S9+: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "check": "Galaxy S9+: / every touch target is at least 24x24 (16 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "Galaxy S9+: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "check": "Galaxy S9+: /ask every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "Galaxy S9+: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "check": "Galaxy S9+: /reports every touch target is at least 24x24 (12 targets, 1 under the recommended 44)",
       "detail": []
     },
     {
@@ -593,17 +593,17 @@
     },
     {
       "pass": true,
-      "check": "iPhone SE: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "check": "iPhone SE: / every touch target is at least 24x24 (16 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "iPhone SE: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "check": "iPhone SE: /ask every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "iPhone SE: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "check": "iPhone SE: /reports every touch target is at least 24x24 (12 targets, 1 under the recommended 44)",
       "detail": []
     },
     {
@@ -656,7 +656,7 @@
     },
     {
       "pass": true,
-      "check": "webkit: 13 navigation-cancelled fetch messages recorded and excluded from the error check (see the idle-page result above)"
+      "check": "webkit: 8 navigation-cancelled fetch messages recorded and excluded from the error check (see the idle-page result above)"
     }
   ]
 }

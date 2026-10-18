@@ -1,7 +1,7 @@
 {
   "suite": "consent",
-  "when": "2026-10-18T06:05:52.220Z",
-  "passed": 19,
+  "when": "2026-10-18T07:27:28.821Z",
+  "passed": 18,
   "failed": 0,
   "rows": [
     {
@@ -11,10 +11,6 @@
     {
       "pass": true,
       "check": "an unapproved draft is clearly labelled (and is never offered in production)"
-    },
-    {
-      "pass": true,
-      "check": "navigation present but content blocked"
     },
     {
       "pass": true,

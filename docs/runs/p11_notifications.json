@@ -1,9 +1,13 @@
 {
   "suite": "notifications",
-  "when": "2026-10-18T05:16:27.163Z",
-  "passed": 8,
+  "when": "2026-10-18T07:30:11.928Z",
+  "passed": 9,
   "failed": 0,
   "rows": [
+    {
+      "pass": true,
+      "check": "fixture: patient1 uploaded a report"
+    },
     {
       "pass": true,
       "check": "bell: no unread notifications to start"

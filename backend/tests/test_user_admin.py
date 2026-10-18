@@ -109,9 +109,9 @@ def test_cannot_change_or_disable_your_own_account(client):
 def test_a_second_administrator_can_act_but_the_last_active_one_is_protected(client):
     from app.routers import care
     a = H(client, "admin1")
-    assert care._active_admins("admin1") == 0                                               # with only admin1 active, nobody else could keep the system administrable
+    others = care._active_admins("admin1")                                                  # other active administrators already present (other test modules may add some)
     create(client, a, "ut-admin2", "admin")
-    assert care._active_admins("admin1") == 1
+    assert care._active_admins("admin1") == others + 1
     b = H(client, "ut-admin2", PW)
     assert client.post("/api/admin/users/admin1/disabled", json={"disabled": True}, headers=b).status_code == 200      # allowed: ut-admin2 remains active
     assert client.post("/api/admin/users/ut-admin2/disabled", json={"disabled": True}, headers=b).status_code == 409   # cannot disable yourself

@@ -14,7 +14,16 @@ from tests.test_api import lab_pdf
 @pytest.fixture(scope="module")
 def client():
     with TestClient(app) as c:
+        started = db.now()
         yield c
+        # leave the shared test database as other modules expect it (patient1 without our plan, quotation, report or photo)
+        db.x("DELETE FROM care_plans WHERE assessment='Test assessment'")
+        db.x("DELETE FROM quotes WHERE lines LIKE '%Notify test%'")
+        db.x("DELETE FROM price_items WHERE name='Notify test'")
+        for d in db.q("SELECT id FROM documents WHERE filename='secret-name.pdf'"):
+            db.x("DELETE FROM doc_pages WHERE document_id=?", (d["id"],)); db.x("DELETE FROM doc_fields WHERE document_id=?", (d["id"],)); db.x("DELETE FROM documents WHERE id=?", (d["id"],))
+        db.x("DELETE FROM images WHERE owner_id='patient1' AND created_at>=?", (started,))
+        db.x("DELETE FROM notifications")
 
 
 def H(client, user):

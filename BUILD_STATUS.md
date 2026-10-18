@@ -7,7 +7,7 @@ repository; the independent audit with per-item classification is **`PROJECT_GAP
 
 | Area | Result |
 |---|---|
-| Backend tests (`cd backend && .venv\Scripts\python -m pytest tests`) | **247 tests pass with live Supabase credentials (4 skip without them); line coverage 91 %** (`coverage run --source=app -m pytest`) |
+| Backend tests (`cd backend && .venv\Scripts\python -m pytest tests`) | **323 tests pass with live Supabase credentials, 0 skipped; line coverage 92 %** (`coverage run --source=app -m pytest`) |
 | Frontend (`cd frontend && npx tsc --noEmit && npx eslint . && npm run build`) | clean, 14 routes |
 | Patient UI journey (`e2e/ui-journey.mjs`, Playwright, fresh DB) | 97 checks pass: 10 screens at 390 px, 7 desktop pages, fake-camera capture, editor, validation (accepted + rejected), upload, report tabs, audio, grounded answer + refusal, quote + PDF, history, isolation |
 | **Clinician↔patient UI journey** (`e2e/clinical-journey.mjs`, fresh DB) | 36 checks pass: patient submits photo + report + flag + quote request; **clinician uses only the browser** to open and see the photo, review it, correct a value (sees the patient's flag), mark reviewed, author/save/approve a care plan, record progress, approve the quote; **admin cannot author or approve**; patient then sees the plan, verified-clinician badge, progress 50 %, approved PDF, corrected value, "reviewed by a clinician"; audit trail checked |
@@ -21,6 +21,7 @@ repository; the independent audit with per-item classification is **`PROJECT_GAP
 | **Reproducibility** (`python -m scripts.train_probe`) | same seed gives a byte-identical probe artifact and identical metrics |
 | **ResNet re-run** (`scripts/train_finetune.py`) | metrics identical (macro-F1 0.502) but artifact bytes differ: outcome-reproducible, not byte-reproducible |
 | **Supabase (live dev project)** | RLS e2e 63/63, advisors 0 findings, ES256 JWT verification, private Storage round-trip, CDN-cache-after-delete defect fixed |
+| **Session 2026-10-18 additions** (`docs/STATUS_REPORT.md`) | upload hardening + injection tests, notifications, user management, consent mechanism, Results over time, quotation validity, KB review lapse, training resume, quality gate v1.1, Supabase 0004-0005 (live RLS 76/76), clean load/soak (0 errors; single instance only) |
 | **Browser / accessibility / devices** (`docs/TESTING_P11.md`) | axe WCAG A/AA 0 violations on all pages and roles; keyboard + focus trap; reduced motion; reflow and 200% text; Chromium, Firefox, WebKit; 5 emulated devices; admin workflows incl. training Start/Stop: a11y 65/65, browsers 111/111, admin 43/43. **No real devices, no screen readers** |
 | **Clinical content governance** | drafts shipped but never used; attested, hash-bound approval; urgent policy = built-in default until a clinician-approved file validates. **Nothing is clinically approved** (`docs/clinical_review/`) |
 | **Ops foundation** | encrypted backups + restore drill (`docs/runs/restore_drill_dev_data.json`), TLS via Caddy verified live locally, Prometheus rules tested with promtool, linted Dockerfiles/CI. **No image built, no CI run, no real Redis** (`docs/RUNBOOK.md`) |

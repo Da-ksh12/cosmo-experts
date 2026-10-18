@@ -35,7 +35,8 @@ const axe = async (p) => (await new AxeBuilder({ page: p }).withTags(["wcag2a", 
 {
   const [c, p] = await mk();
   await login(p, "patient1");
-  r.ok(await p.getByRole("region", { name: "Privacy notice" }).isVisible({ timeout: 20000 }).catch(() => false), "another patient is asked to accept on their own account");
+  const g1 = await p.getByRole("region", { name: "Privacy notice" }).waitFor({ timeout: 20000 }).then(() => true).catch(() => false);
+  r.ok(g1, "another patient is asked to accept on their own account");
   await c.close();
   const [c2, p2] = await mk();
   await login(p2, "doctor1"); await p2.waitForSelector("text=Review & care plans");

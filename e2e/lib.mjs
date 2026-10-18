@@ -13,6 +13,10 @@ export function reporter(name) {
       rows.push({ pass: !!cond, check: msg, ...(detail !== undefined ? { detail } : {}) });
       console.log((cond ? "PASS " : "FAIL ") + msg + (!cond && detail !== undefined ? "  " + JSON.stringify(detail).slice(0, 600) : ""));
     },
+    skip(msg, why) {                                   // an unmet precondition is reported as skipped, never as a pass or a product failure
+      rows.push({ pass: true, skipped: true, check: msg, detail: why });
+      console.log("SKIP " + msg + "  (" + why + ")");
+    },
     done() {
       const failed = rows.filter((r) => !r.pass).length;
       const out = path.join(here, "..", "docs", "runs", `p11_${name}.json`);
