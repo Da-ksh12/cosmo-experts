@@ -1,3 +1,4 @@
+import os
 import threading
 from contextlib import asynccontextmanager
 
@@ -5,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import clinical_content, db, metrics, prod_checks, security
+from . import clinical_content, db, logging_setup, metrics, prod_checks, security
 from .config import CORS_ORIGINS
 from .datasets import registry
 from .gateway import api as gateway_api, jobs as gateway_jobs
@@ -30,6 +31,8 @@ def _warm_up():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if "PYTEST_CURRENT_TEST" not in os.environ and os.environ.get("COSMO_STRUCTURED_LOGS", "1") != "0":
+        logging_setup.configure()                               # redacting JSON logs with correlation ids (left alone under pytest)
     prod_checks.enforce()
     db.init()
     gateway_jobs.ensure_schema()

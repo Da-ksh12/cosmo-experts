@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from . import metrics, ratelimit
+from . import logging_setup, metrics, ratelimit
 
 LIMITS = [  # (name, regex on "METHOD path", max requests, window seconds, keyed by)
     ("login", re.compile(r"^POST /api/auth/login$"), 8, 60, "ip"),
@@ -36,8 +36,9 @@ def _route(request) -> str:
 class Guard(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         started = time.perf_counter()
-        rid = request.headers.get("x-request-id", "")[:64] or uuid.uuid4().hex
+        rid = re.sub(r"[^A-Za-z0-9._\-]", "", request.headers.get("x-request-id", ""))[:64] or uuid.uuid4().hex     # client-supplied: only safe characters survive
         request.state.request_id = rid
+        logging_setup.request_id_var.set(rid)                 # every log line of this request carries the id
         if os.environ.get("COSMO_RATE_LIMIT") != "off" and request.url.path.startswith("/api/"):
             ip = request.client.host if request.client else "?"
             sig = f"{request.method} {request.url.path}"

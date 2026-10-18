@@ -42,7 +42,7 @@ def effective_status(q: dict, now: float | None = None) -> str:
 
 
 def set_config(cfg: dict):
-    db.x("INSERT OR REPLACE INTO settings VALUES('quote_config', ?)", (json.dumps({**DEFAULT_CONFIG, **cfg}),))
+    db.set_setting("quote_config", json.dumps({**DEFAULT_CONFIG, **cfg}))
 
 
 def build_lines(requested: list[dict]) -> dict:

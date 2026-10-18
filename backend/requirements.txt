@@ -26,3 +26,4 @@ redis==5.2.1            # optional shared rate-limit store (COSMO_REDIS_URL)
 fakeredis==2.26.2
 coverage==7.16.2
 psutil==6.1.1   # ops/loadtest.py memory sampling
+psycopg[binary,pool]==3.2.9   # PostgreSQL driver and connection pool (COSMO_DB=postgres)

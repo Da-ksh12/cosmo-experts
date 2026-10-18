@@ -11,7 +11,9 @@ from app.main import app
 
 GOOD = {"COSMO_MODE": "production", "COSMO_SECRET": "s" * 40, "COSMO_AUTH": "supabase", "SUPABASE_URL": "https://x.supabase.co",
         "SUPABASE_SERVICE_ROLE_KEY": "k", "COSMO_STORAGE": "supabase", "COSMO_CORS": "https://app.example.org",
-        "COSMO_BACKUP_KEY": "A" * 43 + "=", "COSMO_ALLOW_NO_CONSENT": "1"}      # consent is covered by tests/test_consent.py
+        "COSMO_BACKUP_KEY": "A" * 43 + "=", "COSMO_ALLOW_NO_CONSENT": "1",
+        "COSMO_DB": "postgres", "COSMO_DATABASE_URL": "postgresql://cosmo_app:pw@db.example.org:5432/cosmo?sslmode=require", "COSMO_COOKIE_SECURE": "1",
+        "SUPABASE_ANON_KEY": "anon-test", "COSMO_ADMIN_CLINICAL_ACCESS": "none"}      # consent is covered by tests/test_consent.py
 
 
 # ---------------------------------------------------------------- secrets from files

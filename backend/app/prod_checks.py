@@ -31,6 +31,11 @@ def problems(env=os.environ) -> list[str]:
             raise ValueError
     except ValueError:
         out.append("COSMO_BACKUP_KEY must be a base64-encoded 32-byte key (python -m scripts.backup genkey)")
+    from .settings import ConfigError, Settings
+    try:
+        out.extend(Settings.from_env(env).problems())
+    except ConfigError as e:
+        out.append(str(e))
     return out
 
 

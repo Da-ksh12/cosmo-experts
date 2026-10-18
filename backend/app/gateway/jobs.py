@@ -41,10 +41,11 @@ def register(task: str, fn):
 
 
 def ensure_schema():
-    db.x("""CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, owner_id TEXT, task TEXT, status TEXT, request_id TEXT, idempotency_key TEXT,
-            params TEXT, input_path TEXT, result TEXT, error TEXT, created_at REAL, started_at REAL, finished_at REAL, cancel_requested INTEGER DEFAULT 0)""")
-    db.x("CREATE INDEX IF NOT EXISTS jobs_owner ON jobs(owner_id, created_at)")
-    db.x("CREATE UNIQUE INDEX IF NOT EXISTS jobs_idem ON jobs(owner_id, idempotency_key) WHERE idempotency_key IS NOT NULL")
+    if not db.is_postgres():                                 # PostgreSQL gets this table and its indexes from the migrations (the app role cannot run DDL)
+        db.x("""CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, owner_id TEXT, task TEXT, status TEXT, request_id TEXT, idempotency_key TEXT,
+                params TEXT, input_path TEXT, result TEXT, error TEXT, created_at REAL, started_at REAL, finished_at REAL, cancel_requested INTEGER DEFAULT 0)""")
+        db.x("CREATE INDEX IF NOT EXISTS jobs_owner ON jobs(owner_id, created_at)")
+        db.x("CREATE UNIQUE INDEX IF NOT EXISTS jobs_idem ON jobs(owner_id, idempotency_key) WHERE idempotency_key IS NOT NULL")
     # a restart kills in-flight work: surface it honestly instead of leaving jobs "processing" forever
     db.x("UPDATE jobs SET status='failed', error='The service restarted while this job was running. Please submit it again.', finished_at=? WHERE status IN ('queued','processing')", (db.now(),))
 
@@ -151,5 +152,5 @@ def stats(hours: int = 24) -> dict:
         t["processing_ms_p50"], t["processing_ms_p95"], t["queue_ms_p95"] = pct(t["lat"], .5), pct(t["lat"], .95), pct(t["queue"], .95)
         t["failure_rate"] = round(t["by_status"].get("failed", 0) / t["count"], 3)
         del t["lat"], t["queue"]
-    q = db.q1("SELECT SUM(status='queued') q, SUM(status='processing') p FROM jobs")
+    q = db.q1("SELECT COALESCE(SUM(CASE WHEN status='queued' THEN 1 ELSE 0 END),0) q, COALESCE(SUM(CASE WHEN status='processing' THEN 1 ELSE 0 END),0) p FROM jobs")
     return {"window_hours": hours, "tasks": out, "queued_now": q["q"] or 0, "processing_now": q["p"] or 0, "workers": MAX_WORKERS, "queue_limit": MAX_QUEUED}

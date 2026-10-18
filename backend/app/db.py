@@ -1,13 +1,21 @@
+"""Application database facade: one API (`q`, `q1`, `x`, `tx`, `insert_ignore`, `upsert`, `audit`) over SQLite (local development, isolated tests) or PostgreSQL
+(production). The backend is selected explicitly by COSMO_DB; production never falls back to SQLite (see settings.py / prod_checks.py). Every call runs in the
+identity context of the current request (dbcore.context), which PostgreSQL turns into row-level security."""
 import json
-import sqlite3
+import re
 import threading
-import time
 import uuid
 from contextlib import contextmanager
 
 from .config import DB_PATH
+from .dbcore import context
+from .dbcore.sqlite_backend import IntegrityError as _SqliteIntegrityError
+from .dbcore.types import Epoch, now  # noqa: F401  (re-exported: db.now() returns an Epoch)
+from .settings import ConfigError, Settings
 
 _lock = threading.RLock()
+_backend = None
+_IDENT = re.compile(r"^[a-z_][a-z0-9_]*$")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT, role TEXT, password_hash TEXT);
@@ -58,33 +66,51 @@ def uid() -> str:
     return uuid.uuid4().hex
 
 
-def now() -> float:
-    return time.time()
+# ---------------------------------------------------------------- backend selection
+def backend():
+    """The active backend, created on first use from the environment (COSMO_DB, COSMO_DATABASE_URL, pool settings)."""
+    global _backend
+    if _backend is None:
+        with _lock:
+            if _backend is None:
+                st = Settings.from_env()
+                if st.db_backend == "postgres":
+                    from .dbcore.pg_backend import PostgresBackend
+                    if not st.database_url:
+                        raise ConfigError("COSMO_DB=postgres requires COSMO_DATABASE_URL")
+                    _backend = PostgresBackend(st.database_url, st.pool_min, st.pool_max, st.connect_timeout_s, st.statement_timeout_ms, st.connect_retries)
+                elif st.db_backend in ("", "sqlite"):
+                    from .dbcore.sqlite_backend import SqliteBackend
+                    _backend = SqliteBackend(DB_PATH)
+                else:
+                    raise ConfigError("unsupported COSMO_DB")
+    return _backend
 
 
-@contextmanager
-def conn():
+def reset_backend() -> None:
+    """Close and forget the active backend (tests, reconfiguration)."""
+    global _backend
     with _lock:
-        c = sqlite3.connect(DB_PATH, timeout=30)
-        c.row_factory = sqlite3.Row
-        try:
-            yield c
-            c.commit()
-        finally:
-            c.close()
+        if _backend is not None:
+            _backend.close()
+        _backend = None
 
 
-def init():
-    with conn() as c:
-        c.executescript(SCHEMA)
-        for table, col, decl in COLUMNS:
-            if col not in [r["name"] for r in c.execute(f"PRAGMA table_info({table})")]:
-                c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+def is_postgres() -> bool:
+    return backend().name == "postgres"
 
 
+def integrity_errors() -> tuple:
+    """Exception classes meaning 'a constraint was violated' on the active backend."""
+    if is_postgres():
+        from .dbcore.pg_backend import IntegrityError
+        return (IntegrityError,)
+    return (_SqliteIntegrityError,)
+
+
+# ---------------------------------------------------------------- access API
 def q(sql, args=()):
-    with conn() as c:
-        return [dict(r) for r in c.execute(sql, args).fetchall()]
+    return backend().q(sql, args, context.current())
 
 
 def q1(sql, args=()):
@@ -92,9 +118,67 @@ def q1(sql, args=()):
     return r[0] if r else None
 
 
-def x(sql, args=()):
-    with conn() as c:
-        c.execute(sql, args)
+def x(sql, args=()) -> int:
+    """Execute a write; returns the number of affected rows."""
+    return backend().x(sql, args, context.current())
+
+
+@contextmanager
+def tx():
+    """One explicit transaction for a multi-step operation. Inside the block use ONLY the yielded object (`t.q`, `t.q1`, `t.x`), never db.q/db.x: those open their own
+    transaction. The block commits on normal exit and rolls back if it raises."""
+    with backend().tx(context.current()) as t:
+        yield t
+
+
+def _ident(name: str) -> str:
+    if not _IDENT.match(name):
+        raise ValueError("invalid SQL identifier")
+    return name
+
+
+def insert_ignore(table: str, row: dict, t=None) -> bool:
+    """INSERT that silently does nothing when a unique/primary key already exists. Returns True if a row was inserted."""
+    cols = [_ident(c) for c in row]
+    verb = "INSERT OR IGNORE INTO" if not is_postgres() else "INSERT INTO"
+    tail = "" if not is_postgres() else " ON CONFLICT DO NOTHING"
+    sql = f"{verb} {_ident(table)}({','.join(cols)}) VALUES({','.join('?' * len(cols))}){tail}"
+    return (t.x(sql, list(row.values())) if t else x(sql, list(row.values()))) == 1
+
+
+def upsert(table: str, key: tuple[str, ...] | str, row: dict, t=None) -> None:
+    """INSERT, or UPDATE every non-key column when the key exists (identical semantics on both backends)."""
+    key = (key,) if isinstance(key, str) else tuple(key)
+    cols = [_ident(c) for c in row]
+    upd = [c for c in cols if c not in key]
+    sql = (f"INSERT INTO {_ident(table)}({','.join(cols)}) VALUES({','.join('?' * len(cols))}) ON CONFLICT({','.join(_ident(k) for k in key)}) "
+           + (f"DO UPDATE SET {','.join(f'{c}=excluded.{c}' for c in upd)}" if upd else "DO NOTHING"))
+    (t.x(sql, list(row.values())) if t else x(sql, list(row.values())))
+
+
+def set_setting(key: str, value: str) -> None:
+    upsert("settings", "key", {"key": key, "value": value})
+
+
+def conn():
+    """SQLite-only raw connection (legacy). New code uses q/x/tx; PostgreSQL has no equivalent."""
+    if is_postgres():
+        raise RuntimeError("db.conn() is SQLite-only; use db.tx()")
+    return backend().tx()
+
+
+def init():
+    """Create or verify the schema. SQLite: idempotent DDL plus additive columns. PostgreSQL: the migration state is checked (or applied, per COSMO_MIGRATION_MODE)."""
+    b = backend()
+    if b.name == "postgres":
+        from .dbcore import migrate
+        migrate.startup_check(b, Settings.from_env())
+        return
+    with b.tx() as t:
+        t.script(SCHEMA)
+        for table, col, decl in COLUMNS:
+            if col not in [r["name"] for r in t.q(f"PRAGMA table_info({table})")]:
+                t.x(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
 
 
 def jdump(o):

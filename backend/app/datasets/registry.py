@@ -82,7 +82,7 @@ def get(dataset_id: str) -> dict | None:
 
 def save(d: dict):
     status = d.pop("approval_status", "unreviewed")
-    db.x("INSERT OR REPLACE INTO datasets VALUES(?,?,?,?)", (d["id"], json.dumps(d), status, db.now()))
+    db.upsert("datasets", "id", {"id": d["id"], "data": json.dumps(d), "approval_status": status, "updated_at": db.now()})
     d["approval_status"] = status
 
 

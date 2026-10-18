@@ -69,7 +69,7 @@ def accept(user: dict, notice_sha256: str) -> None:
     n = notice()
     if not usable() or n["sha256"] != notice_sha256:
         raise HTTPException(409, "The privacy notice changed or is unavailable. Please reload and read the current notice.")
-    db.x("INSERT OR IGNORE INTO consents(user_id,notice_sha256,accepted_at) VALUES(?,?,?)", (user["id"], n["sha256"], db.now()))
+    db.insert_ignore("consents", {"user_id": user["id"], "notice_sha256": n["sha256"], "accepted_at": db.now()})
     db.audit(user["id"], "consent.accept", user["id"], {"notice_sha256": n["sha256"], "status": n["status"]})
 
 

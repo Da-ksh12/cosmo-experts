@@ -15,10 +15,9 @@ log = logging.getLogger("cosmo.notify")
 def send(user_id: str, kind: str, title: str, body: str = "", link: str = "", dedupe: str = "") -> bool:
     """Returns True if a new notification was stored."""
     try:
-        with db.conn() as c:
-            cur = c.execute("INSERT OR IGNORE INTO notifications(id,user_id,kind,title,body,link,dedupe_key,created_at,read_at) VALUES(?,?,?,?,?,?,?,?,NULL)",
-                            (db.uid(), user_id, kind, title[:140], body[:300], link[:200], dedupe, db.now()))
-            return cur.rowcount == 1
+        with db.context.as_system():                       # a notification for ANOTHER user is a server action, not the requester's own write
+            return db.insert_ignore("notifications", {"id": db.uid(), "user_id": user_id, "kind": kind, "title": title[:140], "body": body[:300], "link": link[:200],
+                                                      "dedupe_key": dedupe, "created_at": db.now(), "read_at": None})
     except Exception:                                   # never break the caller
         log.exception("notification not stored")
         return False

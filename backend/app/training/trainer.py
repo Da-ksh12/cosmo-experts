@@ -616,8 +616,8 @@ def deploy(model_id: str, actor: str):
     h = json.loads(hist["value"]) if hist else []
     if prev:
         h.append(prev["value"])
-    db.x("INSERT OR REPLACE INTO settings VALUES(?,?)", (f"active_model:{task}", model_id))
-    db.x("INSERT OR REPLACE INTO settings VALUES(?,?)", (f"model_history:{task}", json.dumps(h)))
+    db.set_setting(f"active_model:{task}", model_id)
+    db.set_setting(f"model_history:{task}", json.dumps(h))
     db.audit(actor, "model.deploy", model_id, {"task": task, "previous": prev["value"] if prev else None})
     return {"task": task, "active": model_id}
 
@@ -630,7 +630,7 @@ def rollback(task: str, actor: str):
         db.audit(actor, "model.rollback", task, {"to": None})
         return {"task": task, "active": None}
     prev = h.pop()
-    db.x("INSERT OR REPLACE INTO settings VALUES(?,?)", (f"active_model:{task}", prev))
-    db.x("INSERT OR REPLACE INTO settings VALUES(?,?)", (f"model_history:{task}", json.dumps(h)))
+    db.set_setting(f"active_model:{task}", prev)
+    db.set_setting(f"model_history:{task}", json.dumps(h))
     db.audit(actor, "model.rollback", task, {"to": prev})
     return {"task": task, "active": prev}
