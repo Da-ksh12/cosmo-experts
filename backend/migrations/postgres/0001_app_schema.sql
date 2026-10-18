@@ -50,7 +50,8 @@ create table app.doc_fields (
   document_id text not null references app.documents(id) on delete cascade,
   name text, value text, unit text, ref_range text, source_page integer, source_text text, confidence double precision, flag text,
   review_status text, corrected_by text, processing_version text,
-  patient_flag text default ''
+  patient_flag text default '',
+  field_no integer default 0                       -- extraction order within the document (replaces SQLite's implicit rowid tie-break)
 );
 
 create table app.images (
@@ -105,7 +106,7 @@ create table app.kb_articles (
 create table app.datasets (id text primary key, data text, approval_status text, updated_at timestamptz);
 create table app.dataset_versions (
   id text primary key,
-  dataset_id text not null references app.datasets(id) on delete cascade,
+  dataset_id text not null,                          -- no foreign key: the importer also records versions for datasets that are not catalogue entries (SQLite never enforced one)
   manifest text, created_at timestamptz
 );
 create table app.model_versions (id text primary key, task text, data text, status text, created_at timestamptz);

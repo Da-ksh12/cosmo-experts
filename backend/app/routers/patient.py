@@ -31,14 +31,15 @@ def login(body: Login):
     from .. import supabase_auth
     if supabase_auth.configured():
         raise HTTPException(410, "Sign in with your account provider; this endpoint is disabled.")
-    u = db.q1("SELECT * FROM users WHERE id=?", (body.user_id,))
-    if not u or not security.verify_pw(body.password, u["password_hash"]):
-        db.audit(body.user_id, "auth.failed")
-        raise HTTPException(401, "Incorrect user or password.")
-    if u["disabled"]:
-        db.audit(u["id"], "auth.refused_disabled")
-        raise HTTPException(403, "This account has been disabled. Please contact the clinic.")
-    db.audit(u["id"], "auth.login")
+    with db.context.as_system():                              # nobody is signed in yet: the sign-in itself is a server action
+        u = db.q1("SELECT * FROM users WHERE id=?", (body.user_id,))
+        if not u or not security.verify_pw(body.password, u["password_hash"]):
+            db.audit(body.user_id, "auth.failed")
+            raise HTTPException(401, "Incorrect user or password.")
+        if u["disabled"]:
+            db.audit(u["id"], "auth.refused_disabled")
+            raise HTTPException(403, "This account has been disabled. Please contact the clinic.")
+        db.audit(u["id"], "auth.login")
     return {"token": security.make_token(u["id"]), "user": {"id": u["id"], "name": u["name"], "role": u["role"]}}
 
 
@@ -138,7 +139,7 @@ def get_document(doc_id: str, user=Depends(current_user)):
     d.pop("stored_path", None)
     return {"document": d,
             "pages": db.q("SELECT page_no,text,method,ocr_confidence FROM doc_pages WHERE document_id=? ORDER BY page_no", (doc_id,)),
-            "fields": db.q("SELECT * FROM doc_fields WHERE document_id=? ORDER BY source_page,rowid", (doc_id,))}
+            "fields": db.q("SELECT * FROM doc_fields WHERE document_id=? ORDER BY source_page,field_no", (doc_id,))}
 
 
 @router.get("/documents/{doc_id}/file")
@@ -155,7 +156,7 @@ def get_document_file(doc_id: str, user=Depends(current_user)):
 @router.get("/documents/{doc_id}/explanation")
 def get_explanation(doc_id: str, lang: str = "en", user=Depends(current_user)):
     d = _doc_or_404(doc_id, user)
-    fields = db.q("SELECT * FROM doc_fields WHERE document_id=? AND review_status!='rejected' ORDER BY source_page,rowid", (doc_id,))
+    fields = db.q("SELECT * FROM doc_fields WHERE document_id=? AND review_status!='rejected' ORDER BY source_page,field_no", (doc_id,))
     pages = db.q("SELECT page_no,method,ocr_confidence FROM doc_pages WHERE document_id=?", (doc_id,))
     out = explain.explain_document(d, fields, pages, lang)
     out["document_review_status"] = d["review_status"]

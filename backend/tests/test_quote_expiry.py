@@ -81,7 +81,7 @@ def test_an_expired_quotation_is_not_offered_by_the_assistant_the_home_suggestio
     cid = client.post("/api/conversations", headers=p).json()["id"]
     live = client.post(f"/api/conversations/{cid}/messages", json={"text": "How much is my quotation?"}, headers=p).json()
     assert "100.00" in live["answer"]
-    db.x("UPDATE quotes SET valid_until=? WHERE id=?", (time.time() - 5, q))
+    db.x("UPDATE quotes SET valid_until=? WHERE id=?", (db.now() - 5, q))
     assert mine(client, p, q)["effective_status"] == "expired"
     other = [x for x in client.get("/api/quotes", headers=p).json() if x["id"] != q and x["effective_status"] == "approved"]
     gone = client.post(f"/api/conversations/{cid}/messages", json={"text": "How much is my quotation?"}, headers=p).json()
@@ -104,7 +104,7 @@ def test_reapproval_renews_an_expired_quotation(setup):
     client, d, p, item = setup
     q = new_quote(client, p, item)
     client.post(f"/api/clinic/quotes/{q}/approve", headers=d)
-    db.x("UPDATE quotes SET valid_until=? WHERE id=?", (time.time() - 5, q))
+    db.x("UPDATE quotes SET valid_until=? WHERE id=?", (db.now() - 5, q))
     assert mine(client, p, q)["effective_status"] == "expired"
     client.post(f"/api/clinic/quotes/{q}/approve", headers=d)
     assert mine(client, p, q)["effective_status"] == "approved"

@@ -100,8 +100,8 @@ def list_conversations(user=Depends(require("patient"))):
 
 @router.get("/assistant/suggestions")
 def suggestions(user=Depends(require("patient"))):
-    names = db.q("SELECT DISTINCT f.name FROM doc_fields f JOIN documents d ON d.id=f.document_id WHERE d.owner_id=? AND d.deleted=0 "
-                 "AND f.review_status!='rejected' ORDER BY d.created_at DESC LIMIT 3", (user["id"],))
+    names = db.q("SELECT f.name FROM doc_fields f JOIN documents d ON d.id=f.document_id WHERE d.owner_id=? AND d.deleted=0 "
+                 "AND f.review_status!='rejected' GROUP BY f.name ORDER BY MAX(d.created_at) DESC LIMIT 3", (user["id"],))
     out = [f"What does my {n['name']} result say?" for n in names]
     out.append("What questions should I ask my doctor?")
     if db.q1("SELECT 1 x FROM kb_articles WHERE review_status='approved' AND title LIKE '%reference range%'"):
@@ -404,7 +404,8 @@ def delete_my_data(user=Depends(require("patient"))):
         db.x("DELETE FROM messages WHERE conversation_id=?", (c["id"],))
     db.x("DELETE FROM conversations WHERE owner_id=?", (uid,))
     db.x("DELETE FROM jobs WHERE owner_id=?", (uid,))
-    db.x("DELETE FROM notifications WHERE user_id=?", (uid,))
+    with db.context.as_system():                              # the patient may read and mark their notifications; removing them is a server action
+        db.x("DELETE FROM notifications WHERE user_id=?", (uid,))
     retained = {"care_plans": db.q1("SELECT COUNT(*) c FROM care_plans WHERE patient_id=?", (uid,))["c"],
                 "quotations": db.q1("SELECT COUNT(*) c FROM quotes WHERE patient_id=?", (uid,))["c"]}
     db.audit(uid, "patient.data_deleted", uid, {"documents": len(docs), "photos": len(imgs), "conversations": len(convs), "retained": retained})

@@ -123,15 +123,16 @@ def test_patient_data_deletion_and_backup_restore(client, tmp_path):
     client.post(f"/api/conversations/{cid}/messages", json={"text": "What does my ferritin say?"}, headers=p2)
     stored = [Path(r["stored_path"]) for r in _db.q("SELECT stored_path FROM documents WHERE owner_id='patient2' AND deleted=0")]
     assert stored and all(p.exists() for p in stored)
-    # backup -> restore into an empty directory, verified by integrity check and counts
-    out = bk.backup(config.DATA_DIR, tmp_path / "bk")
-    res = bk.restore(out, tmp_path / "restored")
-    assert res["integrity_check"] == "ok" and res["counts"]["documents"] >= 1
-    with pytest.raises(SystemExit):
-        bk.restore(out, tmp_path / "restored")                       # refuses to overwrite
-    (out / "cosmo.sqlite3").write_bytes(b"tampered")
-    with pytest.raises(SystemExit):
-        bk.restore(out, tmp_path / "other")                          # integrity failure is detected
+    if not _db.is_postgres():                                        # the file-level SQLite backup does not apply to PostgreSQL (pg_dump backups: tests/test_pg_backup.py)
+        # backup -> restore into an empty directory, verified by integrity check and counts
+        out = bk.backup(config.DATA_DIR, tmp_path / "bk")
+        res = bk.restore(out, tmp_path / "restored")
+        assert res["integrity_check"] == "ok" and res["counts"]["documents"] >= 1
+        with pytest.raises(SystemExit):
+            bk.restore(out, tmp_path / "restored")                   # refuses to overwrite
+        (out / "cosmo.sqlite3").write_bytes(b"tampered")
+        with pytest.raises(SystemExit):
+            bk.restore(out, tmp_path / "other")                      # integrity failure is detected
     # deletion removes files and text, keeps the clinical/financial record and says so
     r = client.post("/api/me/delete-my-data", headers=p2).json()
     assert r["deleted"]["documents"] >= 1 and not any(p.exists() for p in stored)

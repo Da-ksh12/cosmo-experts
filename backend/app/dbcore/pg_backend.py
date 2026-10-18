@@ -10,6 +10,8 @@ Design rules
 * Credentials are never logged; error text is redacted."""
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import time
 from contextlib import contextmanager
@@ -93,8 +95,10 @@ class PostgresBackend:
     name = "postgres"
     transactional_ddl = True
 
-    def __init__(self, url: str, pool_min: int = 1, pool_max: int = 10, connect_timeout: int = 5, statement_timeout_ms: int = 30000, retries: int = 3):
+    def __init__(self, url: str, pool_min: int = 1, pool_max: int = 10, connect_timeout: int = 5, statement_timeout_ms: int = 30000, retries: int = 3,
+                 context_secret: str = ""):
         self.url, self.retries, self.statement_timeout_ms = url, retries, statement_timeout_ms
+        self._ctx_key = context_secret.encode("utf-8")
         self.pool = ConnectionPool(conninfo=url, min_size=pool_min, max_size=pool_max, timeout=connect_timeout, configure=_configure, check=ConnectionPool.check_connection,
                                    kwargs={"row_factory": dict_row, "connect_timeout": connect_timeout, "autocommit": False}, open=False, name="cosmo-app")
         self._opened = False
@@ -132,8 +136,10 @@ class PostgresBackend:
         cm, conn = self._acquire()
         try:
             ctx = ctx or DbContext()
+            msg = f"{ctx.user_id}\x1f{ctx.role}\x1f{ctx.admin_clinical}".encode("utf-8")
+            sig = hmac.new(self._ctx_key, msg, hashlib.sha256).hexdigest() if self._ctx_key else ""     # the policies only honour an identity whose signature verifies
             conn.execute("SELECT set_config('app.user_id', %s, true), set_config('app.role', %s, true), set_config('app.admin_clinical', %s, true), "
-                         "set_config('statement_timeout', %s, true)", (ctx.user_id, ctx.role, ctx.admin_clinical, str(self.statement_timeout_ms)))
+                         "set_config('app.ctx_sig', %s, true), set_config('statement_timeout', %s, true)", (ctx.user_id, ctx.role, ctx.admin_clinical, sig, str(self.statement_timeout_ms)))
             yield PgTx(conn)
         except BaseException as e:
             cm.__exit__(type(e), e, e.__traceback__)             # rolls back and returns the connection to the pool

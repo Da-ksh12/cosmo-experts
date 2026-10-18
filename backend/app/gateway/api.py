@@ -220,8 +220,10 @@ def ready():
     core_ok = [_component("database", dbc), _component("private_storage", store)]
     optional = [_component("ocr", ocr), _component("speech_to_text", stt), _component("text_to_speech", tts), _component("embeddings", emb), _component("llm", lm)]
     ok = all(c["ready"] for c in core_ok)
+    with db.context.as_system():
+        queue = {k: v for k, v in jobs.stats(1).items() if k in ("queued_now", "processing_now", "workers", "queue_limit")}
     return JSONResponse({"status": "ready" if ok else "not_ready", "degraded": [c["name"] for c in optional if not c["ready"]], "core": core_ok, "optional": optional,
-                         "queue": {k: v for k, v in jobs.stats(1).items() if k in ("queued_now", "processing_now", "workers", "queue_limit")}}, status_code=200 if ok else 503)
+                         "queue": queue}, status_code=200 if ok else 503)
 
 
 @router.get("/metrics")

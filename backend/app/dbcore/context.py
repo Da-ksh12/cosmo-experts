@@ -62,6 +62,16 @@ def as_system():
         yield
 
 
+def spawn(target, *args, name: str | None = None, **kwargs):
+    """Start a daemon thread that runs `target` with a COPY of the caller's database context (a new thread would otherwise start with the empty, deny-everything context).
+    Background work therefore keeps the authorization of whoever started it."""
+    import threading
+    ctx = contextvars.copy_context()
+    t = threading.Thread(target=ctx.run, args=(target, *args), kwargs=kwargs, daemon=True, name=name)
+    t.start()
+    return t
+
+
 def run_as_system(fn):
     """Decorator for thread entry points and workers: they start with an empty context and need to say they are server-internal."""
     def wrapper(*a, **kw):

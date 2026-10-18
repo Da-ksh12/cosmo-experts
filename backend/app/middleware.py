@@ -16,6 +16,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from . import logging_setup, metrics, ratelimit
+from .dbcore import context as db_context
 
 LIMITS = [  # (name, regex on "METHOD path", max requests, window seconds, keyed by)
     ("login", re.compile(r"^POST /api/auth/login$"), 8, 60, "ip"),
@@ -39,6 +40,7 @@ class Guard(BaseHTTPMiddleware):
         rid = re.sub(r"[^A-Za-z0-9._\-]", "", request.headers.get("x-request-id", ""))[:64] or uuid.uuid4().hex     # client-supplied: only safe characters survive
         request.state.request_id = rid
         logging_setup.request_id_var.set(rid)                 # every log line of this request carries the id
+        db_context.set_user("", "none")                        # no identity until the authentication dependency establishes one
         if os.environ.get("COSMO_RATE_LIMIT") != "off" and request.url.path.startswith("/api/"):
             ip = request.client.host if request.client else "?"
             sig = f"{request.method} {request.url.path}"

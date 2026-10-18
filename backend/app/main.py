@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from .dbcore import context
 from . import clinical_content, db, logging_setup, metrics, prod_checks, security
 from .config import CORS_ORIGINS
 from .datasets import registry
@@ -34,6 +35,13 @@ async def lifespan(app: FastAPI):
     if "PYTEST_CURRENT_TEST" not in os.environ and os.environ.get("COSMO_STRUCTURED_LOGS", "1") != "0":
         logging_setup.configure()                               # redacting JSON logs with correlation ids (left alone under pytest)
     prod_checks.enforce()
+    with db.context.as_system():                                 # start-up work (schema, seeding) is not performed for any user
+        _startup()
+    threading.Thread(target=context.run_as_system(_warm_up), daemon=True, name="warm-up").start()   # do not block startup; /ready reports when it is done
+    yield
+
+
+def _startup():
     db.init()
     gateway_jobs.ensure_schema()
     from . import supabase_auth
@@ -41,8 +49,6 @@ async def lifespan(app: FastAPI):
         security.seed_users()
     registry.seed()
     clinical_content.seed_kb()          # shipped drafts are inserted as DRAFT only; the assistant ignores them until a doctor approves
-    threading.Thread(target=_warm_up, daemon=True, name="warm-up").start()   # do not block startup; /ready reports when it is done
-    yield
 
 
 app = FastAPI(title="Cosmo Experts AI", version="1.0.0", lifespan=lifespan)
@@ -63,7 +69,9 @@ def prometheus(request: Request):
         return PlainTextResponse("Not found", status_code=404)
     if not metrics.token_ok(request.headers.get("authorization", "")):
         return PlainTextResponse("Unauthorized", status_code=401, headers={"WWW-Authenticate": "Bearer"})
-    return PlainTextResponse(metrics.render(), media_type="text/plain; version=0.0.4; charset=utf-8", headers={"Cache-Control": "no-store"})
+    with db.context.as_system():                                 # operational gauges read counts across tables: a server action
+        body = metrics.render()
+    return PlainTextResponse(body, media_type="text/plain; version=0.0.4; charset=utf-8", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/health")

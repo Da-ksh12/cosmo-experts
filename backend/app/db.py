@@ -57,7 +57,7 @@ COLUMNS = [
     ("price_items", "duration_min", "INTEGER DEFAULT 0"), ("price_items", "compare_at_price", "REAL"),
     ("kb_articles", "reviewed_at", "REAL"), ("kb_articles", "review_due", "REAL"), ("kb_articles", "content_sha256", "TEXT DEFAULT ''"), ("kb_articles", "attestation", "TEXT DEFAULT ''"),
     ("kb_articles", "source_note", "TEXT DEFAULT ''"), ("kb_articles", "content_origin", "TEXT DEFAULT 'clinic'"), ("kb_articles", "claims_to_verify", "TEXT DEFAULT '[]'"),
-    ("users", "disabled", "INTEGER DEFAULT 0"), ("quotes", "valid_until", "REAL"),
+    ("doc_fields", "field_no", "INTEGER DEFAULT 0"), ("users", "disabled", "INTEGER DEFAULT 0"), ("quotes", "valid_until", "REAL"),
     ("quotes", "subtotal", "REAL DEFAULT 0"), ("quotes", "tax_percent", "REAL DEFAULT 0"), ("quotes", "tax_amount", "REAL DEFAULT 0"),
 ]
 
@@ -78,7 +78,10 @@ def backend():
                     from .dbcore.pg_backend import PostgresBackend
                     if not st.database_url:
                         raise ConfigError("COSMO_DB=postgres requires COSMO_DATABASE_URL")
-                    _backend = PostgresBackend(st.database_url, st.pool_min, st.pool_max, st.connect_timeout_s, st.statement_timeout_ms, st.connect_retries)
+                    if len(st.db_context_secret) < 32:
+                        raise ConfigError("COSMO_DB_CONTEXT_SECRET (at least 32 characters) is required with COSMO_DB=postgres")
+                    _backend = PostgresBackend(st.database_url, st.pool_min, st.pool_max, st.connect_timeout_s, st.statement_timeout_ms, st.connect_retries,
+                                               context_secret=st.db_context_secret)
                 elif st.db_backend in ("", "sqlite"):
                     from .dbcore.sqlite_backend import SqliteBackend
                     _backend = SqliteBackend(DB_PATH)
@@ -185,5 +188,7 @@ def jdump(o):
     return json.dumps(o, ensure_ascii=False)
 
 
-def audit(actor, action, target="", detail=None):
-    x("INSERT INTO audit VALUES(?,?,?,?,?,?)", (uid(), now(), actor, action, target, jdump(detail or {})))
+def audit(actor, action, target="", detail=None, t=None):
+    """Append an audit event. Pass the open transaction `t` to make the event part of the same atomic operation as the change it records."""
+    sql, args = "INSERT INTO audit VALUES(?,?,?,?,?,?)", (uid(), now(), actor, action, target, jdump(detail or {}))
+    (t.x(sql, args) if t else x(sql, args))

@@ -132,6 +132,31 @@ def apply(url: str, target: int | None = None, dry_run: bool = False, directory:
             conn.execute("select pg_advisory_unlock(%s)", (LOCK_KEY,)); conn.commit()
 
 
+def install_ctx_secret(url: str, secret: str, replace: bool = False) -> bool:
+    """Install the context secret in the database with the OWNER credential. Returns True if it was (re)written; an existing secret is kept unless replace=True."""
+    with connect_owner(url) as conn:
+        has = conn.execute("select to_regclass('app_private.ctx_secret') is not null as e").fetchone()["e"]
+        if not has:
+            raise MigrationError("row-level security is not installed (apply migration 0002 first)")
+        if conn.execute("select exists (select 1 from app_private.ctx_secret) as e").fetchone()["e"] and not replace:
+            return False
+        conn.execute("select app_private.set_ctx_secret(%s)", (secret,))
+        conn.commit()
+        return True
+
+
+def check_ctx_ready(backend) -> None:
+    """The running application must be able to establish the system identity: proves the secret in the database matches COSMO_DB_CONTEXT_SECRET."""
+    from .context import make
+    try:
+        r = backend.q("select app_private.cur_role() as r", (), make("", "system"))
+    except Exception as e:
+        raise MigrationError("could not verify the database access context: " + safe_exc(e)) from None
+    if not r or r[0]["r"] != "system":
+        raise MigrationError("the database rejected the application's identity signature: install the secret with app_private.set_ctx_secret (owner credential) "
+                             "so that it matches COSMO_DB_CONTEXT_SECRET")
+
+
 def startup_check(backend, settings) -> None:
     """Application start-up policy. check: refuse if behind/drifted. apply: apply with the owner credential, then check. off: nothing (never allowed in production)."""
     import os
@@ -142,6 +167,8 @@ def startup_check(backend, settings) -> None:
     if mode == "apply":
         owner = os.environ.get("COSMO_MIGRATION_DATABASE_URL") or settings.database_url
         apply(owner)
+        if settings.db_context_secret:
+            install_ctx_secret(owner, settings.db_context_secret)                # first run only: an existing secret is never overwritten implicitly
     found = discover()
     try:
         with as_system():
@@ -152,6 +179,7 @@ def startup_check(backend, settings) -> None:
     if st["drift"] or st["pending"] or st["unknown_applied"]:
         raise MigrationError(f"database schema is not at the version this application expects: pending={st['pending']} drift={st['drift']} unknown={st['unknown_applied']}. "
                              "Run `python -m scripts.migrate status` / `apply` with the owner credential.")
+    check_ctx_ready(backend)
 
 
 def expected_tables(directory: Path = MIGRATIONS_DIR) -> set[str]:

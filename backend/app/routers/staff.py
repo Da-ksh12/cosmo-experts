@@ -455,7 +455,7 @@ def train(body: TrainReq, user=Depends(admin)):
         except Exception as e:  # surfaced to the admin, never silently swallowed
             _jobs[job].update(status="failed", error=str(e))
             db.audit(user["id"], "model.train_failed", job, {"error": str(e)[:300]})
-    threading.Thread(target=run, daemon=True).start()
+    db.context.spawn(run)
     return {"job_id": job}
 
 
@@ -575,7 +575,7 @@ def datasets_download(did: str, user=Depends(admin)):
         except Exception as e:
             _dl[did].update(state="failed", error=str(e))
             db.audit(user["id"], "dataset.download_failed", did, {"error": str(e)})
-    threading.Thread(target=run, daemon=True).start()
+    db.context.spawn(run)
     return {"state": "running"}
 
 

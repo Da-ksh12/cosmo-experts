@@ -46,6 +46,7 @@ class Settings:
     mode: str                       # local | test | production
     db_backend: str                 # sqlite | postgres | "" (unset: allowed outside production only)
     database_url: str               # SECRET
+    db_context_secret: str          # SECRET: signs the per-transaction identity the row-level-security policies trust (also installed in the database)
     pool_min: int
     pool_max: int
     connect_timeout_s: int
@@ -75,7 +76,7 @@ class Settings:
         if pool_min > pool_max:
             raise ConfigError("COSMO_DB_POOL_MIN must not exceed COSMO_DB_POOL_MAX")
         return cls(
-            mode=mode, db_backend=backend, database_url=env.get("COSMO_DATABASE_URL", ""), pool_min=pool_min, pool_max=pool_max,
+            mode=mode, db_backend=backend, database_url=env.get("COSMO_DATABASE_URL", ""), db_context_secret=env.get("COSMO_DB_CONTEXT_SECRET", ""), pool_min=pool_min, pool_max=pool_max,
             connect_timeout_s=_int(env, "COSMO_DB_CONNECT_TIMEOUT", 5, 1, 120), statement_timeout_ms=_int(env, "COSMO_DB_STATEMENT_TIMEOUT_MS", 30000, 100, 600000),
             connect_retries=_int(env, "COSMO_DB_CONNECT_RETRIES", 3, 0, 10),
             migration_mode=_choice(env, "COSMO_MIGRATION_MODE", "check" if mode == "production" else "apply", ("off", "check", "apply")),
@@ -98,7 +99,7 @@ class Settings:
             return "(unparseable)"
 
     def describe(self) -> dict:
-        return {"mode": self.mode, "db_backend": self.db_backend or "(unset)", "database": self.database_target() or "(none)", "database_url_set": bool(self.database_url),
+        return {"mode": self.mode, "db_backend": self.db_backend or "(unset)", "database": self.database_target() or "(none)", "database_url_set": bool(self.database_url), "db_context_secret_set": bool(self.db_context_secret),
                 "pool": f"{self.pool_min}-{self.pool_max}", "migration_mode": self.migration_mode, "auth_mode": self.auth_mode, "supabase_url": self.supabase_url or "(none)",
                 "supabase_anon_key_set": bool(self.supabase_anon_key), "supabase_service_key_set": bool(self.supabase_service_key), "cookie_secure": self.cookie_secure,
                 "cookie_samesite": self.cookie_samesite, "cors_origins": list(self.cors_origins), "admin_clinical_access": self.admin_clinical_access or "(unset)"}
@@ -116,6 +117,8 @@ class Settings:
                 out.append("COSMO_DATABASE_URL must be a postgresql:// URL (set it, or COSMO_DATABASE_URL_FILE)")
             elif u.hostname not in ("localhost", "127.0.0.1", "::1") and "sslmode=require" not in self.database_url and "sslmode=verify" not in self.database_url:
                 out.append("COSMO_DATABASE_URL must require TLS for a remote database (add ?sslmode=require or verify-full)")
+        if self.db_backend == "postgres" and len(self.db_context_secret) < 32:
+            out.append("COSMO_DB_CONTEXT_SECRET (at least 32 characters, also installed in the database with app_private.set_ctx_secret) is required: without it the database denies every request")
         if self.migration_mode == "apply" and not self.allow_startup_migrations:
             out.append("COSMO_MIGRATION_MODE=apply at startup is not allowed in production unless COSMO_ALLOW_STARTUP_MIGRATIONS=1; run `python -m scripts.migrate apply` as a deliberate step")
         if self.migration_mode == "off":

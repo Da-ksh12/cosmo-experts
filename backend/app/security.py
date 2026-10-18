@@ -8,6 +8,7 @@ import os
 import time
 
 from fastapi import Depends, Header, HTTPException
+from starlette.concurrency import run_in_threadpool
 
 from . import db
 from .config import SECRET
@@ -67,7 +68,13 @@ def seed_users():
             db.x("INSERT INTO users(id,name,role,password_hash) VALUES(?,?,?,?)", (uid_, name, role, hash_pw(pw)))
 
 
-def current_user(authorization: str = Header(default="")):
+def _authenticate(authorization: str) -> dict:
+    """Verify the token and resolve the account. Runs as the SYSTEM identity: who the caller is cannot be known before this lookup."""
+    with db.context.as_system():
+        return _authenticate_inner(authorization)
+
+
+def _authenticate_inner(authorization: str) -> dict:
     if not authorization.startswith("Bearer "):
         raise HTTPException(401, "Please sign in.")
     token = authorization[7:]
@@ -89,6 +96,14 @@ def current_user(authorization: str = Header(default="")):
     if user["disabled"]:                                   # an existing token stops working the moment the account is disabled
         raise HTTPException(403, "This account has been disabled. Please contact the clinic.")
     return {"id": user["id"], "name": user["name"], "role": user["role"]}
+
+
+async def current_user(authorization: str = Header(default="")):
+    """FastAPI dependency. Async on purpose: it establishes the database identity (dbcore.context) for the REST of this request, and a context variable set inside a
+    synchronous dependency would be lost in its threadpool copy."""
+    user = await run_in_threadpool(_authenticate, authorization)
+    db.context.set_user(user["id"], user["role"])
+    return user
 
 
 def require(*roles):

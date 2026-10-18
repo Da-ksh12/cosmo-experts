@@ -6,6 +6,7 @@ request IDs on every job and audit event, and input bytes deleted as soon as a j
 from __future__ import annotations
 
 import concurrent.futures as cf
+import contextvars
 import json
 import os
 import threading
@@ -87,7 +88,7 @@ def submit(task: str, owner_id: str, params: dict, data: bytes | None, request_i
             path = str(p)
         db.x("INSERT INTO jobs(id,owner_id,task,status,request_id,idempotency_key,params,input_path,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
              (jid, owner_id, task, "queued", request_id, idem_key, json.dumps(params), path, db.now()))
-    _pool.submit(_run, jid)
+    _pool.submit(contextvars.copy_context().run, _run, jid)       # the worker keeps the submitting user's database identity
     return get(jid), True
 
 
@@ -119,7 +120,7 @@ def _run(job_id: str):
     db.x("UPDATE jobs SET status='processing', started_at=? WHERE id=? AND status='queued'", (db.now(), job_id))
     data = Path(j["input_path"]).read_bytes() if j["input_path"] and Path(j["input_path"]).exists() else None
     ctx = {"request_id": j["request_id"], "job_id": job_id, "cancelled": lambda: bool((db.q1("SELECT cancel_requested c FROM jobs WHERE id=?", (job_id,)) or {"c": 0})["c"])}
-    fut = _inner.submit(_handlers[j["task"]], j["owner_id"], json.loads(j["params"]), data, ctx)
+    fut = _inner.submit(contextvars.copy_context().run, _handlers[j["task"]], j["owner_id"], json.loads(j["params"]), data, ctx)
     try:
         status, result = fut.result(timeout=TIMEOUTS.get(j["task"], 120))
         if ctx["cancelled"]():

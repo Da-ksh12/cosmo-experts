@@ -17,6 +17,9 @@ from app.dbcore.types import Epoch
 from tests import pg_harness
 
 
+CTX_SECRET = "unit-test-context-secret-" + "k" * 32
+
+
 @pytest.fixture(scope="session")
 def pg_server():
     s = pg_harness.get_server()
@@ -29,7 +32,8 @@ def pg_server():
 def pgdb(pg_server):
     name = pg_server.new_database("b")
     migrate.apply(pg_server.url(name))
-    be = PostgresBackend(pg_server.url(name, "cosmo_app"), pool_min=1, pool_max=8, connect_timeout=3, statement_timeout_ms=5000, retries=1)
+    migrate.install_ctx_secret(pg_server.url(name), CTX_SECRET)
+    be = PostgresBackend(pg_server.url(name, "cosmo_app"), pool_min=1, pool_max=8, connect_timeout=3, statement_timeout_ms=5000, retries=1, context_secret=CTX_SECRET)
     be.open()
     sysctx = context.make("", "system")
     be.x("insert into users(id,name,role) values('u1','U One','patient'),('u2','U Two','patient'),('d1','Doc','doctor')", (), sysctx)
@@ -75,10 +79,11 @@ def test_a_clean_database_is_provisioned_and_reapplying_is_a_noop(pg_server):
     name = pg_server.new_database("m")
     try:
         url = pg_server.url(name)
-        assert migrate.apply(url, dry_run=True) == [1] and migrate.status(url)["applied"] == []          # a dry run changes nothing
-        assert migrate.apply(url) == [1] and migrate.apply(url) == []
+        every = [m.version for m in migrate.discover()]
+        assert migrate.apply(url, dry_run=True) == every and migrate.status(url)["applied"] == []        # a dry run changes nothing
+        assert migrate.apply(url) == every and migrate.apply(url) == []
         st = migrate.status(url)
-        assert st["applied"] == [1] and st["pending"] == [] and st["drift"] == []
+        assert st["applied"] == every and st["pending"] == [] and st["drift"] == []
         with psycopg.connect(url) as c:
             have = {r[0] for r in c.execute("select table_name from information_schema.tables where table_schema='app'")}
             assert migrate.expected_tables() <= have and "schema_migrations" in have
@@ -164,8 +169,8 @@ def test_startup_check_modes(pg_server, monkeypatch):
     from app.settings import Settings
     name = pg_server.new_database("s")
     try:
-        be = PostgresBackend(pg_server.url(name, "cosmo_app"), retries=0, connect_timeout=2)
-        env = {"COSMO_MODE": "production", "COSMO_DB": "postgres", "COSMO_DATABASE_URL": pg_server.url(name, "cosmo_app")}
+        be = PostgresBackend(pg_server.url(name, "cosmo_app"), retries=0, connect_timeout=2, context_secret=CTX_SECRET)
+        env = {"COSMO_MODE": "production", "COSMO_DB": "postgres", "COSMO_DATABASE_URL": pg_server.url(name, "cosmo_app"), "COSMO_DB_CONTEXT_SECRET": CTX_SECRET}
         check = Settings.from_env({**env, "COSMO_MIGRATION_MODE": "check"})
         with pytest.raises(migrate.MigrationError, match="not been migrated"):
             migrate.startup_check(be, check)                                                              # empty database: refuse to run
@@ -364,7 +369,7 @@ def test_slow_statements_are_cancelled_by_the_statement_timeout(pg_server):
     name = pg_server.new_database("to")
     try:
         migrate.apply(pg_server.url(name))
-        be = PostgresBackend(pg_server.url(name, "cosmo_app"), statement_timeout_ms=300, retries=0)
+        be = PostgresBackend(pg_server.url(name, "cosmo_app"), statement_timeout_ms=300, retries=0, context_secret=CTX_SECRET)
         with pytest.raises(psycopg.errors.QueryCanceled):
             be.q("select pg_sleep(3)", (), context.make("", "system"))
         be.close()

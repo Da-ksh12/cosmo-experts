@@ -25,6 +25,7 @@ def send(user_id: str, kind: str, title: str, body: str = "", link: str = "", de
 
 def to_role(role: str, kind: str, title: str, body: str = "", link: str = "", dedupe: str = "") -> int:
     n = 0
-    for u in db.q("SELECT id FROM users WHERE role=?", (role,)):
-        n += send(u["id"], kind, title, body, link, f"{dedupe}:{u['id']}" if dedupe else "")
+    with db.context.as_system():                                 # reading the user directory to address a role is a server action
+        for u in db.q("SELECT id FROM users WHERE role=?", (role,)):
+            n += send(u["id"], kind, title, body, link, f"{dedupe}:{u['id']}" if dedupe else "")
     return n
