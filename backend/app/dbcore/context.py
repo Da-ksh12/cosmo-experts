@@ -28,8 +28,17 @@ def current() -> DbContext:
     return _ctx.get()
 
 
+def admin_clinical_access() -> str:
+    """'read' or 'none'. Explicit COSMO_ADMIN_CLINICAL_ACCESS wins. Unset: 'read' outside production (existing local behaviour), 'none' in production, where start-up
+    additionally refuses to run without an explicit choice (settings.py)."""
+    v = (os.environ.get("COSMO_ADMIN_CLINICAL_ACCESS") or "").strip().lower()
+    if v in ("read", "none"):
+        return v
+    return "none" if os.environ.get("COSMO_MODE") == "production" else "read"
+
+
 def _admin_clinical() -> str:
-    return "read" if (os.environ.get("COSMO_ADMIN_CLINICAL_ACCESS") or "").strip().lower() == "read" else "none"
+    return admin_clinical_access()
 
 
 def make(user_id: str, role: str) -> DbContext:

@@ -31,7 +31,8 @@ class ServingError(Exception):
 
 
 def _card(model_id: str) -> tuple[dict, str]:
-    row = db.q1("SELECT data,status FROM model_versions WHERE id=?", (model_id,))
+    with db.context.as_system():                     # internal lookup; who may run a model is decided by the calling route
+        row = db.q1("SELECT data,status FROM model_versions WHERE id=?", (model_id,))
     if not row:
         raise ServingError("Unknown model.")
     return json.loads(row["data"]), row["status"]

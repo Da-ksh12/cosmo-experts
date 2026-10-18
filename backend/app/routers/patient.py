@@ -3,7 +3,7 @@ import json
 import re
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
@@ -27,10 +27,10 @@ class Login(BaseModel):
 
 
 @router.post("/auth/login")
-def login(body: Login):
-    from .. import supabase_auth
-    if supabase_auth.configured():
-        raise HTTPException(410, "Sign in with your account provider; this endpoint is disabled.")
+def login(body: Login, response: Response):
+    from .. import auth_flows, supabase_auth
+    if supabase_auth.configured():                            # Supabase Auth: `user_id` carries the e-mail address; see auth_flows.login
+        return auth_flows.login(body.user_id, body.password, response)
     with db.context.as_system():                              # nobody is signed in yet: the sign-in itself is a server action
         u = db.q1("SELECT * FROM users WHERE id=?", (body.user_id,))
         if not u or not security.verify_pw(body.password, u["password_hash"]):

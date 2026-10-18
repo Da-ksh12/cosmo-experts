@@ -93,8 +93,9 @@ def migrate_data(sqlite_path: Path, target_url: str, batch: int = 500, dry_run: 
         raise MigrationAbort(f"the target schema is not at the expected version (pending={st['pending']} drift={st['drift']}): run `python -m scripts.migrate apply` first")
     progress = load_progress(progress_path)
     report: dict = {"dry_run": dry_run, "tables": {}, "orphans_skipped": {}}
+    dropped_children: dict = {}
     try:
-        with psycopg.connect(target_url, row_factory=dict_row, connect_timeout=10) as pg:
+        with psycopg.connect(target_url, row_factory=dict_row, connect_timeout=10, autocommit=True) as pg:      # autocommit: each batch's `transaction()` is a real, durable transaction
             src_tables = {r[0] for r in src.execute("select name from sqlite_master where type='table' and name not like 'sqlite_%'")}
             user_ids = {r[0] for r in src.execute("select id from users")} if "users" in src_tables else set()
             for table in ORDER:
@@ -128,7 +129,10 @@ def migrate_data(sqlite_path: Path, target_url: str, batch: int = 500, dry_run: 
                     if table == "doc_pages" or table == "doc_fields":              # children of documents: drop rows whose document was skipped as an orphan
                         ids = [r["document_id"] for r in keep]
                         present = {x["id"] for x in pg.execute("select id from app.documents where id = any(%s)", (ids,)).fetchall()} if ids and not dry_run else set(ids)
-                        keep = [r for r in keep if r["document_id"] in present or dry_run]
+                        kept = [r for r in keep if r["document_id"] in present or dry_run]
+                        if len(kept) != len(keep):
+                            dropped_children[table] = dropped_children.get(table, 0) + len(keep) - len(kept)
+                        keep = kept
                     if dry_run:
                         rep["inserted"] += len(keep)
                         continue
@@ -162,7 +166,7 @@ def migrate_data(sqlite_path: Path, target_url: str, batch: int = 500, dry_run: 
                     save_progress(progress_path, progress)
                 report["tables"][table] = rep
             if not dry_run:
-                report["validation"] = validate(src, pg, src_tables, report["orphans_skipped"])
+                report["validation"] = validate(src, pg, src_tables, {k: report["orphans_skipped"].get(k, 0) + dropped_children.get(k, 0) for k in {*report["orphans_skipped"], *dropped_children}})
     except psycopg.Error as e:
         raise MigrationAbort("database error: " + safe_exc(e)) from None
     finally:

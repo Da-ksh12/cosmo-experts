@@ -14,6 +14,7 @@ import os
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 import jwt
@@ -126,6 +127,25 @@ def profile(sub: str) -> dict:
         raise AuthError("This account is not set up for access. Please contact the clinic.")
     _profiles[sub] = (time.time(), rows[0])
     return rows[0]
+
+
+def set_profile_role(user_id: str, role: str) -> None:
+    """Server-side role change on public.profiles with the service-role key. The role never comes from a client."""
+    if role not in ("patient", "doctor", "admin"):
+        raise AuthError("Unknown role.")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not key:
+        raise AuthError("Account administration is not configured.")
+    req = urllib.request.Request(f"{os.environ['SUPABASE_URL'].rstrip('/')}/rest/v1/profiles?id=eq.{urllib.parse.quote(user_id, safe='')}", method="PATCH",
+                                 data=json.dumps({"role": role}).encode(), headers={"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json", "Prefer": "return=representation"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:                 # noqa: S310 - operator-configured project URL
+            rows = json.loads(r.read() or b"[]")
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        raise AuthError("Account administration is temporarily unavailable.") from None
+    if not rows:
+        raise AuthError("User not found.")
+    forget(user_id)
 
 
 def forget(sub: str | None = None):

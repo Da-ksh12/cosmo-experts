@@ -252,7 +252,7 @@ def test_bad_tokens_and_local_tokens_are_rejected(client, profiles):
 
 
 def test_local_login_and_demo_accounts_are_disabled(client, monkeypatch):
-    assert client.post("/api/auth/login", json={"user_id": "patient1", "password": "cosmo-dev"}).status_code == 410
+    assert client.post("/api/auth/login", json={"user_id": "patient1", "password": "cosmo-dev"}).status_code == 401
     from app import security
     from app.main import app
     calls = []
@@ -341,7 +341,7 @@ def test_real_users_get_the_right_roles_in_the_app_and_deleted_users_lose_access
         assert c.get("/api/clinic/submissions", headers=h["doctor"]).status_code == 200
         assert c.get("/api/admin/audit", headers=h["doctor"]).status_code == 403
         assert c.get("/api/admin/audit", headers=h["admin"]).status_code == 200
-        assert c.post("/api/auth/login", json={"user_id": "x", "password": "y"}).status_code == 410
+        assert c.post("/api/auth/login", json={"user_id": "x", "password": "y"}).status_code == 401
         # delete the doctor in Supabase: the still-valid JWT must stop working once the profile cache lapses
         real_env["call"]("DELETE", f"{real_env['url']}/auth/v1/admin/users/{users['doctor']['id']}", {"apikey": real_env["svc"], "Authorization": f"Bearer {real_env['svc']}"})
         monkeypatch.setattr(supabase_auth, "PROFILE_TTL", 0.0)

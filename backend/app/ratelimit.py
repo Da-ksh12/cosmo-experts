@@ -31,6 +31,18 @@ class MemoryStore:
             q.append(now)
             return True, 0
 
+    def count(self, key: str, window: int) -> int:
+        now = time.time()
+        with self._lock:
+            q = self._hits[key]
+            while q and q[0] <= now - window:
+                q.popleft()
+            return len(q)
+
+    def clear(self, key: str) -> None:
+        with self._lock:
+            self._hits.pop(key, None)
+
     def reset(self):
         with self._lock:
             self._hits.clear()
@@ -59,6 +71,14 @@ class RedisStore:
             retry = max(1, int(oldest[0][1] + window - now)) if oldest else window
             return False, retry
         return True, 0
+
+    def count(self, key: str, window: int) -> int:
+        k = self.PREFIX + key
+        self.r.zremrangebyscore(k, 0, time.time() - window)
+        return int(self.r.zcard(k))
+
+    def clear(self, key: str) -> None:
+        self.r.delete(self.PREFIX + key)
 
     def reset(self):
         for k in self.r.scan_iter(self.PREFIX + "*"):
@@ -91,6 +111,20 @@ class Limiter:
         except Exception:
             self.errors += 1
             return self.fallback.hit(key, limit, window)
+
+    def count(self, key: str, window: int) -> int:
+        try:
+            return self.store.count(key, window)
+        except Exception:
+            self.errors += 1
+            return self.fallback.count(key, window)
+
+    def clear(self, key: str) -> None:
+        try:
+            self.store.clear(key)
+        except Exception:
+            self.errors += 1
+        self.fallback.clear(key)
 
     def reset(self):
         self.fallback.reset()

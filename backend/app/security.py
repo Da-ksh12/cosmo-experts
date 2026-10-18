@@ -82,13 +82,9 @@ def _authenticate_inner(authorization: str) -> dict:
     if supabase_auth.configured():
         try:
             claims = supabase_auth.verifier().verify(token)
-            prof = supabase_auth.profile(claims["sub"])
         except supabase_auth.AuthError as e:
             raise HTTPException(401, str(e))
-        # the application keeps clinical data locally, so mirror the identity (id = Supabase user id, role from public.profiles)
-        db.x("INSERT INTO users(id,name,role,password_hash) VALUES(?,?,?,'') ON CONFLICT(id) DO UPDATE SET role=excluded.role, name=excluded.name",
-             (claims["sub"], prof.get("full_name") or claims.get("email", ""), prof["role"]))
-        return {"id": claims["sub"], "name": prof.get("full_name") or "", "role": prof["role"]}
+        return identity_from_claims(claims)
     uid_ = verify_token(token)
     user = uid_ and db.q1("SELECT id,name,role,disabled FROM users WHERE id=?", (uid_,))
     if not user:
@@ -96,6 +92,23 @@ def _authenticate_inner(authorization: str) -> dict:
     if user["disabled"]:                                   # an existing token stops working the moment the account is disabled
         raise HTTPException(403, "This account has been disabled. Please contact the clinic.")
     return {"id": user["id"], "name": user["name"], "role": user["role"]}
+
+
+def identity_from_claims(claims: dict) -> dict:
+    """Verified Supabase claims -> the application identity. The ROLE comes from public.profiles (trusted server-side data), never from the token or the request.
+    The account is mirrored into the application's own users table (separate from the authentication identity) where the `disabled` flag lives; a disabled account is
+    refused on every request, so disabling takes effect immediately even though the access token itself stays valid until it expires."""
+    from . import supabase_auth
+    with db.context.as_system():
+        try:
+            prof = supabase_auth.profile(claims["sub"])
+        except supabase_auth.AuthError as e:
+            raise HTTPException(401, str(e))
+        db.x("INSERT INTO users(id,name,role,password_hash) VALUES(?,?,?,'') ON CONFLICT(id) DO UPDATE SET role=excluded.role, name=excluded.name",
+             (claims["sub"], prof.get("full_name") or claims.get("email", ""), prof["role"]))
+        if (db.q1("SELECT disabled FROM users WHERE id=?", (claims["sub"],)) or {"disabled": 0})["disabled"]:
+            raise HTTPException(403, "This account has been disabled. Please contact the clinic.")
+    return {"id": claims["sub"], "name": prof.get("full_name") or "", "role": prof["role"]}
 
 
 async def current_user(authorization: str = Header(default="")):
@@ -115,4 +128,7 @@ def require(*roles):
 
 
 def can_access_patient_data(user, owner_id: str) -> bool:
-    return user["id"] == owner_id or user["role"] in ("doctor", "admin")
+    """Owner, any clinician, and an administrator ONLY when COSMO_ADMIN_CLINICAL_ACCESS=read (the database policies apply the same rule)."""
+    if user["id"] == owner_id or user["role"] == "doctor":
+        return True
+    return user["role"] == "admin" and db.context.admin_clinical_access() == "read"

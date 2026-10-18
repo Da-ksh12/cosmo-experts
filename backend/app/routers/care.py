@@ -142,7 +142,8 @@ def _plan_out(r: dict) -> dict:
 def _doctor_card(doctor_id: str | None):
     if not doctor_id:
         return None
-    u = db.q1("SELECT id,name,credentials,verified FROM users WHERE id=?", (doctor_id,))
+    with db.context.as_system():                       # a patient may see the card (name, stated credentials, verification flag) of the clinician on their own plan, nothing else of that account
+        u = db.q1("SELECT id,name,credentials,verified FROM users WHERE id=?", (doctor_id,))
     if not u:
         return None
     # "verified" is only true when an administrator recorded verification of the stated credentials
@@ -256,6 +257,35 @@ def _local_only():
         raise HTTPException(409, "Accounts are managed in Supabase Auth for this deployment.")
 
 
+def _supabase() -> bool:
+    from .. import supabase_auth
+    return supabase_auth.configured()
+
+
+def _provider_call(fn, *a):
+    """Run a Supabase Auth / profile administration call, mapping provider failures to a safe response."""
+    from .. import gotrue as gt, supabase_auth
+    try:
+        return fn(*a)
+    except (gt.GoTrueError, supabase_auth.AuthError) as e:
+        status = 404 if getattr(e, "status", 0) == 404 or str(e) == "User not found." else 502
+        raise HTTPException(status, "The account service could not complete this action." if status == 502 else "User not found.") from None
+
+
+def _target_row(uid: str):
+    """The application's row for an account. In Supabase mode an account is mirrored on first sign-in; an administrator may act on one that has not signed in yet."""
+    row = db.q1("SELECT id,role,disabled FROM users WHERE id=?", (uid,))
+    if row or not _supabase():
+        return row
+    from .. import supabase_auth
+    try:
+        prof = supabase_auth.profile(uid)
+    except supabase_auth.AuthError:
+        return None
+    db.insert_ignore("users", {"id": uid, "name": prof.get("full_name") or "", "role": prof["role"], "password_hash": "", "credentials": "", "verified": 0, "disabled": 0})
+    return db.q1("SELECT id,role,disabled FROM users WHERE id=?", (uid,))
+
+
 def _active_admins(excluding: str = "") -> int:
     return db.q1("SELECT COUNT(*) c FROM users WHERE role='admin' AND disabled=0 AND id!=?", (excluding,))["c"]
 
@@ -286,9 +316,25 @@ def list_users(user=Depends(require("admin"))):
 
 @router.post("/admin/users")
 def create_user(body: NewUser, user=Depends(require("admin"))):
-    _local_only()
     if body.role not in security.ROLES:
         raise HTTPException(422, "Unknown role.")
+    if _supabase():                                           # `id` carries the e-mail address; the account is created in Supabase Auth, confirmed, and given the role
+        from .. import auth_flows, gotrue as gt, supabase_auth
+        email = auth_flows.normalize_email(body.id)
+        if not email:
+            raise HTTPException(422, "Please enter a valid email address.")
+        prob = auth_flows.password_problem(body.password, email)
+        if prob:
+            raise HTTPException(422, prob)
+        try:
+            created = auth_flows.gotrue().admin_create_user(email, body.password, body.name.strip(), confirm=True)
+        except gt.GoTrueError as e:
+            raise HTTPException(409 if e.status in (409, 422) else 502, "That address cannot be used." if e.status in (409, 422) else "The account service could not complete this action.") from None
+        uid = created.get("id", "")
+        if body.role != "patient":
+            _provider_call(supabase_auth.set_profile_role, uid, body.role)
+        db.audit(user["id"], "user.create", uid, {"role": body.role})
+        return {"id": uid, "role": body.role, "verified": 0}
     if not _ID.match(body.id):
         raise HTTPException(422, "User id must be 3-40 characters: lowercase letters, digits, dot, dash or underscore.")
     if db.q1("SELECT 1 x FROM users WHERE id=?", (body.id,)):
@@ -300,8 +346,7 @@ def create_user(body: NewUser, user=Depends(require("admin"))):
 
 @router.post("/admin/users/{uid}/role")
 def change_role(uid: str, body: RoleChange, user=Depends(require("admin"))):
-    _local_only()
-    target = db.q1("SELECT id,role FROM users WHERE id=?", (uid,))
+    target = _target_row(uid)
     if not target:
         raise HTTPException(404, "User not found.")
     if body.role not in security.ROLES:
@@ -310,6 +355,9 @@ def change_role(uid: str, body: RoleChange, user=Depends(require("admin"))):
         raise HTTPException(409, "You cannot change your own role.")
     if target["role"] == "admin" and body.role != "admin" and _active_admins(uid) == 0:
         raise HTTPException(409, "At least one active administrator must remain.")
+    if _supabase():
+        from .. import supabase_auth
+        _provider_call(supabase_auth.set_profile_role, uid, body.role)                # the role lives in public.profiles in this deployment
     # a changed role never inherits clinical verification: it must be recorded again by an administrator
     db.x("UPDATE users SET role=?, verified=0, credentials='' WHERE id=?", (body.role, uid))
     db.audit(user["id"], "user.role", uid, {"from": target["role"], "to": body.role})
@@ -318,14 +366,16 @@ def change_role(uid: str, body: RoleChange, user=Depends(require("admin"))):
 
 @router.post("/admin/users/{uid}/disabled")
 def set_disabled(uid: str, body: DisableChange, user=Depends(require("admin"))):
-    _local_only()
-    target = db.q1("SELECT id,role,disabled FROM users WHERE id=?", (uid,))
+    target = _target_row(uid)
     if not target:
         raise HTTPException(404, "User not found.")
     if uid == user["id"]:
         raise HTTPException(409, "You cannot disable your own account.")
     if body.disabled and target["role"] == "admin" and _active_admins(uid) == 0:
         raise HTTPException(409, "At least one active administrator must remain.")
+    if _supabase():
+        from .. import auth_flows
+        _provider_call(auth_flows.gotrue().admin_ban, uid, body.disabled)             # blocks new sign-ins and refresh; the per-request disabled check ends existing sessions at once
     db.x("UPDATE users SET disabled=? WHERE id=?", (1 if body.disabled else 0, uid))
     db.audit(user["id"], "user.disable" if body.disabled else "user.enable", uid)
     return {"id": uid, "disabled": body.disabled}
@@ -333,10 +383,16 @@ def set_disabled(uid: str, body: DisableChange, user=Depends(require("admin"))):
 
 @router.post("/admin/users/{uid}/reset-password")
 def reset_password(uid: str, body: PasswordReset, user=Depends(require("admin"))):
-    _local_only()
-    if not db.q1("SELECT 1 x FROM users WHERE id=?", (uid,)):
+    if not _target_row(uid):
         raise HTTPException(404, "User not found.")
-    db.x("UPDATE users SET password_hash=? WHERE id=?", (security.new_hash(body.password), uid))
+    if _supabase():
+        from .. import auth_flows
+        prob = auth_flows.password_problem(body.password)
+        if prob:
+            raise HTTPException(422, prob)
+        _provider_call(auth_flows.gotrue().admin_update_user, uid, {"password": body.password})
+    else:
+        db.x("UPDATE users SET password_hash=? WHERE id=?", (security.new_hash(body.password), uid))
     db.audit(user["id"], "user.password_reset", uid)                                                    # the password itself is never logged
     return {"id": uid}
 

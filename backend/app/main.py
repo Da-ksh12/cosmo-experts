@@ -12,7 +12,7 @@ from .config import CORS_ORIGINS
 from .datasets import registry
 from .gateway import api as gateway_api, jobs as gateway_jobs
 from .middleware import Guard
-from .routers import care, patient, staff
+from .routers import auth as auth_router, care, patient, staff
 
 WARM = {"embeddings": "pending"}
 
@@ -53,6 +53,7 @@ def _startup():
 
 app = FastAPI(title="Cosmo Experts AI", version="1.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"], allow_credentials=False)
+app.include_router(auth_router.router)
 app.include_router(patient.router)
 app.include_router(staff.router)
 app.include_router(care.router)

@@ -21,6 +21,7 @@ from .dbcore import context as db_context
 LIMITS = [  # (name, regex on "METHOD path", max requests, window seconds, keyed by)
     ("login", re.compile(r"^POST /api/auth/login$"), 8, 60, "ip"),
     ("submit", re.compile(r"^POST /api/(v1/(images|documents|speech|assistant)|images|documents|speech|conversations)"), 40, 60, "token"),
+    ("auth_flows", re.compile(r"^POST /api/auth/(register|password-reset/(request|confirm)|refresh)$"), 20, 60, "ip"),
     ("general", re.compile(r".*"), 600, 60, "ip"),
 ]
 
