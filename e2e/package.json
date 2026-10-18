@@ -1,0 +1,10 @@
+{
+  "name": "cosmo-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Browser, accessibility and device-emulation tests. Run against a stack on :3000/:8000.",
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "playwright": "1.49.1"
+  }
+}

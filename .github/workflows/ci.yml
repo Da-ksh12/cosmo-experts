@@ -1,0 +1,92 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Scan the tracked tree for credentials
+        run: python backend/scripts/scan_secrets.py .
+
+  backend:
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: backend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip, cache-dependency-path: backend/requirements.txt }
+      - name: System packages
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr espeak-ng libespeak-ng1
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+      - name: Fetch the licence-checked models used by the tests
+        run: python -m scripts.fetch_models
+      - name: Tests with coverage (Supabase tests skip without credentials)
+        run: |
+          coverage run --source=app -m pytest tests -q -p no:cacheprovider
+          coverage report --fail-under=85
+      - name: Alert rules
+        run: |
+          curl -sSL -o prom.tgz https://github.com/prometheus/prometheus/releases/download/v2.55.1/prometheus-2.55.1.linux-amd64.tar.gz
+          echo "$(curl -sSL https://github.com/prometheus/prometheus/releases/download/v2.55.1/sha256sums.txt | grep linux-amd64.tar.gz | cut -d' ' -f1)  prom.tgz" | sha256sum -c -
+          tar xzf prom.tgz --strip-components=1 prometheus-2.55.1.linux-amd64/promtool
+          ./promtool check rules ../ops/prometheus/alerts.yml
+          (cd ../ops/prometheus && ../../backend/promtool test rules alerts_test.yml)
+
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: frontend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx eslint .
+      - run: npm run build
+      - name: Dependency audit (fails on high or critical)
+        run: npm audit --audit-level=high
+
+  containers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with: { dockerfile: backend/Dockerfile, failure-threshold: warning }
+      - uses: hadolint/hadolint-action@v3.1.0
+        with: { dockerfile: frontend/Dockerfile, failure-threshold: warning }
+      - name: Compose file is valid
+        run: |
+          mkdir -p secrets && for f in redis_url cosmo_secret supabase_service_role_key backup_key metrics_token alert_webhook_url; do echo x > secrets/$f; done
+          COSMO_DOMAIN=example.org COSMO_ACME_EMAIL=ops@example.org SUPABASE_URL=https://x.supabase.co docker compose config -q
+      - name: Build images
+        run: |
+          docker build -t cosmo-backend backend
+          docker build -t cosmo-frontend frontend
+      - name: Backend image starts and reports live
+        run: |
+          docker run -d --name be -e COSMO_MODE=local -p 8000:8000 cosmo-backend
+          for i in $(seq 1 60); do curl -fs http://127.0.0.1:8000/api/v1/health/live && break; sleep 2; done
+          docker logs be | tail -20
+      - name: Backend refuses an unsafe production configuration
+        run: |
+          set +e
+          docker run --rm -e COSMO_MODE=production cosmo-backend python -c "from app import prod_checks; prod_checks.enforce()" 2>&1 | tee out.txt
+          grep -q "Refusing to start" out.txt

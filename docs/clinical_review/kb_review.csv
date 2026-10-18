@@ -1,0 +1,12 @@
+﻿article_id,title,language,content_sha256,decision (approve / approve with edits / reject),edited_text_if_any,source_checked,reviewer_comments
+kb-reference-range,What is a reference range?,en,2c7b215b088a961337f827c08da8befeccd5d5157cebfa4081029dd5f481c1ae,,,,
+kb-single-result,Why one result is not a diagnosis,en,14ebfb425d31ae4e01861984cc36ac4ab4e4d0ccfb445215f60103cb9f1acee4,,,,
+kb-high-low-flags,What do the High and Low markers on a report mean?,en,5123bf6895f8e62cc042c8f844f27949f015c049ab5c566ce34d4a98baf70ea8,,,,
+kb-lab-differences,Why can two laboratories print different ranges for the same test?,en,32349cbe781a005fff4e0b1b4f44d2f0d6683b53ad5d49a61c8686ea8e51d89f,,,,
+kb-units,Why do units matter on a report?,en,d581ff5a63c44d87d0707e7ea2d44d5bc093e85be2273ec18b1c506d68148485,,,,
+kb-test-preparation,Do I need to prepare for a test?,en,9b3ca678a159c326ed49b722b8c5cfe72010e70d9181b7482fd5478823e79e5d,,,,
+kb-questions-for-doctor,How to prepare questions for your doctor,en,a235b4949d792f7c3fce7d83404dfa82722d70070d78624fd393791467df478a,,,,
+kb-assistant-limits,What this assistant can and cannot do,en,2bc3dccf75d13d907a95462683c3d10b5e7e670da6c3632e0674c785b4717ca8,,,,
+kb-clinician-review,What does 'reviewed by a clinician' mean in this app?,en,212cfe5bb54a0b8d9312cb7d87673c6742ff3a38414f52b8ecebad3d20399013,,,,
+kb-photo-quality,How do I take a clear photo for the clinic?,en,419fff545cf80b6dd34eced09b2035c231ab6f9106d407406e0e4510c611ccb0,,,,
+kb-quotation,What is a quotation and is it the final price?,en,f2bf60baac4609d2054238fb94da524bedcbe8ad2bf379b2932ceb419c997c70,,,,

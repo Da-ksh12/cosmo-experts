@@ -1,0 +1,662 @@
+{
+  "suite": "browsers",
+  "when": "2026-10-18T04:27:31.125Z",
+  "passed": 111,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "chromium 131.0.6778.33 launched"
+    },
+    {
+      "pass": true,
+      "check": "chromium: home renders after sign-in"
+    },
+    {
+      "pass": true,
+      "check": "chromium: assistant answers an urgent question with the emergency redirect"
+    },
+    {
+      "pass": true,
+      "check": "chromium: assistant abstains when there is no evidence"
+    },
+    {
+      "pass": true,
+      "check": "chromium: reports page renders"
+    },
+    {
+      "pass": true,
+      "check": "chromium: photo upload proceeds to the next step (/photo/adjust)"
+    },
+    {
+      "pass": true,
+      "check": "chromium: clinician workspace renders"
+    },
+    {
+      "pass": true,
+      "check": "chromium: sign-out returns to the login page"
+    },
+    {
+      "pass": true,
+      "check": "chromium: no uncaught errors or console errors during the journey",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "firefox 132.0 launched"
+    },
+    {
+      "pass": true,
+      "check": "firefox: home renders after sign-in"
+    },
+    {
+      "pass": true,
+      "check": "firefox: assistant answers an urgent question with the emergency redirect"
+    },
+    {
+      "pass": true,
+      "check": "firefox: assistant abstains when there is no evidence"
+    },
+    {
+      "pass": true,
+      "check": "firefox: reports page renders"
+    },
+    {
+      "pass": true,
+      "check": "firefox: photo upload proceeds to the next step (/photo/adjust)"
+    },
+    {
+      "pass": true,
+      "check": "firefox: clinician workspace renders"
+    },
+    {
+      "pass": true,
+      "check": "firefox: sign-out returns to the login page"
+    },
+    {
+      "pass": true,
+      "check": "firefox: no uncaught errors or console errors during the journey",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "webkit 18.2 launched"
+    },
+    {
+      "pass": true,
+      "check": "webkit: home renders after sign-in"
+    },
+    {
+      "pass": true,
+      "check": "webkit: assistant answers an urgent question with the emergency redirect"
+    },
+    {
+      "pass": true,
+      "check": "webkit: assistant abstains when there is no evidence"
+    },
+    {
+      "pass": true,
+      "check": "webkit: reports page renders"
+    },
+    {
+      "pass": true,
+      "check": "webkit: photo upload proceeds to the next step (/photo/adjust)"
+    },
+    {
+      "pass": true,
+      "check": "webkit: clinician workspace renders"
+    },
+    {
+      "pass": true,
+      "check": "webkit: sign-out returns to the login page"
+    },
+    {
+      "pass": true,
+      "check": "webkit: no uncaught errors or console errors during the journey",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: / fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /photo fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /reports fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /ask fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /quote fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /history fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /care fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: bottom navigation is visible"
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: tapping Ask AI in the bottom navigation opens the assistant"
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: /photo every touch target is at least 24x24 (13 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13 landscape: / has no sideways scrolling",
+      "detail": {
+        "sw": 664,
+        "cw": 664
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13 landscape: /ask has no sideways scrolling",
+      "detail": {
+        "sw": 664,
+        "cw": 664
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone 13: no uncaught or console errors",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: / fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 412,
+        "cw": 412
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /photo fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 412,
+        "cw": 412
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /reports fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 412,
+        "cw": 412
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /ask fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 412,
+        "cw": 412
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /quote fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 412,
+        "cw": 412
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /history fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 412,
+        "cw": 412
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /care fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 412,
+        "cw": 412
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: bottom navigation is visible"
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: tapping Ask AI in the bottom navigation opens the assistant"
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: /photo every touch target is at least 24x24 (13 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7 landscape: / has no sideways scrolling",
+      "detail": {
+        "sw": 839,
+        "cw": 839
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7 landscape: /ask has no sideways scrolling",
+      "detail": {
+        "sw": 839,
+        "cw": 839
+      }
+    },
+    {
+      "pass": true,
+      "check": "Pixel 7: no uncaught or console errors",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): / fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 810,
+        "cw": 810
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /photo fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 810,
+        "cw": 810
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /reports fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 810,
+        "cw": 810
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /ask fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 810,
+        "cw": 810
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /quote fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 810,
+        "cw": 810
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /history fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 810,
+        "cw": 810
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /care fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 810,
+        "cw": 810
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /ask every touch target is at least 24x24 (23 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /reports every touch target is at least 24x24 (17 targets, 2 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): /photo every touch target is at least 24x24 (14 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7) landscape: / has no sideways scrolling",
+      "detail": {
+        "sw": 1080,
+        "cw": 1080
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7) landscape: /ask has no sideways scrolling",
+      "detail": {
+        "sw": 1080,
+        "cw": 1080
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPad (gen 7): no uncaught or console errors",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: / fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /photo fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /reports fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /ask fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /quote fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /history fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /care fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: bottom navigation is visible"
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: tapping Ask AI in the bottom navigation opens the assistant"
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: /photo every touch target is at least 24x24 (13 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+ landscape: / has no sideways scrolling",
+      "detail": {
+        "sw": 658,
+        "cw": 658
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+ landscape: /ask has no sideways scrolling",
+      "detail": {
+        "sw": 658,
+        "cw": 658
+      }
+    },
+    {
+      "pass": true,
+      "check": "Galaxy S9+: no uncaught or console errors",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: / fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /photo fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /reports fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /ask fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /quote fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /history fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /care fits the screen without sideways scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: bottom navigation is visible"
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: tapping Ask AI in the bottom navigation opens the assistant"
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: / every touch target is at least 24x24 (18 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /ask every touch target is at least 24x24 (22 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /reports every touch target is at least 24x24 (16 targets, 1 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: /photo every touch target is at least 24x24 (13 targets, 0 under the recommended 44)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE landscape: / has no sideways scrolling",
+      "detail": {
+        "sw": 568,
+        "cw": 568
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE landscape: /ask has no sideways scrolling",
+      "detail": {
+        "sw": 568,
+        "cw": 568
+      }
+    },
+    {
+      "pass": true,
+      "check": "iPhone SE: no uncaught or console errors",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "fake camera: live preview receives frames"
+    },
+    {
+      "pass": true,
+      "check": "fake camera: capture proceeds (/photo/adjust)"
+    },
+    {
+      "pass": true,
+      "check": "microphone control is present on the assistant page"
+    },
+    {
+      "pass": true,
+      "check": "fake camera: no uncaught or console errors",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "webkit: no fetch/CORS errors on pages left idle (the messages seen elsewhere were navigation-cancelled requests)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "webkit: 13 navigation-cancelled fetch messages recorded and excluded from the error check (see the idle-page result above)"
+    }
+  ]
+}

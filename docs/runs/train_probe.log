@@ -1,0 +1,23 @@
+15:36:29 splits train/val/test = [325, 325, 1621]; near-duplicates vs train (thumbnail corr): {'val': 0, 'test': 0}
+15:41:25 features train: (1621, 384) (295s)
+15:42:16 features val: (325, 384) (347s)
+15:43:08 features test: (325, 384) (398s)
+15:45:30 baseline resnet18 frozen+logreg macro-F1 0.508
+15:45:30 C=0.003: val macro-F1 0.544
+15:45:31 C=0.01: val macro-F1 0.575
+15:45:31 C=0.03: val macro-F1 0.586
+15:45:31 C=0.1: val macro-F1 0.539
+15:45:32 C=0.3: val macro-F1 0.518
+15:45:32 C=1.0: val macro-F1 0.504
+MODEL 124f81d4a9594958896d16e61944cd4d test macroF1 0.558 [0.471, 0.63] balAcc 0.576 ECE 0.035 uncal 0.102
+baselines {'majority_class': 0.089, 'resnet18_frozen_features_logreg': 0.508}
+ACK 104 sens 0.721 spec 0.891 auroc 0.888
+BCC 119 sens 0.546 spec 0.874 auroc 0.85
+MEL 7 sens 0.429 spec 0.987 auroc 0.91
+NEV 35 sens 0.657 spec 0.941 auroc 0.953
+SCC 27 sens 0.407 spec 0.862 auroc 0.787
+SEK 33 sens 0.697 spec 0.955 auroc 0.968
+subgroups {'1-2': {'n': 147, 'accuracy': 0.503, 'balanced_accuracy': 0.514, 'reliable': True}, '3': {'n': 58, 'accuracy': 0.603, 'balanced_accuracy': 0.569, 'reliable': True}, '4-6': {'n': 8, 'accuracy': 0.5, 'balanced_accuracy': None, 'reliable': False}, 'NA': {'n': 112, 'accuracy': 0.777, 'balanced_accuracy': 0.756, 'reliable': True}}
+robust {'blur': {'macro_f1': 0.477, 'balanced_accuracy': 0.522, 'mean_confidence': 0.668}, 'dark': {'macro_f1': 0.562, 'balanced_accuracy': 0.58, 'mean_confidence': 0.642}, 'jpeg20': {'macro_f1': 0.32, 'balanced_accuracy': 0.378, 'mean_confidence': 0.629}, 'rotate90': {'macro_f1': 0.562, 'balanced_accuracy': 0.581, 'mean_confidence': 0.637}}
+ood {'n': 19, 'source': 'non-lesion natural images supplied by the administrator', 'mean_confidence': 0.75, 'in_distribution_mean_confidence': 0.643, 'fraction_above_threshold': {'0.5': 0.789, '0.7': 0.632, '0.9': 0.421}, 'in_distribution_fraction_above_threshold': {'0.5': 0.763, '0.7': 0.369, '0.9': 0.095}, 'auroc_confidence_separates_in_vs_out': 0.349}
+selective [{'threshold': 0.6, 'coverage': 0.548, 'accuracy_on_accepted': 0.73}, {'threshold': 0.7, 'coverage': 0.369, 'accuracy_on_accepted': 0.775}, {'threshold': 0.8, 'coverage': 0.203, 'accuracy_on_accepted': 0.818}]

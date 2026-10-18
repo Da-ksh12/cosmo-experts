@@ -1,0 +1,11 @@
+# Captured from the real run against project oikoaukmacpoellmvoly BEFORE migration 0002 was applied (0001 only). Output reproduced verbatim from that run.
+== project oikoaukmacpoellmvoly: migration state = BASELINE (0001 only)
+21 isolation/read/storage checks PASSED (patient isolation, private storage, anonymous refusal, chat privacy, role self-change refused).
+FLAW (baseline) present: patient marks their own document 'reviewed by a clinician'
+FLAW (baseline) present: patient forges an 'assistant' message in their conversation
+FLAW (baseline) present: patient inserts a quotation with a total of their choosing
+FLAW (baseline) present: patient uploads an arbitrary (HTML) file straight into private storage
+FLAW (baseline) present: audit records can be deleted
+FLAW (baseline) not present: sign-up with role=admin in user metadata yields an admin   (no sign-up trigger existed at all, so no profile/role was created automatically)
+Baseline demonstrates 5 of 6 attack paths.
+22 passed, 0 failed  (state: baseline)

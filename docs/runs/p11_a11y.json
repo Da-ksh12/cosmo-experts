@@ -1,0 +1,446 @@
+{
+  "suite": "a11y",
+  "when": "2026-10-17T18:36:16.884Z",
+  "passed": 65,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "axe: anonymous /login (desktop) has no WCAG A/AA violations (25 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: anonymous /login (390 px) has no WCAG A/AA violations (25 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 / (desktop) has no WCAG A/AA violations (21 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /photo (desktop) has no WCAG A/AA violations (26 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /reports (desktop) has no WCAG A/AA violations (24 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask (desktop) has no WCAG A/AA violations (24 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /quote (desktop) has no WCAG A/AA violations (30 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /history (desktop) has no WCAG A/AA violations (29 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /care (desktop) has no WCAG A/AA violations (25 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 / (390 px) has no WCAG A/AA violations (21 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /photo (390 px) has no WCAG A/AA violations (27 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /reports (390 px) has no WCAG A/AA violations (25 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask (390 px) has no WCAG A/AA violations (24 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /quote (390 px) has no WCAG A/AA violations (30 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /history (390 px) has no WCAG A/AA violations (30 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /care (390 px) has no WCAG A/AA violations (26 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: doctor1 /clinic (desktop) has no WCAG A/AA violations (29 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: doctor1 /clinic (390 px) has no WCAG A/AA violations (30 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: admin1 /admin (desktop) has no WCAG A/AA violations (29 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: admin1 /clinic (desktop) has no WCAG A/AA violations (29 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: admin1 /admin (390 px) has no WCAG A/AA violations (30 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "axe: admin1 /clinic (390 px) has no WCAG A/AA violations (30 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "structure /: one h1, one main, lang and title",
+      "detail": {
+        "h1": 1,
+        "main": 1,
+        "lang": "en",
+        "title": "Cosmo Experts AI"
+      }
+    },
+    {
+      "pass": true,
+      "check": "structure /photo: one h1, one main, lang and title",
+      "detail": {
+        "h1": 1,
+        "main": 1,
+        "lang": "en",
+        "title": "Cosmo Experts AI"
+      }
+    },
+    {
+      "pass": true,
+      "check": "structure /reports: one h1, one main, lang and title",
+      "detail": {
+        "h1": 1,
+        "main": 1,
+        "lang": "en",
+        "title": "Cosmo Experts AI"
+      }
+    },
+    {
+      "pass": true,
+      "check": "structure /ask: one h1, one main, lang and title",
+      "detail": {
+        "h1": 1,
+        "main": 1,
+        "lang": "en",
+        "title": "Cosmo Experts AI"
+      }
+    },
+    {
+      "pass": true,
+      "check": "structure /quote: one h1, one main, lang and title",
+      "detail": {
+        "h1": 1,
+        "main": 1,
+        "lang": "en",
+        "title": "Cosmo Experts AI"
+      }
+    },
+    {
+      "pass": true,
+      "check": "structure /history: one h1, one main, lang and title",
+      "detail": {
+        "h1": 1,
+        "main": 1,
+        "lang": "en",
+        "title": "Cosmo Experts AI"
+      }
+    },
+    {
+      "pass": true,
+      "check": "structure /care: one h1, one main, lang and title",
+      "detail": {
+        "h1": 1,
+        "main": 1,
+        "lang": "en",
+        "title": "Cosmo Experts AI"
+      }
+    },
+    {
+      "pass": true,
+      "check": "login: first Tab lands on an interactive control",
+      "detail": "A"
+    },
+    {
+      "pass": true,
+      "check": "login: complete sign-in using only the keyboard",
+      "detail": "http://localhost:3000/clinic"
+    },
+    {
+      "pass": true,
+      "check": "clinic: every focusable control shows a focus indicator",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "dialog: focus moves into the dialog on open"
+    },
+    {
+      "pass": true,
+      "check": "dialog: Tab never leaves the dialog (focus is trapped)"
+    },
+    {
+      "pass": true,
+      "check": "dialog: Shift+Tab never leaves the dialog"
+    },
+    {
+      "pass": true,
+      "check": "dialog: aria-modal and an accessible name"
+    },
+    {
+      "pass": true,
+      "check": "axe: clinic knowledge-base review dialog open has no WCAG A/AA violations (29 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "dialog: Escape closes it and focus returns to the control that opened it"
+    },
+    {
+      "pass": true,
+      "check": "reduced motion: no animation or transition longer than 50 ms remains",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "control: the same page does animate when motion is allowed (so the reduced-motion result is meaningful)"
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: patient1 / has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: patient1 /photo has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: patient1 /reports has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: patient1 /ask has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: patient1 /quote has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: patient1 /history has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: patient1 /care has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: doctor1 /clinic has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "reflow 320 px: admin1 /admin has no horizontal scrolling",
+      "detail": {
+        "sw": 320,
+        "cw": 320
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: patient1 / neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: patient1 /photo neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: patient1 /reports neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: patient1 /ask neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: patient1 /quote neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: patient1 /history neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: patient1 /care neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: doctor1 /clinic neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% text at 390 px: admin1 /admin neither scrolls sideways nor clips text",
+      "detail": {
+        "sw": 390,
+        "cw": 390,
+        "clipped": []
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% browser zoom (640 px): / has no horizontal scrolling",
+      "detail": {
+        "sw": 640,
+        "cw": 640
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% browser zoom (640 px): /photo has no horizontal scrolling",
+      "detail": {
+        "sw": 640,
+        "cw": 640
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% browser zoom (640 px): /reports has no horizontal scrolling",
+      "detail": {
+        "sw": 640,
+        "cw": 640
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% browser zoom (640 px): /ask has no horizontal scrolling",
+      "detail": {
+        "sw": 640,
+        "cw": 640
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% browser zoom (640 px): /quote has no horizontal scrolling",
+      "detail": {
+        "sw": 640,
+        "cw": 640
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% browser zoom (640 px): /history has no horizontal scrolling",
+      "detail": {
+        "sw": 640,
+        "cw": 640
+      }
+    },
+    {
+      "pass": true,
+      "check": "200% browser zoom (640 px): /care has no horizontal scrolling",
+      "detail": {
+        "sw": 640,
+        "cw": 640
+      }
+    }
+  ]
+}

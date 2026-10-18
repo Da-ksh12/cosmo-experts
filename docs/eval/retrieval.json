@@ -1,0 +1,77 @@
+{
+  "docs": 10,
+  "seed": 11,
+  "embedder": "st:bge-small-en-v1.5",
+  "methods": {
+    "lexical_tfidf": {
+      "n_answerable": 140,
+      "hit@1": 0.8,
+      "hit@3": 0.871,
+      "MRR": 0.839,
+      "AUROC_answerable_vs_not": 0.973,
+      "operating_point_FPR<=5%": {
+        "threshold": 0.166,
+        "answer_recall": 0.907,
+        "answer_precision": 1.0,
+        "f1": 0.951,
+        "unanswerable_wrongly_answered": "0/120"
+      }
+    },
+    "dense_bge": {
+      "n_answerable": 140,
+      "hit@1": 0.986,
+      "hit@3": 1.0,
+      "MRR": 0.99,
+      "AUROC_answerable_vs_not": 0.994,
+      "operating_point_FPR<=5%": {
+        "threshold": 0.676,
+        "answer_recall": 0.957,
+        "answer_precision": 1.0,
+        "f1": 0.978,
+        "unanswerable_wrongly_answered": "0/120"
+      }
+    },
+    "hybrid_0.3_dense": {
+      "n_answerable": 140,
+      "hit@1": 0.821,
+      "hit@3": 0.914,
+      "MRR": 0.877,
+      "AUROC_answerable_vs_not": 0.99,
+      "operating_point_FPR<=5%": {
+        "threshold": 0.301,
+        "answer_recall": 0.907,
+        "answer_precision": 1.0,
+        "f1": 0.951,
+        "unanswerable_wrongly_answered": "0/120"
+      }
+    },
+    "hybrid_0.5_dense": {
+      "n_answerable": 140,
+      "hit@1": 0.893,
+      "hit@3": 0.986,
+      "MRR": 0.939,
+      "AUROC_answerable_vs_not": 0.997,
+      "operating_point_FPR<=5%": {
+        "threshold": 0.372,
+        "answer_recall": 0.986,
+        "answer_precision": 1.0,
+        "f1": 0.993,
+        "unanswerable_wrongly_answered": "0/120"
+      }
+    },
+    "hybrid_0.7_dense": {
+      "n_answerable": 140,
+      "hit@1": 0.9,
+      "hit@3": 1.0,
+      "MRR": 0.945,
+      "AUROC_answerable_vs_not": 0.996,
+      "operating_point_FPR<=5%": {
+        "threshold": 0.472,
+        "answer_recall": 0.986,
+        "answer_precision": 1.0,
+        "f1": 0.993,
+        "unanswerable_wrongly_answered": "0/120"
+      }
+    }
+  }
+}

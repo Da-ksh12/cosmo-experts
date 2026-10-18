@@ -1,0 +1,114 @@
+# Production-shaped stack: Caddy (TLS) -> Next.js -> FastAPI, optional Redis, Prometheus + Alertmanager.
+# NOT RUN in the development environment (no container runtime). Review docs/DEPLOYMENT.md before use.
+# Secrets are Docker secrets (files under ./secrets/, never committed); the application reads NAME_FILE variables.
+name: cosmo
+
+services:
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      COSMO_DOMAIN: ${COSMO_DOMAIN:?set COSMO_DOMAIN to the public host name}
+      COSMO_ACME_EMAIL: ${COSMO_ACME_EMAIL:?set COSMO_ACME_EMAIL}
+    volumes:
+      - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [frontend]
+    networks: [cosmo]
+
+  frontend:
+    build:
+      context: ./frontend
+      args: { COSMO_API_URL: "http://backend:8000" }
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp", "/app/.next/cache"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on: [backend]
+    networks: [cosmo]
+
+  backend:
+    build: { context: ./backend, args: { WITH_TORCH: "${WITH_TORCH:-0}" } }
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      COSMO_MODE: production
+      COSMO_AUTH: supabase
+      COSMO_STORAGE: supabase
+      SUPABASE_URL: ${SUPABASE_URL:?set SUPABASE_URL}
+      COSMO_CORS: https://${COSMO_DOMAIN}
+      COSMO_REDIS_URL_FILE: /run/secrets/redis_url
+      COSMO_SECRET_FILE: /run/secrets/cosmo_secret
+      SUPABASE_SERVICE_ROLE_KEY_FILE: /run/secrets/supabase_service_role_key
+      COSMO_BACKUP_KEY_FILE: /run/secrets/backup_key
+      COSMO_METRICS_TOKEN_FILE: /run/secrets/metrics_token
+      FORWARDED_ALLOW_IPS: 172.16.0.0/12
+    secrets: [redis_url, cosmo_secret, supabase_service_role_key, backup_key, metrics_token]
+    volumes:
+      - cosmo_data:/data
+    depends_on: [redis]
+    networks: [cosmo]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "no", "--save", "", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    networks: [cosmo]
+
+  backup:
+    # Daily encrypted backup + pruning, then a health check that also verifies backup freshness. Same image and secrets as the backend.
+    build: { context: ./backend }
+    restart: unless-stopped
+    entrypoint: ["sh", "-c"]
+    command: ["while true; do python -m scripts.backup backup-encrypted /backups || echo backup failed; sleep 86400; done"]
+    environment:
+      COSMO_DATA_DIR: /data
+      COSMO_BACKUP_KEY_FILE: /run/secrets/backup_key
+    secrets: [backup_key]
+    volumes:
+      - cosmo_data:/data
+      - backups:/backups
+    networks: [cosmo]
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    profiles: [monitoring]
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d"]
+    volumes:
+      - ./ops/prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    secrets: [metrics_token]
+    networks: [cosmo]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    restart: unless-stopped
+    profiles: [monitoring]
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes: ["./ops/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro"]
+    secrets: [alert_webhook_url]
+    networks: [cosmo]
+
+secrets:
+  redis_url: { file: ./secrets/redis_url }                       # e.g. redis://redis:6379/0
+  cosmo_secret: { file: ./secrets/cosmo_secret }
+  supabase_service_role_key: { file: ./secrets/supabase_service_role_key }
+  backup_key: { file: ./secrets/backup_key }                     # python -m scripts.backup genkey
+  metrics_token: { file: ./secrets/metrics_token }
+  alert_webhook_url: { file: ./secrets/alert_webhook_url }       # chat webhook for alerts
+
+volumes:
+  cosmo_data:
+  backups:
+  caddy_data:
+  caddy_config:
+  prometheus_data:
+
+# One private bridge network. Only Caddy publishes ports. The backend needs outbound HTTPS to Supabase, so the network is not 'internal'.
+networks:
+  cosmo:

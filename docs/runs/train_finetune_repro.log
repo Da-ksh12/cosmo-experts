@@ -1,0 +1,14 @@
+21:34:50 splits: test=325 images/194 patients, val=325 images/197 patients, train=1621 images/980 patients
+21:34:53 near-duplicate audit vs train (thumbnail corr >= 0.985): val=0 test=0; perceptual-hash flags (unreliable): {'val': 1, 'test': 4}
+21:34:59 baseline: extracting frozen ImageNet features
+21:37:53 baseline frozen+logreg: macro-F1 0.515
+F:\Cosmo Experts\backend\app\training\trainer.py:371: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot += float(loss) * len(idx); n += len(idx); step += 1
+21:40:52 epoch 1/6 loss 1.6341 val macro-F1 0.501 (179s)
+21:43:55 epoch 2/6 loss 1.3028 val macro-F1 0.379 (363s)
+21:46:54 epoch 3/6 loss 1.1835 val macro-F1 0.554 (541s)
+21:49:45 epoch 4/6 loss 0.9968 val macro-F1 0.644 (712s)
+21:52:40 epoch 5/6 loss 0.8838 val macro-F1 0.620 (887s)
+21:55:43 epoch 6/6 loss 0.8147 val macro-F1 0.610 (1071s)
+RESULT {"model": "f93966836e184a2c869dba28a4cd17af", "macro_f1": 0.502, "ci": [0.429, 0.576], "balanced_accuracy": 0.505, "accuracy": 0.637, "artifact_sha256": "24ed3c8061f915f176b40a09aa5c0124a9f0206f292baf49388e4fc1794755cb", "reference": {"model": "fc7eef89489e4e7db1ce95caf2ec5173", "macro_f1": 0.502, "accuracy": 0.637, "artifact_sha256": "a2c5e42dfd9efc5648fcf651ba2f5409fc621261b2b2b670ef6352b361099b68"}, "metrics_identical": true, "artifact_identical": false, "split_identical": true}

@@ -1,0 +1,11 @@
+﻿category,title,patterns,decision (keep / change / remove),requested_changes,comments
+breathing,Difficulty breathing,\b(can'?t|cannot|unable to) (breathe|catch (my|a) breath)\b | \b(difficulty|trouble|struggling) (in )?breathing\b | \bshort(ness)? of breath\b | \bgasping\b | \bchoking\b,,,
+chest,Chest pain or pressure,\bchest (pain|tightness|pressure|discomfort)\b | \b(pain|pressure|tightness|discomfort) (in|on) (my |the |his |her )?chest\b | \bheart attack\b,,,
+bleeding,Severe or uncontrolled bleeding,\bsevere bleeding\b | \b(heavy|uncontrolled|won'?t stop) bleeding\b | \bbleeding (heavily|a lot|won'?t stop|that (will not|won'?t) stop)\b | \bcoughing (up )?blood\b | \bvomiting blood\b,,,
+consciousness,"Loss of consciousness, fainting, confusion",\bunconscious\b | \bpassed out\b | \bfaint(ed|ing)\b | \bnot (responding|waking up)\b | \bsudden(ly)? confus(ed|ion)\b,,,
+allergic_reaction,Severe allergic reaction,\banaphyla\w*\b | \bswelling of (the )?(face|lips|tongue|throat)\b | \b(face|lips|tongue|throat) (is |are )?swell(ing|ed|en)\b | \bthroat (is )?closing\b,,,
+stroke_signs,Possible stroke signs,\bface (is )?droop(ing|ed)?\b | \bslurred speech\b | \bsudden(ly)? (weak|numb)\w*\b | \bcan'?t (move|lift) (my )?(arm|leg)\b | \bsudden (loss of vision|vision loss)\b,,,
+seizure,Seizure,\bseizure\b | \bconvuls(ion|ing)\b | \bfitting\b,,,
+self_harm,Thoughts of self-harm or suicide,\bsuicid\w*\b | \b(kill|hurt|harm) myself\b | \bend my life\b | \bdon'?t want to (live|be alive)\b | \bwant to die\b,,,
+poisoning,Poisoning or overdose,\boverdos(e|ed|ing)\b | \bpoison(ed|ing)?\b | \bswallowed (a lot|too many|bleach|chemical)\w*\b,,,
+fever,High fever,\bhigh fever\b | \bfever (of|above|over) 10[2-9]\b,,,

@@ -1,0 +1,38 @@
+PASS patient: photo accepted by the real validator
+PASS patient: lab report uploaded and read
+PASS patient: flags a doubtful value
+PASS patient: quotation request sent
+PASS doctor: sees exactly this patient's submission in the table
+PASS doctor: can open and SEE the submitted photo (image decoded in the browser)
+PASS doctor: sees the automated check beside the photo, labelled as usability only
+PASS doctor: marks photo reviewed
+PASS doctor: sees the patient's flag on exactly the flagged value
+PASS doctor: case overview loads photos and documents for the chosen patient
+PASS doctor: cannot approve before saving a draft
+PASS doctor: authored, approved and recorded progress on a care plan through the UI
+PASS doctor: approved the patient's quotation
+PASS doctor session: no console/page/5xx errors []
+PASS admin: sees the plan but cannot author or approve it
+PASS admin: no clinical photo-review action
+PASS patient: sees the clinician's assessment text
+PASS patient: sees the clinician as verified (admin recorded it)
+PASS patient: sees stage 1 recorded as done
+PASS patient: downloads the approved quotation PDF
+PASS patient: history progress is 50% (1 of 2 recorded stages)
+PASS patient: photo shows 'reviewed by a clinician'
+PASS patient: sees the clinician-corrected value (10.4) in the report
+PASS patient: sees the review status 'corrected'
+PASS patient session: no console/page/5xx errors []
+PASS audit: image.staff_access by doctor1
+PASS audit: image.reviewed by doctor1
+PASS audit: field.review by doctor1
+PASS audit: field.patient_flag by patient1
+PASS audit: document.reviewed by doctor1
+PASS audit: case.opened by doctor1
+PASS audit: careplan.save_draft by doctor1
+PASS audit: careplan.approve by doctor1
+PASS audit: careplan.stage by doctor1
+PASS audit: quote.approve by doctor1
+PASS audit: admin never approved a clinical plan
+
+ALL CHECKS PASSED

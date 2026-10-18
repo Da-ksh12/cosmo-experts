@@ -1,0 +1,36 @@
+{
+  "model": "Systran/faster-whisper-base (MIT), int8, CPU",
+  "voices": [
+    "Microsoft David Desktop - English (United States)",
+    "Microsoft Hazel Desktop - English (Great Britain)",
+    "Microsoft Zira Desktop - English (United States)"
+  ],
+  "utterances_per_condition": 60,
+  "caveat": "Synthetic TTS speech; clean/noisy/telephone simulations. English only. Hindi/Hinglish NOT verified (no Hindi voice/audio available).",
+  "conditions": {
+    "clean": {
+      "WER": 0.041,
+      "key_term_recall": 0.863,
+      "real_time_factor": 0.67,
+      "utterances": 60
+    },
+    "noise_20dB": {
+      "WER": 0.052,
+      "key_term_recall": 0.824,
+      "real_time_factor": 0.66,
+      "utterances": 60
+    },
+    "noise_10dB": {
+      "WER": 0.075,
+      "key_term_recall": 0.765,
+      "real_time_factor": 0.67,
+      "utterances": 60
+    },
+    "telephone": {
+      "WER": 0.075,
+      "key_term_recall": 0.784,
+      "real_time_factor": 0.68,
+      "utterances": 60
+    }
+  }
+}

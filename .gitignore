@@ -1,0 +1,23 @@
+# secrets and local state: never commit
+.env
+.env.*
+!.env.example
+secrets/
+*.cbk
+backend/data/
+backend/.venv/
+node_modules/
+frontend/.next/
+**/__pycache__/
+*.sqlite3
+.coverage
+e2e/node_modules/
+e2e/package-lock.json.bak
+docs/*.log
+docs/runs/p11_screens/
+backend/content/urgent_policy.approved.json
+*.pt
+*.safetensors
+*.gguf
+*.onnx
+frontend/tsconfig.tsbuildinfo

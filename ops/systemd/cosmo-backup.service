@@ -1,0 +1,16 @@
+[Unit]
+Description=Cosmo Experts encrypted backup
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=cosmo
+WorkingDirectory=/opt/cosmo/backend
+Environment=COSMO_DATA_DIR=/var/lib/cosmo
+# Key supplied as a root-owned 0400 file via systemd credentials; never in the unit file.
+LoadCredential=backup_key:/etc/cosmo/backup_key
+ExecStart=/bin/sh -c 'COSMO_BACKUP_KEY="$(cat "$CREDENTIALS_DIRECTORY/backup_key")" exec /opt/cosmo/backend/.venv/bin/python -m scripts.backup backup-encrypted /var/backups/cosmo'
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/cosmo /var/backups/cosmo
+NoNewPrivileges=true

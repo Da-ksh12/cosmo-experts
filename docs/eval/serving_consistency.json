@@ -1,0 +1,17 @@
+{
+ "model": "124f81d4a9594958896d16e61944cd4d",
+ "served_from_raw_files": {
+  "n": 325,
+  "accuracy": 0.615,
+  "macro_f1": 0.558,
+  "balanced_accuracy": 0.576
+ },
+ "model_card_evaluation": {
+  "n": 325,
+  "accuracy": 0.615,
+  "macro_f1": 0.558,
+  "balanced_accuracy": 0.576
+ },
+ "identical": true,
+ "images_rejected_by_input_quality_gate": "43/325"
+}

@@ -1,0 +1,28 @@
+# Local TLS test configuration: Caddy's own internal CA issues a certificate for localhost. Used by ops/test_tls_local.py.
+# `skip_install_trust` stops Caddy from adding its root certificate to the operating system trust store.
+{
+	skip_install_trust
+	auto_https disable_redirects
+	admin off
+	http_port {$TEST_HTTP_PORT}
+	https_port {$TEST_HTTPS_PORT}
+}
+
+localhost:{$TEST_HTTPS_PORT} {
+	tls internal
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	@internal path /metrics /metrics/*
+	respond @internal 404
+	reverse_proxy 127.0.0.1:{$TEST_UPSTREAM_PORT}
+}
+
+http://localhost:{$TEST_HTTP_PORT} {
+	redir https://localhost:{$TEST_HTTPS_PORT}{uri} permanent
+}

@@ -1,0 +1,12 @@
+20:39:56 splits train/val/test = [325, 325, 1621]; near-duplicates vs train (thumbnail corr): {'val': 0, 'test': 0}
+20:45:07 features train: (1621, 384) (311s)
+20:46:00 features val: (325, 384) (364s)
+20:46:52 features test: (325, 384) (415s)
+20:49:16 baseline resnet18 frozen+logreg macro-F1 0.508
+20:49:16 C=0.003: val macro-F1 0.544
+20:49:16 C=0.01: val macro-F1 0.575
+20:49:17 C=0.03: val macro-F1 0.586
+20:49:17 C=0.1: val macro-F1 0.539
+20:49:17 C=0.3: val macro-F1 0.518
+20:49:18 C=1.0: val macro-F1 0.504
+{"model": "20b66199a48b4956962f9a3fdcb7bbac", "macro_f1": 0.558, "ci": [0.471, 0.63], "balanced_accuracy": 0.576, "accuracy": 0.615, "ece": 0.035}

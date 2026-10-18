@@ -1,0 +1,25 @@
+start: {'job_id': '693c4a47ef3b4fffb1bc088341066853'}
+15:08:46 splits: test=325 images/194 patients, val=325 images/197 patients, train=1621 images/980 patients
+15:08:48 near-duplicate audit vs train: val=1 test=4
+15:08:48 cache 0/325 (0s)
+15:08:56 cache 200/325 (9s)
+15:09:02 cache 0/325 (0s)
+15:09:10 cache 200/325 (8s)
+15:09:16 cache 0/1621 (0s)
+15:09:25 cache 200/1621 (9s)
+15:09:33 cache 400/1621 (17s)
+15:09:40 cache 600/1621 (24s)
+15:09:49 cache 800/1621 (33s)
+15:10:02 cache 1000/1621 (46s)
+15:10:15 cache 1200/1621 (59s)
+15:10:25 cache 1400/1621 (69s)
+15:10:38 cache 1600/1621 (82s)
+15:10:46 baseline: extracting frozen ImageNet features
+15:13:48 baseline frozen+logreg: macro-F1 0.515
+15:16:58 epoch 1/6 loss 1.6341 val macro-F1 0.501 (191s)
+15:19:45 epoch 2/6 loss 1.3028 val macro-F1 0.379 (357s)
+15:22:27 epoch 3/6 loss 1.1835 val macro-F1 0.554 (519s)
+15:25:11 epoch 4/6 loss 0.9968 val macro-F1 0.644 (683s)
+15:27:55 epoch 5/6 loss 0.8838 val macro-F1 0.620 (847s)
+15:31:20 epoch 6/6 loss 0.8147 val macro-F1 0.610 (1052s)
+FINAL: {'status': 'done', 'phase': 'training', 'percent': 100.0, 'started': 1792229918.8507123, 'model_id': 'fc7eef89489e4e7db1ce95caf2ec5173'}

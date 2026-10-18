@@ -1,0 +1,26 @@
+doc 1/16 done (83s)
+doc 2/16 done (152s)
+doc 3/16 done (221s)
+doc 4/16 done (293s)
+doc 5/16 done (367s)
+doc 6/16 done (444s)
+doc 7/16 done (513s)
+doc 8/16 done (590s)
+doc 9/16 done (669s)
+doc 10/16 done (741s)
+doc 11/16 done (808s)
+doc 12/16 done (888s)
+doc 13/16 done (954s)
+doc 14/16 done (1026s)
+doc 15/16 done (1088s)
+doc 16/16 done (1149s)
+| Condition | Docs | GT rows | Recall (exact) | Precision (exact) | Value-only recall | FP rows | Flag acc. | Lab-type | Crashes | s/doc |
+|---|---|---|---|---|---|---|---|---|---|---|
+| digital | 16 | 133 | 1.0 | 1.0 | 1.0 | 0 | 1.0 | 1.0 | 0 | 0.01 |
+| scan_clean | 16 | 133 | 0.835 | 0.86 | 0.91 | 8 | 1.0 | 1.0 | 0 | 10.14 |
+| scan_rot90 | 16 | 133 | 0.827 | 0.866 | 0.887 | 9 | 1.0 | 1.0 | 0 | 10.04 |
+| scan_rot180 | 16 | 133 | 0.827 | 0.859 | 0.902 | 8 | 1.0 | 1.0 | 0 | 10.26 |
+| scan_rot270 | 16 | 133 | 0.827 | 0.853 | 0.902 | 9 | 1.0 | 1.0 | 0 | 10.03 |
+| scan_blur | 16 | 133 | 0.857 | 0.857 | 0.947 | 7 | 1.0 | 1.0 | 0 | 10.27 |
+| scan_noise | 16 | 133 | 0.827 | 0.88 | 0.887 | 7 | 1.0 | 1.0 | 0 | 11.23 |
+| scan_lowres | 16 | 133 | 0.82 | 0.845 | 0.925 | 6 | 1.0 | 1.0 | 0 | 8.77 |

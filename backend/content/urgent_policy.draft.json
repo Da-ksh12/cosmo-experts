@@ -1,0 +1,273 @@
+{
+  "_meta": {
+    "status": "DRAFT - NOT CLINICALLY REVIEWED - NOT LOADED BY THE APPLICATION",
+    "authored_by": "AI-assisted software draft (Claude). No clinician has seen it.",
+    "how_it_is_used": "The application never reads this file. Until a clinician-approved policy file (content/urgent_policy.approved.json, see docs/clinical_review/APPROVAL_PROCEDURE.md) is installed, the assistant uses the small built-in default in app/assistant/engine.py (chest pain, breathing difficulty, severe bleeding, unconscious, suicide, anaphylaxis, swelling of face/lips/tongue/throat, high fever, fainting).",
+    "limits_of_the_mechanism": [
+      "Keyword/regular-expression matching on typed or transcribed text. It cannot understand context, negation, spelling errors, or languages not listed.",
+      "It is a safety net that redirects to emergency services. It is NOT a triage tool and never says a situation is safe.",
+      "A statement that does not match is NOT evidence that there is no emergency."
+    ]
+  },
+  "design_decisions_for_reviewer": [
+    "Over-escalate or under-escalate? The draft errs towards escalating (e.g. 'no chest pain' also triggers) because negation handling by pattern is unreliable. Confirm or change.",
+    "Should 'high fever' escalate for adults, or only for infants/very young children? Needs an age-aware rule or a fixed message.",
+    "Is the proposed message wording acceptable? Should it name a specific local emergency number for the clinic's country/region?",
+    "Should the clinic phone number and opening hours be shown in the message?",
+    "Which languages must be supported at launch (English only, Hindi in Devanagari, Hinglish in Latin script)?"
+  ],
+  "proposed_message": "This may be an emergency. Please call your local emergency number or go to the nearest emergency department now. If you are with someone who is unwell, ask them to help you. You can also call the clinic. This assistant cannot assess emergencies and cannot tell you that a situation is safe.",
+  "proposed_message_requires": "clinician approval of every sentence, plus the real emergency number and clinic contact details for the deployment country",
+  "categories": [
+    {
+      "id": "breathing",
+      "title": "Difficulty breathing",
+      "patterns": [
+        "\\b(can'?t|cannot|unable to) (breathe|catch (my|a) breath)\\b",
+        "\\b(difficulty|trouble|struggling) (in )?breathing\\b",
+        "\\bshort(ness)? of breath\\b",
+        "\\bgasping\\b",
+        "\\bchoking\\b"
+      ],
+      "rationale": "Breathing difficulty can be life-threatening.",
+      "example_positive": [
+        "I can't breathe",
+        "I have difficulty breathing",
+        "shortness of breath since morning",
+        "my son is choking"
+      ],
+      "example_negative": [
+        "How do I read my breathing test report?",
+        "What is the normal range for oxygen saturation?"
+      ],
+      "review_questions": [
+        "Is 'shortness of breath' too broad (chronic stable conditions)? Should it still escalate?"
+      ]
+    },
+    {
+      "id": "chest",
+      "title": "Chest pain or pressure",
+      "patterns": [
+        "\\bchest (pain|tightness|pressure|discomfort)\\b",
+        "\\b(pain|pressure|tightness|discomfort) (in|on) (my |the |his |her )?chest\\b",
+        "\\bheart attack\\b"
+      ],
+      "rationale": "Chest pain can indicate a cardiac emergency.",
+      "example_positive": [
+        "I have chest pain",
+        "pressure in my chest",
+        "I think it is a heart attack"
+      ],
+      "example_negative": [
+        "What does the chest X-ray report mean?",
+        "Where can I get a heart scan done?"
+      ],
+      "review_questions": [
+        "Should 'palpitations' or 'pain spreading to the arm or jaw' be added?"
+      ]
+    },
+    {
+      "id": "bleeding",
+      "title": "Severe or uncontrolled bleeding",
+      "patterns": [
+        "\\bsevere bleeding\\b",
+        "\\b(heavy|uncontrolled|won'?t stop) bleeding\\b",
+        "\\bbleeding (heavily|a lot|won'?t stop|that (will not|won'?t) stop)\\b",
+        "\\bcoughing (up )?blood\\b",
+        "\\bvomiting blood\\b"
+      ],
+      "rationale": "Heavy bleeding may need immediate care.",
+      "example_positive": [
+        "there is severe bleeding",
+        "the bleeding won't stop",
+        "I am vomiting blood"
+      ],
+      "example_negative": [
+        "Is a small cut bleeding normal after a peel?",
+        "What is a bleeding time test?"
+      ],
+      "review_questions": [
+        "Where is the line between minor and severe bleeding for post-procedure care? Should the clinic's own after-care guidance be referenced?"
+      ]
+    },
+    {
+      "id": "consciousness",
+      "title": "Loss of consciousness, fainting, confusion",
+      "patterns": [
+        "\\bunconscious\\b",
+        "\\bpassed out\\b",
+        "\\bfaint(ed|ing)\\b",
+        "\\bnot (responding|waking up)\\b",
+        "\\bsudden(ly)? confus(ed|ion)\\b"
+      ],
+      "rationale": "Altered consciousness may signal a serious condition.",
+      "example_positive": [
+        "he is unconscious",
+        "I fainted",
+        "she is not responding"
+      ],
+      "example_negative": [
+        "What does 'faint line' mean on my pregnancy test report?"
+      ],
+      "review_questions": [
+        "'faint' is also used for non-medical meanings (faint line, faint colour). Accept the false positives?"
+      ]
+    },
+    {
+      "id": "allergic_reaction",
+      "title": "Severe allergic reaction",
+      "patterns": [
+        "\\banaphyla\\w*\\b",
+        "\\bswelling of (the )?(face|lips|tongue|throat)\\b",
+        "\\b(face|lips|tongue|throat) (is |are )?swell(ing|ed|en)\\b",
+        "\\bthroat (is )?closing\\b"
+      ],
+      "rationale": "Rapid facial or throat swelling can obstruct the airway.",
+      "example_positive": [
+        "my lips are swelling after the injection",
+        "swelling of the tongue",
+        "I think it is anaphylaxis"
+      ],
+      "example_negative": [
+        "Is mild swelling around the eyes normal the day after a filler?"
+      ],
+      "review_questions": [
+        "For a dermatology clinic: should post-procedure swelling of the face have its own, less urgent wording?"
+      ]
+    },
+    {
+      "id": "stroke_signs",
+      "title": "Possible stroke signs",
+      "patterns": [
+        "\\bface (is )?droop(ing|ed)?\\b",
+        "\\bslurred speech\\b",
+        "\\bsudden(ly)? (weak|numb)\\w*\\b",
+        "\\bcan'?t (move|lift) (my )?(arm|leg)\\b",
+        "\\bsudden (loss of vision|vision loss)\\b"
+      ],
+      "rationale": "Sudden neurological symptoms are time-critical.",
+      "example_positive": [
+        "my face is drooping",
+        "slurred speech",
+        "sudden weakness on one side"
+      ],
+      "example_negative": [
+        "What is a nerve conduction study?"
+      ],
+      "review_questions": [
+        "Add 'sudden severe headache'? Add 'worst headache of my life'?"
+      ]
+    },
+    {
+      "id": "seizure",
+      "title": "Seizure",
+      "patterns": [
+        "\\bseizure\\b",
+        "\\bconvuls(ion|ing)\\b",
+        "\\bfitting\\b"
+      ],
+      "rationale": "Seizures may need emergency care.",
+      "example_positive": [
+        "he is having a seizure",
+        "she is convulsing"
+      ],
+      "example_negative": [
+        "Who can interpret my EEG report?"
+      ],
+      "review_questions": [
+        "'fitting' also means clothing or equipment fitting. Accept the false positives?"
+      ]
+    },
+    {
+      "id": "self_harm",
+      "title": "Thoughts of self-harm or suicide",
+      "patterns": [
+        "\\bsuicid\\w*\\b",
+        "\\b(kill|hurt|harm) myself\\b",
+        "\\bend my life\\b",
+        "\\bdon'?t want to (live|be alive)\\b",
+        "\\bwant to die\\b"
+      ],
+      "rationale": "Safety of the person is the priority.",
+      "example_positive": [
+        "I want to end my life",
+        "I am thinking of suicide",
+        "I want to hurt myself"
+      ],
+      "example_negative": [],
+      "review_questions": [
+        "This category needs its own message (compassionate wording and a local crisis line), not the general emergency message. Please supply approved wording and the number.",
+        "Should the clinic be notified automatically? (Not implemented.)"
+      ],
+      "known_false_positives": [
+        "What does 'suicide inhibitor' mean in an enzyme report?"
+      ]
+    },
+    {
+      "id": "poisoning",
+      "title": "Poisoning or overdose",
+      "patterns": [
+        "\\boverdos(e|ed|ing)\\b",
+        "\\bpoison(ed|ing)?\\b",
+        "\\bswallowed (a lot|too many|bleach|chemical)\\w*\\b"
+      ],
+      "rationale": "Poisoning and overdose are emergencies.",
+      "example_positive": [
+        "I took an overdose",
+        "my child swallowed bleach"
+      ],
+      "example_negative": [],
+      "review_questions": [
+        "Include 'took too many tablets' phrasing variants?"
+      ],
+      "known_false_positives": [
+        "Is poison ivy rash dangerous?"
+      ]
+    },
+    {
+      "id": "fever",
+      "title": "High fever",
+      "patterns": [
+        "\\bhigh fever\\b",
+        "\\bfever (of|above|over) 10[2-9]\\b"
+      ],
+      "rationale": "Persistent or very high fever, especially in infants or immunosuppressed people, may need prompt care.",
+      "example_positive": [
+        "I have a high fever",
+        "fever of 104"
+      ],
+      "example_negative": [
+        "What is the normal body temperature?"
+      ],
+      "review_questions": [
+        "Needs age and context rules. As drafted it is a placeholder matching the current built-in default. Please specify thresholds or remove."
+      ]
+    }
+  ],
+  "language_candidates_NEEDS_NATIVE_SPEAKER_CLINICIAN": {
+    "status": "Unverified. These transliterations were proposed by a model and have not been checked by a Hindi-speaking clinician. They are NOT part of the category patterns above.",
+    "hinglish_latin_script": {
+      "breathing": [
+        "saans nahi aa rahi",
+        "saans lene mein dikkat"
+      ],
+      "chest": [
+        "seene mein dard",
+        "chhati mein dard"
+      ],
+      "bleeding": [
+        "bahut khoon beh raha hai"
+      ],
+      "consciousness": [
+        "behosh ho gaya",
+        "behosh ho gayi"
+      ],
+      "self_harm": [
+        "jaan dena chahta hoon",
+        "mar jana chahta hoon"
+      ]
+    },
+    "devanagari": "Not drafted: a clinician must supply and verify.",
+    "other_languages": "Not drafted."
+  }
+}

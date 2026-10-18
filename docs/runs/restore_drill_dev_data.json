@@ -1,0 +1,23 @@
+{
+  "backup_seconds": 0.64,
+  "backup_bytes": 400280,
+  "plaintext_db_bytes": 1527808,
+  "restore_seconds": 0.11,
+  "restore_result": {
+    "integrity_check": "ok",
+    "counts": {
+      "users": 4,
+      "documents": 2,
+      "images": 2,
+      "care_plans": 1,
+      "audit": 54
+    }
+  },
+  "tables": 18,
+  "row_counts_identical": true,
+  "upload_files": 2,
+  "upload_files_mismatched_or_missing": 0,
+  "wrong_key": "refused: wrong key: this backup was encrypted with a different key",
+  "wrong_key_left_target": false,
+  "tampered": "refused: backup failed authentication: it was modified, truncated, reordered or the key is wrong"
+}

@@ -1,0 +1,124 @@
+{
+  "_meta": {
+    "status": "DRAFT - NOT CLINICALLY REVIEWED",
+    "authored_by": "AI-assisted software draft (Claude). Not written or checked by a clinician.",
+    "purpose": "Plain-language, non-diagnostic health-literacy text for a qualified clinician to correct, rewrite, source, approve or reject. Nothing here is used by the patient assistant until a clinician approves the article in the clinic workspace with a reviewer attestation.",
+    "scope_rules": [
+      "Explains how to read a report or use the app. Never names a disease, drug, dose, treatment or cause for the reader.",
+      "Every factual sentence is listed under claims_to_verify so the reviewer can confirm or strike it.",
+      "No source has been attached. The reviewer must supply or confirm the source before approval (field source_note on approval)."
+    ]
+  },
+  "articles": [
+    {
+      "id": "kb-reference-range",
+      "title": "What is a reference range?",
+      "language": "en",
+      "body": "A reference range is the set of values the laboratory printed on your report as typical for the test it used. Different laboratories and methods can print different ranges.",
+      "claims_to_verify": [
+        "A reference range is printed by the laboratory for the method it used.",
+        "Different laboratories or methods can print different ranges."
+      ]
+    },
+    {
+      "id": "kb-single-result",
+      "title": "Why one result is not a diagnosis",
+      "language": "en",
+      "body": "A single test value cannot tell the full story. A doctor interprets results together with your symptoms, history, examination and other tests.",
+      "claims_to_verify": [
+        "A single value alone does not establish a diagnosis.",
+        "Interpretation combines symptoms, history, examination and other tests."
+      ]
+    },
+    {
+      "id": "kb-high-low-flags",
+      "title": "What do the High and Low markers on a report mean?",
+      "language": "en",
+      "body": "A High or Low marker means the printed value is outside the reference range shown next to it on your report. It tells you the value sits outside that printed range. It does not tell you why, and it does not mean something is wrong or right. Your doctor decides what, if anything, it means for you.",
+      "claims_to_verify": [
+        "A High/Low marker only states position relative to the printed reference range.",
+        "Being outside the printed range does not by itself indicate a problem; interpretation is the doctor's."
+      ]
+    },
+    {
+      "id": "kb-lab-differences",
+      "title": "Why can two laboratories print different ranges for the same test?",
+      "language": "en",
+      "body": "Laboratories may use different equipment, methods and reference groups, so the range printed on one report may differ from another. When you compare reports from different laboratories, compare each result with the range printed on its own report, and ask your doctor if the difference matters.",
+      "claims_to_verify": [
+        "Equipment, methods and reference populations can differ between laboratories and change the printed range.",
+        "Each result should be compared with the range on the same report."
+      ]
+    },
+    {
+      "id": "kb-units",
+      "title": "Why do units matter on a report?",
+      "language": "en",
+      "body": "A test value only makes sense with its unit, for example mg/dL or g/dL. The same test can be reported in different units by different laboratories, and a number in one unit is not comparable to a number in another. Always read the unit printed beside the value and do not compare numbers that have different units.",
+      "claims_to_verify": [
+        "The same analyte can be reported in different units by different laboratories.",
+        "Values in different units are not directly comparable without conversion."
+      ]
+    },
+    {
+      "id": "kb-test-preparation",
+      "title": "Do I need to prepare for a test?",
+      "language": "en",
+      "body": "Preparation depends on the test and on the laboratory. Some tests have instructions about eating, drinking or medicines beforehand and others do not. Follow the written instructions from your doctor or laboratory, and ask them if you are unsure. Do not change any medicine unless your doctor tells you to.",
+      "claims_to_verify": [
+        "Preparation requirements vary by test and laboratory.",
+        "Patients should follow their doctor's or laboratory's instructions and not change medicines on their own."
+      ]
+    },
+    {
+      "id": "kb-questions-for-doctor",
+      "title": "How to prepare questions for your doctor",
+      "language": "en",
+      "body": "Before an appointment you can write down what you want to ask. Useful questions include: what does this result mean for me, is any follow-up needed, when should the test be repeated, and who should I contact if something changes. Bring your reports with you. You can add a report in this app so that the clinic team can see it.",
+      "claims_to_verify": [
+        "Preparing questions and bringing reports is reasonable general advice.",
+        "The example questions are appropriate and not misleading."
+      ]
+    },
+    {
+      "id": "kb-assistant-limits",
+      "title": "What this assistant can and cannot do",
+      "language": "en",
+      "body": "This assistant can show you what your uploaded reports say, share information your clinic has approved, and help you prepare questions. It does not diagnose, choose medicines or doses, or tell you whether a situation is an emergency. If you feel very unwell or think you may need urgent help, contact your local emergency number or your clinic straight away.",
+      "claims_to_verify": [
+        "The description of the assistant's capabilities matches the product behaviour.",
+        "The emergency instruction wording is acceptable to the clinic (see the urgent-symptom policy draft)."
+      ]
+    },
+    {
+      "id": "kb-clinician-review",
+      "title": "What does 'reviewed by a clinician' mean in this app?",
+      "language": "en",
+      "body": "When an item says it was reviewed by a clinician, a signed-in doctor at your clinic has looked at it and recorded their review. Items without this label have only been processed by software and have not been checked by a person. Software results can contain mistakes, especially for blurry or unusual documents and photos.",
+      "claims_to_verify": [
+        "The app labels an item reviewed only after a doctor's recorded review.",
+        "The statement about software mistakes is accurate and appropriately worded."
+      ]
+    },
+    {
+      "id": "kb-photo-quality",
+      "title": "How do I take a clear photo for the clinic?",
+      "language": "en",
+      "body": "Use even, bright light such as daylight and avoid strong shadows and flash glare. Hold the camera steady, fill most of the frame with the area to be looked at, and tap to focus before taking the photo. Take the photo before applying products to the area unless your clinic tells you otherwise. If the app says the photo is not clear enough, retake it.",
+      "claims_to_verify": [
+        "Lighting, focus and framing guidance is appropriate.",
+        "The advice about products before photographing matches clinic practice or should be removed."
+      ]
+    },
+    {
+      "id": "kb-quotation",
+      "title": "What is a quotation and is it the final price?",
+      "language": "en",
+      "body": "A quotation is an estimate prepared from the clinic's approved price list. It becomes available to you only after a clinic doctor approves it. The final cost depends on the plan your doctor agrees with you, so ask the clinic if anything is unclear.",
+      "claims_to_verify": [
+        "The quotation is an estimate and not the final bill under clinic policy.",
+        "The approval step description matches how the clinic works."
+      ]
+    }
+  ]
+}

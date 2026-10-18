@@ -1,0 +1,253 @@
+{
+  "suite": "admin",
+  "when": "2026-10-18T04:24:04.068Z",
+  "passed": 43,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "KB: the shipped article starts as an unreviewed software draft",
+      "detail": {
+        "status": "draft",
+        "origin": "ai_draft"
+      }
+    },
+    {
+      "pass": true,
+      "check": "KB: the page labels unreviewed drafts"
+    },
+    {
+      "pass": true,
+      "check": "KB: while a draft, the assistant does not cite it"
+    },
+    {
+      "pass": true,
+      "check": "KB: the dialog lists the statements the reviewer must verify"
+    },
+    {
+      "pass": true,
+      "check": "KB: Approve is disabled before any attestation"
+    },
+    {
+      "pass": true,
+      "check": "KB: still disabled with a source note shorter than 10 characters"
+    },
+    {
+      "pass": true,
+      "check": "KB: disabled when the attestation box is cleared"
+    },
+    {
+      "pass": true,
+      "check": "KB: editing the text disables approval until it is saved as a new draft"
+    },
+    {
+      "pass": true,
+      "check": "KB: editing the text clears the attestation (it applies to one exact text)"
+    },
+    {
+      "pass": true,
+      "check": "KB: enabled only with an unchanged text, a source note and the attestation"
+    },
+    {
+      "pass": true,
+      "check": "KB: approval recorded with reviewer and source note",
+      "detail": {
+        "id": "kb-photo-quality",
+        "title": "How do I take a clear photo for the clinic?",
+        "body": "Use even, bright light such as daylight and avoid strong shadows and flash glare. Hold the camera steady, fill most of the frame with the area to be looked at, and tap to focus before taking the photo. Take the photo before applying products to the area unless your clinic tells you otherwise. If the app says the photo is not clear enough, retake it. Take photos before applying products. Take photos before applying products. Take photos before applying products.",
+        "language": "en",
+        "review_status": "approved",
+        "reviewed_by": "doctor1",
+        "version": 4,
+        "reviewed_at": 1792297418.3665195,
+        "content_sha256": "5e166ec622003eff0d9476a806cc55049f03b185f80464c9ebefff3840916d16",
+        "attestation": "{\"reviewer\": \"doctor1\", \"credentials\": \"MD Dermatology, reg. TEST-0001 (test fixture)\", \"verified\": true, \"statement\": \"I reviewed this exact text and approve it as accurate, appropriate for patients and non-diagnostic.\", \"content_sha256\": \"5e166ec622003eff0d9476a806cc55049f03b185f80464c9ebefff3840916d16\"}",
+        "source_note": "Clinic photography leaflet v2, page 3 (test fixture)",
+        "content_origin": "ai_draft",
+        "claims_to_verify": [
+          "Lighting, focus and framing guidance is appropriate.",
+          "The advice about products before photographing matches clinic practice or should be removed."
+        ],
+        "usable_by_assistant": true
+      }
+    },
+    {
+      "pass": true,
+      "check": "KB: once approved, the assistant cites it"
+    },
+    {
+      "pass": true,
+      "check": "KB: reopening shows who approved it and the source note"
+    },
+    {
+      "pass": true,
+      "check": "KB: an edit returns the article to draft and bumps the version",
+      "detail": {
+        "status": "draft",
+        "v": 5
+      }
+    },
+    {
+      "pass": true,
+      "check": "KB: the edited draft is no longer used by the assistant"
+    },
+    {
+      "pass": true,
+      "check": "price list: item added through the form with all fields",
+      "detail": {
+        "id": "fc98a45c45714097b5b6e21f2e270282",
+        "name": "P11 Laser session mvdblq9h",
+        "description": "",
+        "unit_price": 1500,
+        "currency": "INR",
+        "category": "Skin",
+        "sessions": 3,
+        "duration_min": 30,
+        "compare_at_price": 2000
+      }
+    },
+    {
+      "pass": true,
+      "check": "price list: the new item and its list price appear on the page"
+    },
+    {
+      "pass": true,
+      "check": "quotation settings: values persist after a reload"
+    },
+    {
+      "pass": true,
+      "check": "quotation settings: stored by the server",
+      "detail": {
+        "tax_percent": 12,
+        "payment_options": [
+          "Card",
+          "UPI"
+        ],
+        "inclusions": [
+          "Consultation",
+          "After-care advice"
+        ],
+        "terms": "Valid for 30 days (test fixture)."
+      }
+    },
+    {
+      "pass": true,
+      "check": "quotation: a patient request starts as a draft",
+      "detail": {
+        "id": "dafa30524b4e405b8329e5b9e58fe429",
+        "status": "draft",
+        "subtotal": 4500,
+        "tax_amount": 540,
+        "total": 5040,
+        "currency": "INR",
+        "message": "Your request was sent. The clinic team will review and approve a quotation."
+      }
+    },
+    {
+      "pass": true,
+      "check": "quotation: the clinic sees it awaiting approval"
+    },
+    {
+      "pass": true,
+      "check": "quotation: approved in the UI; total = 3 x 1500 plus 12% tax computed by the server",
+      "detail": {
+        "status": "approved",
+        "total": 5040
+      }
+    },
+    {
+      "pass": true,
+      "check": "quotation: the patient can download the approved PDF"
+    },
+    {
+      "pass": true,
+      "check": "admin: sees the knowledge base but has no Review / Approve controls"
+    },
+    {
+      "pass": true,
+      "check": "admin: cannot add price-list items (doctor only)"
+    },
+    {
+      "pass": true,
+      "check": "admin: no quotation Approve control"
+    },
+    {
+      "pass": true,
+      "check": "admin: care-plan authoring is not offered"
+    },
+    {
+      "pass": true,
+      "check": "admin: the API also refuses KB approval"
+    },
+    {
+      "pass": true,
+      "check": "admin: recording clinician verification succeeded and the doctor session still works"
+    },
+    {
+      "pass": true,
+      "check": "patient: /clinic shows no staff content"
+    },
+    {
+      "pass": true,
+      "check": "patient: /admin shows no staff content"
+    },
+    {
+      "pass": true,
+      "check": "patient: staff APIs return 403"
+    },
+    {
+      "pass": true,
+      "check": "doctor: the training API returns 403"
+    },
+    {
+      "pass": true,
+      "check": "training: Start is disabled until a dataset is chosen"
+    },
+    {
+      "pass": true,
+      "check": "training: only approved datasets are offered, including PAD-UFES-20",
+      "detail": [
+        "Choose an approved dataset…",
+        "PAD-UFES-20"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "training: Start becomes enabled with a dataset and version"
+    },
+    {
+      "pass": true,
+      "check": "training: the job reports 'running' in the UI"
+    },
+    {
+      "pass": true,
+      "check": "training: real log lines from the running process appear",
+      "detail": "09:53:56 splits: test=325 images/194 patients, val=325 images/197 patients, train=1621 images/980 patients"
+    },
+    {
+      "pass": true,
+      "check": "training: Start is disabled while a job runs"
+    },
+    {
+      "pass": true,
+      "check": "training: Stop ends the job and the UI shows 'stopped'"
+    },
+    {
+      "pass": true,
+      "check": "training: Start is available again after stopping"
+    },
+    {
+      "pass": true,
+      "check": "training: a stopped job does not register a model",
+      "detail": {
+        "before": 4,
+        "after": 4
+      }
+    },
+    {
+      "pass": true,
+      "check": "no uncaught or console errors during the admin workflows",
+      "detail": []
+    }
+  ]
+}

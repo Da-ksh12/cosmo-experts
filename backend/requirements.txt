@@ -1,0 +1,27 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+numpy<2.3
+opencv-python-headless==4.11.0.86
+pillow
+pypdf
+pymupdf            # AGPL-3.0 / commercial: review before commercial deployment
+scikit-learn
+reportlab
+pytesseract        # needs the Tesseract binary (Apache-2.0) installed separately
+pyttsx3
+faster-whisper     # local speech-to-text (MIT); model fetched explicitly by scripts/fetch_models.py
+sentence-transformers  # local embeddings (Apache-2.0); BGE-small model (MIT) fetched by scripts/fetch_models.py
+huggingface_hub
+timm               # backbone loading for the research linear probe
+pytest
+httpx
+# Training and embeddings (CPU wheels): pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# Optional local LLM runtime (off by default): pip install llama-cpp-python --prefer-binary --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+PyJWT[crypto]==2.15.1   # Supabase access-token verification (ES256/RS256 via JWKS)
+cryptography==50.0.2    # AES-256-GCM backup encryption
+redis==5.2.1            # optional shared rate-limit store (COSMO_REDIS_URL)
+# Test and CI tooling
+fakeredis==2.26.2
+coverage==7.16.2

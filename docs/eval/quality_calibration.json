@@ -1,0 +1,97 @@
+{
+ "fit_on": "train split (384 images)",
+ "reported_on": "test split (308 images)",
+ "current_rule": "sharpness<40 or contrast<18 or brightness outside 55-215 or small<300px",
+ "focus_metric_auroc_train": {
+  "lapvar": {
+   "blur_mild": 0.997,
+   "blur_strong": 1.0,
+   "motion": 0.938
+  },
+  "tenengrad": {
+   "blur_mild": 0.913,
+   "blur_strong": 0.995,
+   "motion": 0.82
+  },
+  "lapvar_norm": {
+   "blur_mild": 0.99,
+   "blur_strong": 0.996,
+   "motion": 0.907
+  }
+ },
+ "chosen_focus_metric": "lapvar",
+ "thresholds": {
+  "focus": 10.521,
+  "contrast": 11.9476,
+  "dark": 85.0,
+  "bright": 200.0
+ },
+ "train": {
+  "false_reject_usable_new": 0.081,
+  "false_reject_usable_old_rule": 0.471,
+  "detect": {
+   "blur_mild": {
+    "new": 0.984,
+    "old_rule": 1.0
+   },
+   "blur_strong": {
+    "new": 1.0,
+    "old_rule": 1.0
+   },
+   "motion": {
+    "new": 0.727,
+    "old_rule": 0.961
+   },
+   "dark": {
+    "new": 1.0,
+    "old_rule": 0.997
+   },
+   "bright": {
+    "new": 0.979,
+    "old_rule": 0.961
+   },
+   "washed": {
+    "new": 0.99,
+    "old_rule": 1.0
+   },
+   "jpeg10": {
+    "new": 0.057,
+    "old_rule": 0.438
+   }
+  }
+ },
+ "test": {
+  "false_reject_usable_new": 0.084,
+  "false_reject_usable_old_rule": 0.494,
+  "detect": {
+   "blur_mild": {
+    "new": 0.981,
+    "old_rule": 0.997
+   },
+   "blur_strong": {
+    "new": 1.0,
+    "old_rule": 1.0
+   },
+   "motion": {
+    "new": 0.711,
+    "old_rule": 0.932
+   },
+   "dark": {
+    "new": 1.0,
+    "old_rule": 1.0
+   },
+   "bright": {
+    "new": 0.987,
+    "old_rule": 0.974
+   },
+   "washed": {
+    "new": 0.994,
+    "old_rule": 1.0
+   },
+   "jpeg10": {
+    "new": 0.058,
+    "old_rule": 0.461
+   }
+  }
+ }
+}

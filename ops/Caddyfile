@@ -1,0 +1,33 @@
+# Production reverse proxy. Caddy obtains and renews certificates automatically (ACME / Let's Encrypt) for COSMO_DOMAIN.
+# HTTP is redirected to HTTPS by default. Only the web front end is proxied: /metrics and the backend port are NOT reachable from the internet.
+{
+	email {$COSMO_ACME_EMAIL}
+}
+
+{$COSMO_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(self), microphone=(self), geolocation=()"
+		-Server
+	}
+
+	# Uploads are limited again in the application (COSMO_MAX_UPLOAD_MB); this stops oversized bodies earlier.
+	request_body {
+		max_size 20MB
+	}
+
+	# The metrics endpoint is for Prometheus on the private network only.
+	@internal path /metrics /metrics/*
+	respond @internal 404
+
+	reverse_proxy frontend:3000 {
+		header_up X-Forwarded-Proto {scheme}
+		health_uri /
+		health_interval 15s
+	}
+}

@@ -1,0 +1,100 @@
+PASS S1 home: Face Analysis
+PASS S1 home: Hair & Scalp
+PASS S1 home: Body Analysis
+PASS S1 home: Upload Reports
+PASS S1 home: Start Guided Assessment
+PASS S1 home: Chat with our AI Assistant
+PASS S1 home: Recent Activity
+PASS S1 home: bottom navigation visible on mobile
+PASS S1: no horizontal overflow
+PASS S1 guided assessment opens
+PASS S2 capture: Face selected from home link
+PASS S2 capture: tips change with category
+PASS S2: no horizontal overflow
+PASS S2 capture: real camera stream is live
+PASS S2 capture: camera photo captured -> adjust
+PASS S3: no horizontal overflow
+PASS S3 adjust: Flip really changes the rendered pixels
+PASS S3 adjust: Reset restores the original
+PASS S3 adjust: zoom changes the crop
+PASS S3 adjust: aspect ratio selectable
+PASS S4 validation row: File format
+PASS S4 validation row: Image quality
+PASS S4 validation row: Lighting
+PASS S4 validation row: Face detection
+PASS S4 validation row: Framing
+PASS S4 validation row: Overall suitability
+PASS S4 validation: six real checks returned
+PASS S4: no horizontal overflow
+PASS S4 rejection: actionable message from validator
+PASS S4 rejection: cannot continue with a rejected photo
+PASS S5 reports: real size and page count on the card
+PASS S5 reports: real PDF thumbnail rendered
+PASS S5: no horizontal overflow
+PASS S5 reports: PDF preview opens
+PASS S5 reports: unsupported file rejected with a clear message
+PASS S6: clinician-review status shown
+PASS S6 summary: no horizontal overflow
+PASS S6: result flagged only against printed range
+PASS S6: printed 'L' flag surfaced as the report's own marking
+PASS S6: source page + exact text shown
+PASS S6: original text visible
+PASS S6: doctor questions tab
+PASS S6: language switch (Hinglish)
+PASS S6: audio plays or gracefully falls back
+INFO audio: 0:00 / 0:481x Language: English (India)
+PASS S7 chat: grounded answer links back to the report
+PASS S7 chat: refuses to choose medicine
+PASS S7 chat: voice mode shows an honest state (STT not installed)
+PASS S7: no horizontal overflow
+PASS S7 chat: history lists the conversation
+PASS S8 care: verified only after admin verification
+PASS S8 care: approved badge on clinician content
+PASS S8 care: clinician's real assessment text
+PASS S8: no horizontal overflow
+PASS S8 care: stages tab
+PASS S8 care: notes tab
+PASS S9 quote: recommended tab from approved care plan
+PASS S9 quote: clinician recommendation labelled
+PASS S9 quote: live total = 6 sessions × 1000 + 18% tax = 7,080
+PASS S9 quote: totals recalculate (7 sessions → 8,260)
+PASS S9 quote: payment options come from clinic config
+PASS S9 quote: category tab filters catalogue
+PASS S9: no horizontal overflow
+PASS S9 quote: estimate sent; shows as awaiting approval (not final)
+PASS S9 quote: server stored the same verified total
+PASS S9 quote: approved quotation offers PDF
+PASS S9 quote: PDF downloads
+PASS S10 history: progress is computed from recorded stages (1 of 4 = 25%)
+PASS S10 history timeline: Doctor review and care plan
+PASS S10 history timeline: lab.pdf
+PASS S10 history: photo filter lists photos
+PASS S10 history: quotations filter
+PASS S10 history: search + empty state
+PASS S10 history: detail dialog
+PASS S10 history: privacy toggle
+PASS S10: no horizontal overflow
+PASS no console/page/5xx errors on patient mobile journey []
+PASS isolation: patient2 sees no care plan
+PASS isolation: patient2 history empty (empty state shown)
+PASS desktop 01-home: no horizontal overflow
+PASS desktop 01-home: bottom nav hidden
+PASS desktop 02-capture: no horizontal overflow
+PASS desktop 02-capture: bottom nav hidden
+PASS desktop 05-reports: no horizontal overflow
+PASS desktop 05-reports: bottom nav hidden
+PASS desktop 07-chat: no horizontal overflow
+PASS desktop 07-chat: bottom nav hidden
+PASS desktop 08-care: no horizontal overflow
+PASS desktop 08-care: bottom nav hidden
+PASS desktop 09-quote: no horizontal overflow
+PASS desktop 09-quote: bottom nav hidden
+PASS desktop 10-history: no horizontal overflow
+PASS desktop 10-history: bottom nav hidden
+PASS no errors on desktop pass []
+PASS clinic workspace renders
+PASS doctor on /admin is rerouted or empty of admin data
+PASS no errors on admin []
+PASS no errors on doctor []
+
+ALL CHECKS PASSED

@@ -1,0 +1,90 @@
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="cosmo-backend"}'
+        values: '1 1 0 0 0 0 0'
+      - series: 'cosmo_backup_last_success_timestamp_seconds'
+        values: '0+0x400'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: CosmoBackendDown
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: CosmoBackendDown
+        exp_alerts:
+          - exp_labels: { severity: critical, job: cosmo-backend }
+            exp_annotations:
+              summary: "Backend is not answering scrapes"
+              description: "Prometheus could not scrape the backend for 2 minutes. Patients cannot use the app."
+
+  - interval: 1m
+    input_series:
+      - series: 'cosmo_backup_last_success_timestamp_seconds'
+        values: '1000000000x400'
+      - series: 'cosmo_backup_last_run_ok'
+        values: '1x100 0x300'
+    alert_rule_test:
+      # time() is the evaluation time in seconds; the last success is a fixed instant far in the past once eval_time exceeds 26 h
+      - eval_time: 10m
+        alertname: CosmoLastBackupFailed
+        exp_alerts: []
+      - eval_time: 200m
+        alertname: CosmoLastBackupFailed
+        exp_alerts:
+          - exp_labels: { severity: critical }
+            exp_annotations: { summary: "The last backup run failed" }
+
+  - interval: 1m
+    input_series:
+      - series: 'cosmo_http_requests_total{method="GET",route="/api/x",status="2xx"}'
+        values: '0+60x30'
+      - series: 'cosmo_http_requests_total{method="GET",route="/api/x",status="5xx"}'
+        values: '0+10x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: CosmoHighServerErrorRate
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations: { summary: "More than 5% of requests are failing with a server error" }
+
+  - interval: 1m
+    input_series:
+      - series: 'cosmo_http_requests_total{method="GET",route="/api/x",status="2xx"}'
+        values: '0+600x30'
+      - series: 'cosmo_http_requests_total{method="GET",route="/api/x",status="5xx"}'
+        values: '0+1x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: CosmoHighServerErrorRate
+        exp_alerts: []
+
+  - interval: 1m
+    input_series:
+      - series: 'cosmo_jobs_queued'
+        values: '9x30'
+      - series: 'cosmo_jobs_queue_limit'
+        values: '10x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CosmoJobQueueNearlyFull
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations: { summary: "Job queue above 80% of its limit; new submissions will soon be rejected" }
+
+  - interval: 1m
+    input_series:
+      - series: 'cosmo_data_disk_free_bytes'
+        values: '5x30'
+      - series: 'cosmo_data_disk_total_bytes'
+        values: '100x30'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: CosmoDiskSpaceLow
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations: { summary: "Less than 10% free on the data volume" }

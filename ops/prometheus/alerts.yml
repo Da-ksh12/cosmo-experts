@@ -1,0 +1,109 @@
+groups:
+  - name: cosmo-availability
+    rules:
+      - alert: CosmoBackendDown
+        expr: up{job="cosmo-backend"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Backend is not answering scrapes"
+          description: "Prometheus could not scrape the backend for 2 minutes. Patients cannot use the app."
+
+      - alert: CosmoDatabaseDown
+        expr: cosmo_database_up == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Application database is unreachable"
+
+      - alert: CosmoPrivateStorageDown
+        expr: cosmo_private_storage_up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Private file storage is unreachable"
+          description: "Uploads and document downloads are failing (backend {{ $labels.backend }})."
+
+  - name: cosmo-errors-and-latency
+    rules:
+      - alert: CosmoHighServerErrorRate
+        expr: |
+          sum(rate(cosmo_http_requests_total{status="5xx"}[5m]))
+            / clamp_min(sum(rate(cosmo_http_requests_total[5m])), 1e-9) > 0.05
+          and sum(rate(cosmo_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "More than 5% of requests are failing with a server error"
+
+      - alert: CosmoSlowRequests
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(cosmo_http_request_duration_seconds_bucket{route!~"/api/v1/jobs.*|/api/v1/events.*"}[10m]))) > 5
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "p95 request latency above 5 s"
+
+      - alert: CosmoRateLimiting
+        expr: sum(rate(cosmo_http_requests_total{status="4xx",route="rate_limited"}[5m])) > 1
+        for: 10m
+        labels: { severity: info }
+        annotations:
+          summary: "Sustained rate limiting (possible abuse or a misconfigured client address)"
+          description: "If every client is limited together, check --proxy-headers / FORWARDED_ALLOW_IPS."
+
+      - alert: CosmoRateLimitStoreFailing
+        expr: increase(cosmo_ratelimit_store_errors_total[10m]) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: "Shared rate-limit store errors; limits are only enforced per instance"
+
+  - name: cosmo-jobs
+    rules:
+      - alert: CosmoJobQueueNearlyFull
+        expr: cosmo_jobs_queued >= 0.8 * cosmo_jobs_queue_limit
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Job queue above 80% of its limit; new submissions will soon be rejected"
+
+      - alert: CosmoJobsFailing
+        expr: cosmo_jobs_failure_ratio > 0.2
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "More than 20% of {{ $labels.task }} jobs failed in the last hour"
+
+  - name: cosmo-data-protection
+    rules:
+      - alert: CosmoBackupStale
+        expr: time() - cosmo_backup_last_success_timestamp_seconds > 26 * 3600
+        for: 10m
+        labels: { severity: critical }
+        annotations:
+          summary: "No successful backup for more than 26 hours"
+          description: "Run the restore drill (docs/RUNBOOK.md) once backups work again."
+
+      - alert: CosmoLastBackupFailed
+        expr: cosmo_backup_last_run_ok == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "The last backup run failed"
+
+      - alert: CosmoDiskSpaceLow
+        expr: cosmo_data_disk_free_bytes / cosmo_data_disk_total_bytes < 0.10
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Less than 10% free on the data volume"
+
+  - name: cosmo-clinical-governance
+    rules:
+      - alert: CosmoNoApprovedUrgentPolicy
+        expr: cosmo_urgent_policy_approved == 0
+        for: 1h
+        labels: { severity: info }
+        annotations:
+          summary: "The assistant is using the built-in urgent-symptom default, not a clinician-approved policy"
+          description: "Expected until the clinic approves a policy (docs/clinical_review/APPROVAL_PROCEDURE.md)."

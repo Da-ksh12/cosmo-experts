@@ -1,0 +1,12 @@
+[Unit]
+Description=Cosmo Experts health check and alert
+
+[Service]
+Type=oneshot
+User=cosmo
+WorkingDirectory=/opt/cosmo/backend
+Environment=COSMO_DATA_DIR=/var/lib/cosmo
+LoadCredential=webhook:/etc/cosmo/alert_webhook_url
+ExecStart=/bin/sh -c 'exec /opt/cosmo/backend/.venv/bin/python -m scripts.healthcheck --url http://127.0.0.1:8000 --webhook "$(cat "$CREDENTIALS_DIRECTORY/webhook")"'
+SuccessExitStatus=0 1
+NoNewPrivileges=true

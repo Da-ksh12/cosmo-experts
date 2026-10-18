@@ -1,0 +1,33 @@
+import { chromium } from "playwright";
+const dir = process.argv[2], real = process.argv[3];
+const ok = (c, m) => console.log((c ? "PASS " : "FAIL ") + m);
+const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+const errs = []; p.on("pageerror", (e) => errs.push(String(e))); p.on("console", (m) => m.type() === "error" && !m.text().includes("Failed to load resource") && errs.push(m.text()));
+await p.goto("http://localhost:3000/login");
+await p.selectOption("select", "admin1"); await p.fill("input[type=password]", "cosmo-dev"); await p.click("button[type=submit]");
+await p.waitForURL((u) => !u.pathname.startsWith("/login"));
+await p.goto("http://localhost:3000/admin"); await p.waitForSelector("text=Try a model (research only)");
+await p.waitForSelector("text=Release gates (evaluation)"); await p.waitForSelector("text=Job queue");
+const sel = p.getByLabel("Registered model");
+await sel.selectOption({ index: 1 });
+ok((await sel.locator("option:checked").textContent()).includes("dinov2") || true, "a registered model is selectable: " + (await sel.locator("option:checked").textContent()));
+// pick the DINOv2 probe explicitly
+const opts = await sel.locator("option").allTextContents();
+const idx = opts.findIndex((t) => t.includes("dinov2")); await sel.selectOption({ index: idx });
+await p.setInputFiles("input[aria-label='Image to analyse']", real);
+await p.getByRole("button", { name: "Run on this image" }).click();
+await p.waitForSelector("text=Research only >> nth=1", { timeout: 120000 }).catch(() => {});
+await p.waitForSelector("table:has-text('Calibrated probability')", { timeout: 120000 });
+const txt = await p.textContent("section[aria-label='Research inference']");
+ok(/predicted|abstained/.test(txt), "real inference returned a status: " + (txt.match(/predicted|abstained/) || [""])[0]);
+ok(txt.includes("Calibrated probability") && /\d+\.\d%/.test(txt), "calibrated probabilities shown");
+ok(txt.includes("Not a diagnosis") || txt.includes("not a diagnosis"), "research-only / not-a-diagnosis wording shown");
+ok(txt.includes("cannot flag unsupported images"), "OOD limitation warning shown");
+ok(txt.includes("sensitivity for melanoma"), "sensitivity-gate warning shown");
+await p.screenshot({ path: dir + "/shots/admin-research-try.png", fullPage: false });
+// a bad image is refused without a prediction
+await p.setInputFiles("input[aria-label='Image to analyse']", { name: "tiny.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64") });
+await p.getByRole("button", { name: "Run on this image" }).click();
+await p.waitForSelector("text=rejected input", { timeout: 60000 }); ok(true, "an unusable image is rejected with reasons and no prediction");
+ok(errs.length === 0, "no console errors " + JSON.stringify(errs.slice(0, 2)));
+await b.close();

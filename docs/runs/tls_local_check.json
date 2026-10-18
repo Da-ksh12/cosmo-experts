@@ -1,0 +1,19 @@
+{
+  "https_status": 200,
+  "body": {
+    "status": "alive"
+  },
+  "hsts": "max-age=31536000; includeSubDomains",
+  "x_content_type_options": "nosniff",
+  "x_frame_options": "DENY",
+  "server_header_removed": true,
+  "backend_request_id_passed_through": true,
+  "tls_version": "TLSv1.3",
+  "cipher": "TLS_AES_128_GCM_SHA256",
+  "certificate_bytes": 449,
+  "untrusted_ca_rejected_by_default_client": true,
+  "metrics_via_proxy_status": 404,
+  "metrics_direct_on_private_port_status": 200,
+  "http_redirect": "301 -> https://localhost:54940/api/health",
+  "PASS": true
+}
