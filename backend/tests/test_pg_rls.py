@@ -14,7 +14,7 @@ from tests.test_pg_backend import CTX_SECRET, pg_server  # noqa: F401  (fixtures
 
 T = "2026-10-18T10:00:00Z"
 TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
-          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "notifications", "jobs"]
+          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "notifications", "jobs"]
 
 
 def C(uid, role, admin="none"):
@@ -47,6 +47,7 @@ def rls(pg_server):
         x("insert into notifications(id,user_id,kind,title,dedupe_key,created_at) values(?,?,'k','t',?,now())", (f"n-{p}", p, f"k-{p}"))
         x("insert into jobs(id,owner_id,task,status,created_at) values(?,?,'t','done',now())", (f"j-{p}", p))
     x("insert into care_plans(id,patient_id,doctor_id,status,assessment,updated_at) values('cp-draft','p1','d1','draft','secret draft',now()),('cp-ok','p1','d1','approved','approved plan',now())")
+    x("insert into legal_holds(id,patient_id,reason_code,placed_by,placed_at) values('lh1','p1','other','a1',now())")
     x("insert into kb_articles(id,title,body,review_status,version) values('kb-ok','A','a','approved',1),('kb-dr','D','d','draft',1)")
     x("insert into price_items(id,name,unit_price,active) values('pi1','Peel',100,1)")
     x("insert into settings values('quote_config','{}')")
@@ -271,3 +272,27 @@ def test_consent_history_is_append_only_for_the_application_role_and_cannot_be_w
         writes(be, P1, "update consent_events set action='accepted' where id='ce-new'")
     with pytest.raises(Exception):
         writes(be, P1, "delete from consent_events where id='ce-new'")
+
+
+def test_legal_holds_are_visible_to_administrators_and_the_system_only_and_are_never_deleted(rls):
+    be, _ = rls
+    for ctx in (P1, P2, DOC):
+        assert be.q("select count(*) c from legal_holds", (), ctx)[0]["c"] == 0
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            writes(be, ctx, "insert into legal_holds(id,patient_id,reason_code,placed_by,placed_at) values('lh-x','p1','other','x',now())")
+    assert ids(be, ADM, "legal_holds") == ["lh1"]
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, ADM, "delete from legal_holds where id='lh1'")
+    with pytest.raises(psycopg.errors.CheckViolation):
+        writes(be, ADM, "insert into legal_holds(id,patient_id,reason_code,placed_by,placed_at) values('lh-y','p1','free text','a1',now())")
+
+
+def test_audit_entries_can_only_be_purged_through_the_system_only_function(rls):
+    be, _ = rls
+    cutoff = "2999-01-01"
+    for ctx in (P1, DOC, ADM):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            be.q("select app.purge_audit(?::timestamptz, 10)", (cutoff,), ctx)
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, ADM, "delete from audit")
+    assert be.q("select app.purge_audit(?::timestamptz, 10000) n", (cutoff,), SYS)[0]["n"] >= 0

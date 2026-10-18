@@ -7,9 +7,9 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, Upl
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .. import consent, db, security
+from .. import consent, db, retention, security
 from ..assistant import engine
-from ..config import CONVERSATION_RETENTION_DAYS, MAX_UPLOAD_BYTES, UPLOAD_DIR
+from ..config import MAX_UPLOAD_BYTES, UPLOAD_DIR
 from ..documents import explain, pipeline
 from ..imaging import suitability
 from ..quotes import service as quotes
@@ -196,7 +196,7 @@ class Msg(BaseModel):
 def new_conversation(user=Depends(consent.patient_consented)):
     cid = db.uid()
     db.x("INSERT INTO conversations VALUES(?,?,?)", (cid, user["id"], db.now()))
-    return {"id": cid, "retention_days": CONVERSATION_RETENTION_DAYS}
+    return {"id": cid, "retention_days": retention.configured_days().get("conversations")}
 
 
 def _conv(cid, user):

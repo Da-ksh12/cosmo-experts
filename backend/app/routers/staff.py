@@ -6,9 +6,9 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from .. import clinical_content, db
+from .. import clinical_content, db, retention
 from ..services import notify
-from ..config import CONVERSATION_RETENTION_DAYS, DATASET_DIR
+from ..config import DATASET_DIR
 from ..datasets import importer, registry
 from ..quotes import service as quotes
 from ..security import require
@@ -384,7 +384,7 @@ def system(user=Depends(admin)):
         dev, tv = "unavailable", None
     from ..documents.pipeline import ocr_available
     return {"free_disk_gb": round(free / 1e9, 1), "training_device": dev, "torch": tv, "ocr_available": ocr_available(),
-            "tts": adapters.get_tts().status(), "stt": adapters.stt_status(), "conversation_retention_days": CONVERSATION_RETENTION_DAYS}
+            "tts": adapters.get_tts().status(), "stt": adapters.stt_status(), "conversation_retention_days": retention.configured_days().get("conversations")}
 
 
 # ---------------- admin: tasks, training, models ----------------
@@ -523,15 +523,60 @@ def audit_log(limit: int = 200, user=Depends(admin)):
     return db.q("SELECT * FROM audit ORDER BY ts DESC LIMIT ?", (min(limit, 1000),))
 
 
+class PurgeBody(BaseModel):
+    dry_run: bool = True
+    confirm: str = ""
+
+
+@router.get("/admin/retention/plan")
+def retention_plan(user=Depends(admin)):
+    """What a purge would remove under the configured periods. Categories without an operator-chosen period are reported as not configured and are never purged."""
+    try:
+        return {"categories": retention.plan(), "holds": len(retention.active_holds())}
+    except retention.ConfigError as e:
+        raise HTTPException(422, str(e))
+
+
 @router.post("/admin/retention/purge")
-def purge(user=Depends(admin)):
-    cutoff = db.now() - CONVERSATION_RETENTION_DAYS * 86400
-    old = db.q("SELECT id FROM conversations WHERE created_at<?", (cutoff,))
-    for c in old:
-        db.x("DELETE FROM messages WHERE conversation_id=?", (c["id"],))
-        db.x("DELETE FROM conversations WHERE id=?", (c["id"],))
-    db.audit(user["id"], "retention.purge", "", {"conversations": len(old)})
-    return {"purged_conversations": len(old)}
+def purge(body: PurgeBody | None = None, user=Depends(admin)):
+    """Dry run by default. Deleting needs {"dry_run": false, "confirm": "DELETE"}; it runs in bounded batches and records counts only."""
+    body = body or PurgeBody()
+    if not body.dry_run and body.confirm != "DELETE":
+        raise HTTPException(422, 'To delete data send {"dry_run": false, "confirm": "DELETE"}.')
+    try:
+        rep = retention.run(dry_run=body.dry_run, actor=user["id"])
+    except retention.ConfigError as e:
+        raise HTTPException(422, str(e))
+    if not body.dry_run:
+        db.audit(user["id"], "retention.run", "", {"categories": {c["category"]: c.get("purged", 0) for c in rep["categories"]}})
+    return rep
+
+
+class HoldBody(BaseModel):
+    patient_id: str
+    reason_code: str
+
+
+@router.get("/admin/legal-holds")
+def holds_list(user=Depends(admin)):
+    return {"holds": retention.active_holds()}
+
+
+@router.post("/admin/legal-holds")
+def hold_place(body: HoldBody, user=Depends(admin)):
+    try:
+        return retention.place_hold(body.patient_id, body.reason_code, user["id"])
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    except LookupError as e:
+        raise HTTPException(404, str(e))
+
+
+@router.post("/admin/legal-holds/{hold_id}/release")
+def hold_release(hold_id: str, user=Depends(admin)):
+    if not retention.release_hold(hold_id, user["id"]):
+        raise HTTPException(404, "No active hold with that id.")
+    return {"ok": True}
 
 
 # ---------------- admin: gated download of official files ----------------

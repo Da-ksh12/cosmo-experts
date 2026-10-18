@@ -22,5 +22,4 @@ SECRET = os.environ.get("COSMO_SECRET", "dev-only-secret-change-me")
 MAX_UPLOAD_BYTES = int(os.environ.get("COSMO_MAX_UPLOAD_MB", "15")) * 1024 * 1024
 MAX_PDF_PAGES = int(os.environ.get("COSMO_MAX_PDF_PAGES", "40"))
 AUDIO_RETENTION_SECONDS = 0  # raw audio is never retained
-CONVERSATION_RETENTION_DAYS = int(os.environ.get("COSMO_CONV_RETENTION_DAYS", "30"))
 CORS_ORIGINS = os.environ.get("COSMO_CORS", "http://localhost:3000").split(",")

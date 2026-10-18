@@ -25,7 +25,9 @@ MIME = {"pdf": "application/pdf", "jpg": "image/jpeg", "jpeg": "image/jpeg", "pn
 
 
 class StorageError(Exception):
-    pass
+    def __init__(self, message: str = "", status: int = 0):
+        super().__init__(message)
+        self.status = status
 
 
 def _safe_owner(owner: str) -> str:
@@ -96,7 +98,7 @@ def _sb_request(method: str, path: str, body: bytes | None = None, ctype: str | 
         with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310 - operator-configured project URL
             return r.read()
     except urllib.error.HTTPError as e:
-        raise StorageError(f"storage request failed (HTTP {e.code})") from None
+        raise StorageError(f"storage request failed (HTTP {e.code})", e.code) from None
     except (urllib.error.URLError, TimeoutError) as e:
         raise StorageError("storage is unreachable") from None
 
@@ -135,20 +137,27 @@ def read(ref: str) -> bytes:
         raise StorageError("the stored file is no longer available") from None
 
 
-def delete(ref: str) -> None:
+def delete(ref: str, strict: bool = False) -> None:
+    """Remove a stored file. Lenient by default (rollback paths, user-facing deletes): problems are swallowed. `strict=True` (retention) treats "already gone" as success
+    and raises StorageError for any other failure, so the caller keeps the database row and retries instead of orphaning a file."""
     if not ref:
         return
     if ref.startswith(PREFIX):
         bucket, key = _sb_parts(ref)
         try:
             _sb_request("DELETE", f"object/{bucket}/{urllib.parse.quote(key)}")
-        except StorageError:
-            pass                                                # already gone
+        except StorageError as e:
+            if strict and e.status not in (400, 404):           # Supabase answers 400/404 for an object that does not exist
+                raise
         return
     try:
         _local_path(ref).unlink(missing_ok=True)
     except StorageError:
-        pass
+        if strict:
+            raise
+    except OSError:
+        if strict:
+            raise StorageError("the file could not be removed") from None
 
 
 def healthy() -> tuple[bool, str]:

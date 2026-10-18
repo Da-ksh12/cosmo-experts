@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .. import db, security
+from .. import db, retention, security
 from .. import storage
 from ..quotes import service as quotes
 from ..services import notify
@@ -444,29 +444,11 @@ def delete_my_data(user=Depends(require("patient"))):
     """Deletes what the patient controls: uploaded documents (files + extracted text/fields), photos, conversations and messages.
     Clinician-authored care plans, quotations and the audit trail are RETAINED (clinical/financial record-keeping duties) and are reported back,
     so the patient knows exactly what remains. The retention schedule must be confirmed by legal counsel for the deployment jurisdiction."""
-    uid = user["id"]
-    docs = db.q("SELECT id,stored_path FROM documents WHERE owner_id=? AND deleted=0", (uid,))
-    for d in docs:
-        storage.delete(d["stored_path"])
-        db.x("DELETE FROM doc_pages WHERE document_id=?", (d["id"],))
-        db.x("DELETE FROM doc_fields WHERE document_id=?", (d["id"],))
-    db.x("UPDATE documents SET deleted=1, stored_path='', filename='deleted' WHERE owner_id=?", (uid,))
-    imgs = db.q("SELECT id,stored_path FROM images WHERE owner_id=? AND deleted=0", (uid,))
-    for i in imgs:
-        storage.delete(i["stored_path"])
-    db.x("UPDATE images SET deleted=1, stored_path='' WHERE owner_id=?", (uid,))
-    convs = db.q("SELECT id FROM conversations WHERE owner_id=?", (uid,))
-    for c in convs:
-        db.x("DELETE FROM messages WHERE conversation_id=?", (c["id"],))
-    db.x("DELETE FROM conversations WHERE owner_id=?", (uid,))
-    db.x("DELETE FROM jobs WHERE owner_id=?", (uid,))
-    with db.context.as_system():                              # the patient may read and mark their notifications; removing them is a server action
-        db.x("DELETE FROM notifications WHERE user_id=?", (uid,))
-    retained = {"care_plans": db.q1("SELECT COUNT(*) c FROM care_plans WHERE patient_id=?", (uid,))["c"],
-                "quotations": db.q1("SELECT COUNT(*) c FROM quotes WHERE patient_id=?", (uid,))["c"]}
-    db.audit(uid, "patient.data_deleted", uid, {"documents": len(docs), "photos": len(imgs), "conversations": len(convs), "retained": retained})
-    return {"deleted": {"documents": len(docs), "photos": len(imgs), "conversations": len(convs)}, "retained_by_policy": retained,
-            "note": "Care plans, quotations and the audit log are kept for clinical and financial record-keeping. Ask the clinic about their retention period."}
+    try:
+        res = retention.erase_patient(user["id"])
+    except retention.Held:
+        raise HTTPException(409, "We cannot delete your data right now. Please contact the clinic.") from None
+    return {**res, "note": "Care plans, quotations and the audit log are kept for clinical and financial record-keeping. Ask the clinic about their retention period."}
 
 
 # ---------------- notifications (own only) ----------------

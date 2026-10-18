@@ -40,6 +40,9 @@ CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS field_corrections(id TEXT PRIMARY KEY, field_id TEXT, document_id TEXT, before TEXT, after TEXT, status TEXT, reviewer TEXT,
   ts REAL, processing_version TEXT, training_eligible INTEGER DEFAULT 0, governance_ref TEXT DEFAULT '', deidentified INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS consents(user_id TEXT NOT NULL, notice_sha256 TEXT NOT NULL, accepted_at REAL, PRIMARY KEY(user_id, notice_sha256));
+CREATE TABLE IF NOT EXISTS legal_holds(id TEXT PRIMARY KEY, patient_id TEXT NOT NULL, reason_code TEXT NOT NULL CHECK(reason_code IN ('legal_proceeding','regulatory_inquiry','clinical_safety_review','other')),
+  placed_by TEXT NOT NULL, placed_at REAL NOT NULL, released_by TEXT, released_at REAL);
+CREATE INDEX IF NOT EXISTS legal_holds_patient_ix ON legal_holds(patient_id);
 CREATE TABLE IF NOT EXISTS consent_events(id TEXT PRIMARY KEY, user_id TEXT NOT NULL, notice_sha256 TEXT NOT NULL, notice_status TEXT NOT NULL CHECK(notice_status IN ('approved','draft')),
   action TEXT NOT NULL CHECK(action IN ('accepted','withdrawn')), at REAL NOT NULL, source TEXT NOT NULL DEFAULT 'web');
 CREATE INDEX IF NOT EXISTS consent_events_user_ix ON consent_events(user_id, at);
