@@ -12,7 +12,7 @@ from ..config import DATASET_DIR
 from ..datasets import importer, registry
 from ..quotes import service as quotes
 from ..security import require
-from ..training import tasks, trainer
+from ..training import orchestrator, pipeline, tasks, trainer
 
 router = APIRouter(prefix="/api")
 doctor = require("doctor", "admin")
@@ -410,6 +410,9 @@ class TrainReq(BaseModel):
     max_per_split: int | None = None
     seed: int = 17
     resume: bool = False          # continue from the last completed epoch of an identical run (same data, split, settings and torch version)
+    method: str = Field(default="finetune", pattern="^(finetune|probe)$")
+    device: str = Field(default="auto", pattern="^(auto|cpu|cuda|mps)$")
+    allow_long_run: bool = False
 
 
 _jobs: dict[str, dict] = {}
@@ -430,8 +433,13 @@ def train(body: TrainReq, user=Depends(admin)):
         raise HTTPException(409, {"message": "Licence gate blocked training.", "reasons": gate["reasons"]})
     if body.weights_path and not Path(body.weights_path).is_file():
         raise HTTPException(422, "Pretrained weights file not found. Weights are never downloaded implicitly.")
+    cfg = _train_config(body)
+    pl = orchestrator.plan(cfg)
+    if not pl["feasible"]:
+        db.audit(user["id"], "training.refused", body.dataset_id, {"blockers": pl["blockers"][:5]})
+        raise HTTPException(409, {"message": "This training run cannot start here.", "reasons": pl["blockers"], "plan": pl})
     job = db.uid()
-    _jobs[job] = {"status": "running", "phase": "starting", "percent": 0.0, "log": [], "started": db.now()}
+    _jobs[job] = {"status": "running", "phase": "starting", "percent": 0.0, "log": [], "started": db.now(), "plan": pl}
     lic = {"spdx": d.get("verified_spdx"), "terms_snapshot_hash": d.get("terms_snapshot_hash"), "official_license_name": d.get("official_license_name"),
            "source": d.get("url"), "attribution": d.get("attribution")}
 
@@ -444,19 +452,78 @@ def train(body: TrainReq, user=Depends(admin)):
 
     def run():
         try:
-            card = trainer.train(body.task_id, body.dataset_id, body.version_id, user["id"], body.architecture, body.epochs, body.lr, body.batch,
-                                 weights_path=body.weights_path, seed=body.seed, max_per_split=body.max_per_split, image_size=body.image_size,
-                                 finetune=body.finetune, pretrained_note=body.pretrained_note, progress=progress, should_stop=lambda: job in _stop,
-                                 license_info=lic, ood_dir=body.ood_dir, resume=body.resume)
-            _jobs[job].update(status="done", model_id=card["model_id"], percent=100.0)
-        except trainer.Stopped:
-            _jobs[job].update(status="stopped")
-            db.audit(user["id"], "model.train_stopped", job)
+            res = orchestrator.run_training(cfg, user["id"], progress=progress, should_stop=lambda: job in _stop, license_info=lic)
+        except orchestrator.NotFeasible as e:
+            _jobs[job].update(status="failed", error="; ".join(e.blockers))
+            return
         except Exception as e:  # surfaced to the admin, never silently swallowed
-            _jobs[job].update(status="failed", error=str(e))
+            _jobs[job].update(status="failed", error=str(e)[:300])
             db.audit(user["id"], "model.train_failed", job, {"error": str(e)[:300]})
+            return
+        if res["status"] == "done":
+            _jobs[job].update(status="done", model_id=res["model_id"], percent=100.0, run_id=res["run_id"])
+        elif res["status"] == "stopped":
+            _jobs[job].update(status="stopped", run_id=res["run_id"])
+            db.audit(user["id"], "model.train_stopped", job)
+        else:
+            _jobs[job].update(status="failed", error=res.get("error", "training failed"), run_id=res["run_id"])
     db.context.spawn(run)
-    return {"job_id": job}
+    return {"job_id": job, "plan": pl}
+
+
+def _train_config(body: "TrainReq") -> orchestrator.TrainConfig:
+    return orchestrator.TrainConfig(task_id=body.task_id, dataset_id=body.dataset_id, version_id=body.version_id, method=body.method, architecture=body.architecture, epochs=body.epochs,
+                                    lr=body.lr, batch=body.batch, image_size=body.image_size, finetune=body.finetune, weights_path=body.weights_path, pretrained_note=body.pretrained_note,
+                                    ood_dir=body.ood_dir, max_per_split=body.max_per_split, seed=body.seed, resume=body.resume, device=body.device, allow_long_run=body.allow_long_run)
+
+
+@router.post("/admin/train/plan")
+def train_plan(body: TrainReq, user=Depends(admin)):
+    """What a training run would need and whether it fits this machine, without starting it."""
+    return orchestrator.plan(_train_config(body))
+
+
+@router.get("/admin/training-runs")
+def training_runs(limit: int = 50, user=Depends(admin)):
+    return orchestrator.list_runs(limit)
+
+
+@router.get("/admin/tasks/{task}/readiness")
+def task_readiness(task: str, user=Depends(admin)):
+    """Can a training run for this task start today? If not: exactly why (licence gate, missing data, import)."""
+    try:
+        return pipeline.readiness(task)
+    except KeyError:
+        raise HTTPException(404, "Unknown task.")
+
+
+@router.get("/admin/datasets/{did}/card")
+def dataset_card(did: str, markdown: bool = False, user=Depends(admin)):
+    c = registry.card(did)
+    if c is None:
+        raise HTTPException(404, "Unknown dataset.")
+    from fastapi.responses import PlainTextResponse
+    from ..training import cards
+    return PlainTextResponse(cards.dataset_card_markdown(c), media_type="text/markdown") if markdown else c
+
+
+@router.get("/admin/models/{mid}/card")
+def model_card(mid: str, user=Depends(admin)):
+    from fastapi.responses import PlainTextResponse
+    from ..training import cards
+    ms = {m["model_id"]: m for m in trainer.list_models()}
+    if mid not in ms:
+        raise HTTPException(404, "Unknown model.")
+    m = ms[mid]
+    return PlainTextResponse(cards.model_card_markdown(m, m["gates"], m.get("status", ""), m.get("evidence_class", "public_research_dataset")), media_type="text/markdown")
+
+
+@router.post("/admin/datasets/cleanup-partials")
+def cleanup_partials(older_than_hours: float = 24.0, user=Depends(admin)):
+    """Remove stale incomplete downloads. Recent ones are kept: they are what makes a download resumable."""
+    removed = importer.sweep_partials(older_than_s=max(older_than_hours, 1.0) * 3600)
+    db.audit(user["id"], "dataset.cleanup_partials", "", {"removed": len(removed)})
+    return {"removed": removed}
 
 
 @router.get("/admin/train/checkpoints")

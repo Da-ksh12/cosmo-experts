@@ -14,7 +14,7 @@ from tests.test_pg_backend import CTX_SECRET, pg_server  # noqa: F401  (fixtures
 
 T = "2026-10-18T10:00:00Z"
 TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
-          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "notifications", "jobs"]
+          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "notifications", "jobs"]
 
 
 def C(uid, role, admin="none"):
@@ -48,6 +48,7 @@ def rls(pg_server):
         x("insert into jobs(id,owner_id,task,status,created_at) values(?,?,'t','done',now())", (f"j-{p}", p))
     x("insert into care_plans(id,patient_id,doctor_id,status,assessment,updated_at) values('cp-draft','p1','d1','draft','secret draft',now()),('cp-ok','p1','d1','approved','approved plan',now())")
     x("insert into legal_holds(id,patient_id,reason_code,placed_by,placed_at) values('lh1','p1','other','a1',now())")
+    x("insert into training_runs(id,task,dataset_id,version_id,config,config_hash,plan,status,started_at,actor,device) values('tr1','t','d','v','{}','h','{}','done',now(),'a1','cpu')")
     x("insert into kb_articles(id,title,body,review_status,version) values('kb-ok','A','a','approved',1),('kb-dr','D','d','draft',1)")
     x("insert into price_items(id,name,unit_price,active) values('pi1','Peel',100,1)")
     x("insert into settings values('quote_config','{}')")
@@ -296,3 +297,17 @@ def test_audit_entries_can_only_be_purged_through_the_system_only_function(rls):
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
         writes(be, ADM, "delete from audit")
     assert be.q("select app.purge_audit(?::timestamptz, 10000) n", (cutoff,), SYS)[0]["n"] >= 0
+
+
+def test_training_runs_are_visible_to_administrators_and_the_system_only_and_never_deleted(rls):
+    be, _ = rls
+    for ctx in (P1, P2, DOC):
+        assert be.q("select count(*) c from training_runs", (), ctx)[0]["c"] == 0
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            writes(be, ctx, "insert into training_runs(id,task,config,config_hash,status,started_at) values('tr-x','t','{}','h','done',now())")
+    assert ids(be, ADM, "training_runs") == ["tr1"]
+    assert writes(be, ADM, "update training_runs set status='failed' where id='tr1'") == 1
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, ADM, "delete from training_runs where id='tr1'")
+    with pytest.raises(psycopg.errors.CheckViolation):
+        writes(be, ADM, "update training_runs set status='whatever' where id='tr1'")

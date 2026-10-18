@@ -19,6 +19,7 @@ from PIL import Image, UnidentifiedImageError
 from .. import db, netguard
 from ..config import DATASET_DIR
 
+IMPORTER_VERSION = "importer-2.0.0"
 MIN_FREE_BYTES = 2 * 1024 ** 3
 _cancel: dict[str, threading.Event] = {}
 IMG_EXT = {".jpg", ".jpeg", ".png"}
@@ -134,9 +135,11 @@ def download(url: str, dest: Path, expected_sha256: str | None, dataset_id: str,
     return dest
 
 
-def ingest_folder(dataset_id: str, folder: Path, actor: str, labels_csv: Path | None = None, limit: int | None = None) -> dict:
+def ingest_folder(dataset_id: str, folder: Path, actor: str, labels_csv: Path | None = None, limit: int | None = None, class_mapping: dict | None = None) -> dict:
     """Validate a local folder of images (already obtained under the dataset's terms) into a versioned manifest.
-    labels_csv columns: filename,label[,group_id][,fitzpatrick][,source]"""
+    labels_csv columns: filename,label[,group_id][,fitzpatrick][,source]
+    class_mapping: optional {dataset label: task label}. Labels without a mapping are EXCLUDED and listed in the manifest (never guessed); the original label is kept.
+    A cancelled run still records what was read, but the manifest says `complete: false` and training refuses an incomplete version."""
     check_disk()
     meta: dict[str, dict] = {}
     if labels_csv:
@@ -187,14 +190,31 @@ def ingest_folder(dataset_id: str, folder: Path, actor: str, labels_csv: Path | 
         seen_hash.append({"file": rel, "phash": ph})
         entries.append(e)
     entries = [e for e in entries if not e.get("_conflict")]
+    unmapped = []
+    if class_mapping:
+        mapped = []
+        for e in entries:
+            tgt = class_mapping.get(e["label"]) if e.get("label") else None
+            if tgt is None:
+                unmapped.append({"file": e["file"], "label": e.get("label")})
+                continue
+            mapped.append(dict(e, label_original=e["label"], label=tgt))
+        entries = mapped
+    cancelled = any(x.get("error") == "cancelled" for x in errors)
     version = (db.q1("SELECT COUNT(*) c FROM dataset_versions WHERE dataset_id=?", (dataset_id,)) or {"c": 0})["c"] + 1
+    from ..training import cards
     manifest = {"dataset_id": dataset_id, "version": version, "root": str(folder), "count": len(entries),
-                "duplicates_skipped": dups, "label_conflicts_excluded": conflicts, "near_duplicates_flagged": near, "errors": errors, "entries": entries}
+                "duplicates_skipped": dups, "label_conflicts_excluded": conflicts, "near_duplicates_flagged": near, "errors": errors, "entries": entries,
+                "complete": not cancelled, "imported_at": db.now(), "importer": IMPORTER_VERSION,
+                "class_mapping": class_mapping or None, "unmapped_labels_excluded": unmapped,
+                "class_distribution": cards.class_distribution([e for e in entries if e.get("label")]), "fitzpatrick_distribution": cards.fitzpatrick_distribution(entries),
+                "subjects": len({e["group_id"] for e in entries}),
+                "labels_source": {"file": labels_csv.name, "sha256": sha256_file(labels_csv)} if labels_csv else None}
     vid = db.uid()
     db.x("INSERT INTO dataset_versions VALUES(?,?,?,?)", (vid, dataset_id, json.dumps(manifest), db.now()))
     db.audit(actor, "dataset.import", dataset_id, {"version": version, "count": len(entries), "dups": len(dups), "label_conflicts": len(conflicts), "near_flagged": len(near), "errors": len(errors)})
     return {"version_id": vid, "version": version, "count": len(entries), "duplicates_skipped": len(dups), "label_conflicts_excluded": len(conflicts),
-            "near_duplicates_flagged": len(near), "errors": errors}
+            "near_duplicates_flagged": len(near), "errors": errors, "complete": not cancelled, "unmapped_labels_excluded": len(unmapped)}
 
 
 def make_splits(entries: list[dict], seed: int = 17, fractions=(0.7, 0.15, 0.15)) -> dict:
@@ -210,23 +230,79 @@ def make_splits(entries: list[dict], seed: int = 17, fractions=(0.7, 0.15, 0.15)
     return out
 
 
-def safe_unzip(zip_path: Path, dest: Path) -> int:
-    """Extract only regular image/csv members, rejecting path traversal and absolute paths."""
+MAX_ZIP_MEMBERS = 200_000
+MAX_ZIP_TOTAL = 50 * 1024 ** 3
+MAX_ZIP_RATIO = 200
+
+
+def safe_unzip(zip_path: Path, dest: Path, max_members: int = MAX_ZIP_MEMBERS, max_total: int = MAX_ZIP_TOTAL, max_ratio: int = MAX_ZIP_RATIO) -> int:
+    """Extract only regular image/csv members. Refuses path traversal and absolute paths, symbolic links, archives with too many members, archives that would expand beyond
+    `max_total` bytes or past the free disk space, and members with a decompression ratio above `max_ratio` (zip bombs). Files written before a failure are removed again,
+    so an aborted extraction leaves nothing half-extracted."""
     import zipfile
     dest.mkdir(parents=True, exist_ok=True)
     n = 0
     root = dest.resolve()
+    written: list[Path] = []
     with zipfile.ZipFile(zip_path) as z:
-        for info in z.infolist():
-            if info.is_dir():
-                continue
-            target = (dest / info.filename).resolve()
-            if root not in target.parents and target != root:
-                raise ImportError_(f"Unsafe path in archive: {info.filename}")
-            if target.suffix.lower() not in IMG_EXT | {".csv", ".txt"}:
-                continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with z.open(info) as src, open(target, "wb") as out:
-                shutil.copyfileobj(src, out)
-            n += 1
+        infos = [i for i in z.infolist() if not i.is_dir()]
+        if len(infos) > max_members:
+            raise ImportError_(f"The archive has too many members ({len(infos)}).")
+        total = sum(i.file_size for i in infos)
+        if total > max_total:
+            raise ImportError_("The archive would expand beyond the size limit.")
+        for i in infos:
+            if i.compress_size and i.file_size / max(i.compress_size, 1) > max_ratio and i.file_size > 1 << 20:
+                raise ImportError_(f"Suspicious compression ratio in {i.filename}.")
+        check_disk(total)
+        try:
+            for info in infos:
+                target = (dest / info.filename).resolve()
+                if root not in target.parents and target != root:
+                    raise ImportError_(f"Unsafe path in archive: {info.filename}")
+                if (info.external_attr >> 16) & 0o170000 == 0o120000:
+                    raise ImportError_(f"Symbolic link in archive: {info.filename}")
+                if target.suffix.lower() not in IMG_EXT | {".csv", ".txt"}:
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                written.append(target)
+                with z.open(info) as src, open(target, "wb") as out:
+                    shutil.copyfileobj(src, out)
+                n += 1
+        except BaseException:
+            for w in written:
+                w.unlink(missing_ok=True)
+            raise
     return n
+
+
+def sweep_partials(root: Path | None = None, older_than_s: float = 86400.0) -> list[str]:
+    """Remove stale incomplete downloads (`*.part`) older than `older_than_s`. Recent partial files are kept: they are what makes a download resumable."""
+    import time
+    base = Path(root) if root else DATASET_DIR
+    removed = []
+    for p in base.rglob("*.part"):
+        try:
+            if time.time() - p.stat().st_mtime > older_than_s:
+                p.unlink()
+                removed.append(str(p.relative_to(base)))
+        except OSError:
+            continue
+    return removed
+
+
+def verify_files(manifest: dict, sample: int | None = 50, seed: int = 0) -> dict:
+    """Re-hash a seeded random sample (or all) of the manifest's files against the recorded SHA-256 values: detects moved, deleted or altered data before training starts."""
+    import random
+    entries = list(manifest.get("entries", []))
+    if sample and len(entries) > sample:
+        entries = random.Random(seed).sample(entries, sample)
+    missing, mismatched = [], []
+    root = Path(manifest["root"])
+    for e in entries:
+        p = root / e["file"]
+        if not p.is_file():
+            missing.append(e["file"])
+        elif sha256_file(p) != e["sha256"]:
+            mismatched.append(e["file"])
+    return {"checked": len(entries), "missing": missing, "mismatched": mismatched, "ok": not missing and not mismatched}

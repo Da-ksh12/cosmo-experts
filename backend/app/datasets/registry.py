@@ -71,13 +71,42 @@ def seed():
             db.x("INSERT INTO datasets VALUES(?,?,?,?)", (s["id"], json.dumps(rec), "unreviewed", db.now()))
 
 
+# Fields added after the first registry records were written: filled with explicit "not recorded" defaults, never with guesses.
+NEW_FIELDS = {"publisher": None, "provenance": None, "restrictions": [], "import_status": "not_imported", "class_mapping": None}
+IMPORT_STATUSES = ("not_imported", "importing", "imported", "incomplete", "failed", "cancelled")
+
+
 def get(dataset_id: str) -> dict | None:
     r = db.q1("SELECT * FROM datasets WHERE id=?", (dataset_id,))
     if not r:
         return None
     d = json.loads(r["data"])
+    for k, v in NEW_FIELDS.items():
+        d.setdefault(k, list(v) if isinstance(v, list) else v)
     d["approval_status"] = r["approval_status"]
     return d
+
+
+def set_import_status(dataset_id: str, status: str, note: str = "") -> None:
+    if status not in IMPORT_STATUSES:
+        raise ValueError("unknown import status")
+    d = get(dataset_id)
+    if d is None:
+        return
+    d["import_status"] = status
+    d["import_note"] = note[:200]
+    save(d)
+
+
+def latest_manifest(dataset_id: str) -> dict | None:
+    r = db.q1("SELECT manifest FROM dataset_versions WHERE dataset_id=? ORDER BY created_at DESC LIMIT 1", (dataset_id,))
+    return json.loads(r["manifest"]) if r else None
+
+
+def card(dataset_id: str) -> dict | None:
+    from ..training import cards
+    d = get(dataset_id)
+    return cards.dataset_card(d, latest_manifest(dataset_id)) if d else None
 
 
 def save(d: dict):

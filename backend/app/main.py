@@ -45,6 +45,8 @@ async def lifespan(app: FastAPI):
 def _startup():
     db.init()
     gateway_jobs.ensure_schema()
+    from .training import orchestrator
+    orchestrator.mark_interrupted()                  # a training run still marked running belongs to a process that no longer exists
     from . import supabase_auth
     if not supabase_auth.configured():     # demo accounts exist only in local mode
         security.seed_users()

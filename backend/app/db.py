@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS kb_articles(id TEXT PRIMARY KEY, title TEXT, body TEX
 CREATE TABLE IF NOT EXISTS datasets(id TEXT PRIMARY KEY, data TEXT, approval_status TEXT, updated_at REAL);
 CREATE TABLE IF NOT EXISTS dataset_versions(id TEXT PRIMARY KEY, dataset_id TEXT, manifest TEXT, created_at REAL);
 CREATE TABLE IF NOT EXISTS model_versions(id TEXT PRIMARY KEY, task TEXT, data TEXT, status TEXT, created_at REAL);
+CREATE TABLE IF NOT EXISTS training_runs(id TEXT PRIMARY KEY, task TEXT, dataset_id TEXT, version_id TEXT, config TEXT, config_hash TEXT, plan TEXT, status TEXT, started_at REAL,
+  finished_at REAL, model_id TEXT, error TEXT, actor TEXT, device TEXT);
 CREATE TABLE IF NOT EXISTS audit(id TEXT PRIMARY KEY, ts REAL, actor TEXT, action TEXT, target TEXT, detail TEXT);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS field_corrections(id TEXT PRIMARY KEY, field_id TEXT, document_id TEXT, before TEXT, after TEXT, status TEXT, reviewer TEXT,

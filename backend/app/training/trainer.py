@@ -44,13 +44,14 @@ def sha256_file(p) -> str:
     return h.hexdigest()
 
 
-def pick_device():
-    import torch
-    if torch.cuda.is_available():
-        return "cuda"
-    if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
-        return "mps"
-    return "cpu"
+DEVICE_PREFERENCE: str | None = None        # set by the orchestrator for the duration of one run (only one run is active at a time)
+
+
+def pick_device(prefer: str | None = None):
+    """CPU unless a GPU was explicitly requested (COSMO_AI_DEVICE, the run's device setting or `prefer`) or has a passing verification record: see ai/resources.select_device.
+    A GPU that merely exists is not used."""
+    from ..ai.resources import select_device
+    return select_device(prefer or DEVICE_PREFERENCE).kind
 
 
 # ---------------------------------------------------------------- data
@@ -354,6 +355,8 @@ def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resn
     if not row:
         raise ValueError("unknown dataset version")
     mf = json.loads(row["manifest"])
+    if mf.get("complete") is False:
+        raise ValueError("This dataset version is incomplete (the import was cancelled). Import it again before training.")
     entries = [e for e in mf["entries"] if e.get("label")]
     splits = stratified_group_split(entries, seed)
     if max_per_split:

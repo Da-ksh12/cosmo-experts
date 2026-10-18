@@ -3,6 +3,9 @@ import sys
 import tempfile
 
 os.environ["COSMO_RATE_LIMIT"] = "off"
+# The training memory guard (orchestrator.plan) is conservative and depends on how much RAM the host happens to have free at that moment. Tiny synthetic training runs in
+# the tests must not flip with that, so the guard's share is relaxed here; tests of the guard itself set COSMO_TRAIN_RAM_FRACTION explicitly.
+os.environ["COSMO_TRAIN_RAM_FRACTION"] = "20"
 os.environ["COSMO_DATA_DIR"] = tempfile.mkdtemp(prefix="cosmo_test_")
 # the data directory (database, uploads, checkpoints, downloaded fixtures) can reach hundreds of MB: remove it when the test process exits
 import atexit
