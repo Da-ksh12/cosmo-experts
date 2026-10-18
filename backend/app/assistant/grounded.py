@@ -14,12 +14,13 @@ import json
 import re
 from dataclasses import dataclass, field
 
+from ..ai import injection
 from .llm import LLMBackend, LLMError
 
 SYSTEM = (
     "You answer a patient's question using ONLY the numbered SOURCES provided. You are not a doctor. Rules: "
     "never diagnose; never recommend, start, stop or dose any medicine; never interpret a result beyond what a source states; "
-    "if the sources do not answer the question, return an empty claims list. "
+    "if the sources do not answer the question, return an empty claims list. " + injection.DATA_NOTICE + " "
     "Return JSON: {\"claims\":[{\"text\":\"one short plain-language sentence\",\"source_ids\":[n],\"quote\":\"exact words copied from that source\"}]}."
 )
 
@@ -32,6 +33,7 @@ PRESCRIPTIVE = re.compile(r"\b(take|start|stop|increase|decrease|prescribe|dose|
 INTERPRETIVE = re.compile(r"\b(normal|abnormal|within|inside|outside|healthy|deficien\w*|elevated|safe|fine|good|bad|concerning|worrying|severe|mild|serious|risk\w*|"
                           r"optimal|adequate|sufficient|excess\w*|improv\w*|worsen\w*|low|high)\b", re.I)
 NUM = re.compile(r"\d+(?:[.,]\d+)?")
+WITHHELD = "[text withheld: it contains instructions addressed to software]"
 KIND_LABEL = {"document": "report_fact", "knowledge_base": "approved_reference", "quotation": "quotation"}
 
 
@@ -47,6 +49,22 @@ def _licensed(word: str, norm_source: str, raw_source: str) -> bool:
 
 def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s.,/%-]", "", s.lower())).strip()
+
+
+def claim_problem(text: str, quote: str, source_text: str, *, check_wording: bool = True) -> str | None:
+    """Why `text` is not supported by `source_text` (the text it cites), or None when it is. This is the single support check: the verified model path below and the
+    explanation builder (ai/citations.py) both use it, so a statement is held to the same standard wherever it comes from. `check_wording=False` is for fixed, reviewed templates
+    that must name units such as mg/dL (the free-text wording filter would read "mg" as dosing language); the quote, number and interpretive-word checks still apply."""
+    if check_wording and PRESCRIPTIVE.search(text):
+        return "prescriptive or diagnostic wording"
+    src = _norm(source_text)
+    if _norm(quote) not in src:
+        return "quote not found in cited source"
+    if any(not _licensed(w.lower(), src, source_text) for w in INTERPRETIVE.findall(text)):
+        return "interpretive wording not stated in the cited source"
+    if any(n.replace(",", ".") not in src.replace(",", ".") for n in NUM.findall(text)):
+        return "claim contains a number absent from the cited source"
+    return None
 
 
 @dataclass
@@ -68,9 +86,16 @@ class Result:
     model: str = ""
 
 
+def prepare(question: str, passages: list[dict]) -> tuple[str, list[dict]]:
+    """The prompt as the model receives it, and the passages exactly as sent. Sources sit inside a delimited block (random per-request marker; control characters and delimiter look-alikes
+    removed) that is declared to be data; a claim's quotation is later checked against the passages AS SENT, so cleaning can never make a genuine quotation fail or a fake one pass."""
+    safe = [{**p, "text": WITHHELD} if injection.is_instruction_like(p.get("text", "")) else p for p in passages]     # keeps numbering; nothing can be quoted from a withheld source
+    block, _nonce, sent = injection.delimit(safe)
+    return f"{block}\n\nQUESTION: {question}\n\nReturn only the JSON.", sent
+
+
 def build_prompt(question: str, passages: list[dict]) -> str:
-    src = "\n".join(f"[{i + 1}] ({p['kind']}) {p['text'][:500]}" for i, p in enumerate(passages))
-    return f"SOURCES:\n{src}\n\nQUESTION: {question}\n\nReturn only the JSON."
+    return prepare(question, passages)[0]
 
 
 def verify(parsed: dict, passages: list[dict]) -> tuple[list[Verified], list[dict]]:
@@ -85,16 +110,8 @@ def verify(parsed: dict, passages: list[dict]) -> tuple[list[Verified], list[dic
             reason = "missing text, source or quote"
         elif any(i < 1 or i > len(passages) for i in ids):
             reason = "cites a source that does not exist"
-        elif PRESCRIPTIVE.search(text):
-            reason = "prescriptive or diagnostic wording"
         else:
-            src = _norm(" ".join(passages[i - 1]["text"] for i in ids))
-            if _norm(quote) not in src:
-                reason = "quote not found in cited source"
-            elif any(not _licensed(w.lower(), src, " ".join(passages[i - 1]["text"] for i in ids)) for w in INTERPRETIVE.findall(text)):
-                reason = "interpretive wording not stated in the cited source"
-            elif any(n.replace(",", ".") not in src.replace(",", ".") for n in NUM.findall(text)):
-                reason = "claim contains a number absent from the cited source"
+            reason = claim_problem(text, quote, " ".join(passages[i - 1]["text"] for i in ids))
         if reason:
             bad.append({"claim": text[:120], "reason": reason})
         else:
@@ -104,8 +121,9 @@ def verify(parsed: dict, passages: list[dict]) -> tuple[list[Verified], list[dic
 
 def generate(backend: LLMBackend, question: str, passages: list[dict], max_tokens: int = 350) -> Result:
     res = Result()
+    prompt, sent = prepare(question, passages)
     try:
-        g = backend.generate(SYSTEM, build_prompt(question, passages), max_tokens=max_tokens, json_schema=SCHEMA)
+        g = backend.generate(SYSTEM, prompt, max_tokens=max_tokens, json_schema=SCHEMA)
     except LLMError as e:
         res.dropped.append({"claim": "", "reason": f"backend error: {e}"}); return res
     res.raw, res.seconds, res.tokens, res.model = g.text, g.seconds, g.completion_tokens, g.model
@@ -119,5 +137,5 @@ def generate(backend: LLMBackend, question: str, passages: list[dict], max_token
             res.json_ok = bool(m)
         except json.JSONDecodeError:
             parsed = {}
-    res.claims, res.dropped = verify(parsed, passages)
+    res.claims, res.dropped = verify(parsed, sent)
     return res

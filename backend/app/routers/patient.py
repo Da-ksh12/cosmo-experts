@@ -10,11 +10,11 @@ from pydantic import BaseModel, Field
 from .. import consent, db, retention, security
 from ..assistant import engine
 from ..config import MAX_UPLOAD_BYTES, UPLOAD_DIR
-from ..documents import explain, pipeline, store
+from ..documents import pipeline, store
 from ..imaging import suitability
 from ..quotes import service as quotes
 from .. import storage
-from ..services import core, notify
+from ..services import core, explanations, notify
 from ..security import current_user, require, can_access_patient_data
 from ..speech import adapters as speech
 
@@ -166,13 +166,11 @@ def get_document_file(doc_id: str, user=Depends(current_user)):
 
 @router.get("/documents/{doc_id}/explanation")
 def get_explanation(doc_id: str, lang: str = "en", user=Depends(current_user)):
-    d = _doc_or_404(doc_id, user)
-    fields = db.q("SELECT * FROM doc_fields WHERE document_id=? AND review_status!='rejected' ORDER BY source_page,field_no", (doc_id,))
-    pages = db.q("SELECT page_no,method,ocr_confidence FROM doc_pages WHERE document_id=?", (doc_id,))
-    out = explain.explain_document(d, fields, pages, lang)
-    out["document_review_status"] = d["review_status"]
-    out["extraction_warnings"] = [w for w in (d["error"] or "").split("; ") if w]
-    return out
+    """Same service as the engine capability `document.explain`: one access rule, one audit record, one safety screening."""
+    try:
+        return explanations.build(user, doc_id, lang)
+    except explanations.NotFound:
+        raise HTTPException(404, "Document not found.")
 
 
 @router.delete("/documents/{doc_id}")

@@ -62,7 +62,7 @@ def approved_articles() -> list[dict]:
     """Approved AND unmodified since approval. A row whose text no longer matches its approval hash (tampering, direct DB edit, legacy approval without a record) is excluded."""
     out = []
     now = time.time()
-    for a in db.q("SELECT id,title,body,language,version,content_sha256,review_due FROM kb_articles WHERE review_status='approved'"):
+    for a in db.q("SELECT id,title,body,language,version,content_sha256,review_due,reviewed_by,reviewed_at,source_note,content_origin FROM kb_articles WHERE review_status='approved'"):
         if a["review_due"] and a["review_due"] < now:                  # an approval lapses when its scheduled re-review date passes: fail closed
             continue
         if a["content_sha256"] and a["content_sha256"] == article_hash(a["title"], a["body"], a["language"] or "en"):

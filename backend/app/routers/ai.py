@@ -58,3 +58,31 @@ def analyze_image(request: Request, category: str = Form(...), task: str | None 
         raise HTTPException(422, e.public_message) from None
     db.audit(user["id"], "ai.image_analyze", category, {"route": res.route, "tasks": [o.task for o in res.outcomes], "research": bool(research), "request_id": res.request_id})
     return res
+
+
+# ---------------------------------------------------------------- approved knowledge and report explanations
+from pydantic import BaseModel, Field  # noqa: E402
+
+from ..ai.schemas import RunEnvelope  # noqa: E402
+
+
+class KnowledgeQuery(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    k: int = Field(default=3, ge=1, le=10)
+
+
+@router.post("/knowledge/search", response_model=RunEnvelope)
+def knowledge_search(body: KnowledgeQuery, request: Request, user=Depends(current_user)):
+    """Passage-level search of clinician-approved, unexpired articles. Answers carry citations; below the calibrated threshold the answer is an abstention that says why."""
+    return get_engine().run("knowledge.search", body.model_dump(), user=user, request_id=getattr(request.state, "request_id", ""))
+
+
+@router.get("/documents/{doc_id}/explanation", response_model=RunEnvelope)
+def document_explanation(doc_id: str, request: Request, lang: str = "en", user=Depends(consent.required)):
+    """The same explanation as GET /api/documents/{id}/explanation, inside the engine envelope (availability, safety review, provenance). Access is decided from the signed-in person."""
+    if lang not in ("en", "hi", "hinglish"):
+        raise HTTPException(422, "Unknown language.")
+    env = get_engine().run("document.explain", {"document_id": doc_id, "lang": lang}, user=user, request_id=getattr(request.state, "request_id", ""))
+    if env.status == "rejected_input" and env.message == "Document not found.":
+        raise HTTPException(404, "Document not found.")
+    return env

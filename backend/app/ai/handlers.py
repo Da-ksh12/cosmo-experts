@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ..config import MAX_UPLOAD_BYTES
 from .engine import AIEngine, HandlerContext, HandlerResult
-from .errors import RejectedInput, Unavailable
+from .errors import Forbidden, RejectedInput, Unavailable
 from .schemas import ModelRef
 
 
@@ -41,6 +41,18 @@ class SpeechTextPayload(BaseModel):
     text: str = Field(min_length=1, max_length=5000)
     language: str = Field(default="en", max_length=8)
     rate: float = Field(default=1.0, ge=0.5, le=2.0)
+
+
+class KnowledgePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    query: str = Field(min_length=1, max_length=500)
+    k: int = Field(default=3, ge=1, le=10)
+
+
+class ExplainPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    document_id: str = Field(min_length=1, max_length=64)
+    lang: str = Field(default="en", pattern="^(en|hi|hinglish)$")
 
 
 def _typed(model: type[BaseModel], payload) -> BaseModel:
@@ -127,6 +139,52 @@ def h_hindi_ocr(payload, ctx: HandlerContext) -> HandlerResult:
                          processing_version=res.version)
 
 
+# ---------------------------------------------------------------- knowledge.search / document.explain
+ABSTAIN_TEXT = {"insufficient_evidence": None, "unsupported_language": "The approved information is available in English only, so this question cannot be matched.",
+                "empty_query": "Please ask a longer question.", "no_approved_content": "There is no approved information to search yet."}
+
+
+def validate_knowledge(payload) -> None:
+    _typed(KnowledgePayload, payload)
+
+
+def h_knowledge_search(payload, ctx: HandlerContext) -> HandlerResult:
+    """Approved, unexpired articles only; every hit carries a passage-level citation. The caller's identity decides how much of the review record is shown."""
+    from . import knowledge, safety
+    import hashlib
+    p = _typed(KnowledgePayload, payload)
+    ctx.check()
+    staff = (ctx.user or {}).get("role") in ("doctor", "admin")
+    res = knowledge.search(p.query, k=p.k)
+    ctx.check()
+    out = res.to_dict(staff=staff)
+    if not res.answered:
+        return HandlerResult("abstained", out, ABSTAIN_TEXT.get(res.reason) or safety.ABSTAIN_MSG, processing_version=knowledge.VERSION)
+    ref = "approved_kb:" + hashlib.sha256("|".join(sorted(h.passage.id for h in res.hits)).encode()).hexdigest()[:12]
+    return HandlerResult("ok", out, "", evidence=[h.passage.text for h in res.hits], dataset_ref=ref, processing_version=knowledge.VERSION, labels=["approved_reference"])
+
+
+def validate_explain(payload) -> None:
+    _typed(ExplainPayload, payload)
+
+
+def h_document_explain(payload, ctx: HandlerContext) -> HandlerResult:
+    """The same service as GET /api/documents/{id}/explanation. The person comes from the authenticated context, never from the payload; a document the caller may not open is reported
+    exactly like one that does not exist."""
+    from ..services import explanations
+    p = _typed(ExplainPayload, payload)
+    if not ctx.user or not ctx.user.get("id"):
+        raise Forbidden()
+    ctx.check()
+    try:
+        out = explanations.build(ctx.user, p.document_id, p.lang)
+    except explanations.NotFound:
+        raise RejectedInput("Document not found.") from None
+    ctx.check()
+    evid = [i["citation"]["excerpt"] for s in out["sections"] for i in s["items"] if i.get("citation")]
+    return HandlerResult("abstained" if out.get("abstained") else "review_required", out, "", processing_version=out.get("version"), evidence=evid)
+
+
 # ---------------------------------------------------------------- image.lesion_classification_research
 def validate_research(payload) -> None:
     p = _typed(ResearchImagePayload, payload)
@@ -182,6 +240,8 @@ def register_all(engine: AIEngine) -> None:
     engine.register("document.extract", h_document_extract, validate_document)
     engine.register("document.medications", h_document_medications, validate_document)
     engine.register("document.ocr.hindi", h_hindi_ocr, validate_document)
+    engine.register("document.explain", h_document_explain, validate_explain)
+    engine.register("knowledge.search", h_knowledge_search, validate_knowledge)
     engine.register("image.lesion_classification_research", h_research_image, validate_research)
     engine.register("speech.transcribe", h_transcribe, validate_audio)
     engine.register("speech.synthesize", h_synthesize, validate_speech_text)

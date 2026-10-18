@@ -13,6 +13,8 @@ from .llm import get_backend
 from .retrieval import get_retriever
 
 from .. import clinical_content, db
+from ..ai import injection, knowledge
+from ..ai.citations import document_citation
 from ..quotes import service as quotes_service
 
 
@@ -39,8 +41,8 @@ def _passages(owner_id: str) -> list[dict]:
             # the test name is the retrieval key; the displayed excerpt is the exact source line
             out.append({"text": f["source_text"], "match": f'{f["name"]} result {f["name"]}', "kind": "document",
                         "document_id": d["id"], "filename": d["filename"], "page": f["source_page"]})
-    for a in clinical_content.approved_articles():
-        out.append({"text": f'{a["title"]}. {a["body"]}', "kind": "knowledge_base", "article_id": a["id"], "title": a["title"], "version": a["version"]})
+    for kp in knowledge.load("en").passages:                       # approved, unexpired and unchanged articles, split into cited passages (instruction-like passages already excluded)
+        out.append({**kp.pool_entry(), "article_id": kp.article_id, "title": kp.title, "version": kp.version})
     return out
 
 
@@ -72,7 +74,8 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
         prev = said[0] if said else ""
         query = f"{prev} {question}".strip()
 
-    pool = _passages(owner_id)
+    pool, quarantined = injection.partition(_passages(owner_id))     # text that addresses software is data we do not use: not retrieved, not quoted, not sent to a model
+    notice = ({"notice": "Some text in your documents looks like instructions to software, so it was not used in this answer.", "quarantined_text": len(quarantined)} if quarantined else {})
     if QUOTE_Q.search(question):
         qp = _quotes(owner_id)
         if qp:
@@ -83,15 +86,16 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
         return {"answer": "You don't have an approved quotation yet. You can request one and the clinic team will prepare it.",
                 "sources": [], "status": "available", "abstained": False}
     if not pool:
-        return {"answer": ABSTAIN_MSG, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "no_evidence"}
+        return {"answer": ABSTAIN_MSG, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "no_evidence", **notice}
 
     ret = get_retriever()
+
     def passing(q):
         return [(pool[h.index], h.score) for h in ret.search(q, pool, k=3) if h.score >= ret.threshold]
     # a short follow-up such as "and its range?" refers to the previous question, so its evidence takes precedence over a bare keyword match
     hits = (passing(query) or passing(prev)) if prev else passing(question)
     if not hits:
-        return {"answer": ABSTAIN_MSG, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "no_evidence"}
+        return {"answer": ABSTAIN_MSG, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "no_evidence", **notice}
 
     # Optional experimental mode: a local LLM drafts claims that are then verified against the cited text. Off unless explicitly enabled
     # (COSMO_ASSISTANT_MODE=llm + a model); on any failure or when no claim survives verification the extractive answer below is used.
@@ -111,7 +115,7 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
                         srcs.append(_source(p, 0.0, c.provenance))
                 return {"answer": "\n- ".join(["Here is what I found that relates to your question (each statement was checked against its source):"] + lines)
                         + "\nThis is not a diagnosis. Your doctor can explain what it means for you.", "sources": srcs, "status": "clinician_review_required",
-                        "abstained": False, "mode": "llm_verified", "model": g.model, "dropped_unverified_claims": len(g.dropped)}
+                        "abstained": False, "mode": "llm_verified", "model": g.model, "dropped_unverified_claims": len(g.dropped), **notice}
 
     bullets, sources, seen = [], [], set()
     for p, s in hits:
@@ -122,14 +126,17 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
         if p["kind"] == "document":
             bullets.append(f'Your document "{p["filename"]}" (page {p["page"]}) says: "{p["text"][:300]}"')
         else:
-            bullets.append(f'Clinic-approved information, "{p["title"]}": {p["text"][:400]}')
+            bullets.append(f'Clinic-approved information, "{p["title"]}": {p["passage"].text[:400]}')
         sources.append(_source(p, s, "report_fact" if p["kind"] == "document" else "approved_reference"))
     return {"answer": "Here is what I found that relates to your question:\n- " + "\n- ".join(bullets)
             + "\nThis repeats what the sources say; it is not a diagnosis. Your doctor can explain what it means for you.",
-            "sources": sources, "status": "clinician_review_required", "abstained": False, "mode": "extractive"}
+            "sources": sources, "status": "clinician_review_required", "abstained": False, "mode": "extractive", **notice}
 
 
 def _source(p: dict, score: float, provenance: str) -> dict:
+    """The source entries the screens have always received, plus a `citation` with the passage-level detail (page and text, or article version, span and review record)."""
     if p["kind"] == "document":
-        return {"kind": "document", "document_id": p["document_id"], "page": p["page"], "excerpt": p["text"][:300], "score": round(score, 2), "provenance": provenance}
-    return {"kind": "knowledge_base", "article_id": p["article_id"], "title": p["title"], "version": p["version"], "score": round(score, 2), "provenance": provenance}
+        return {"kind": "document", "document_id": p["document_id"], "page": p["page"], "excerpt": p["text"][:300], "score": round(score, 2), "provenance": provenance,
+                "citation": document_citation(p["document_id"], page=p["page"], excerpt=p["text"], item="text")}
+    return {"kind": "knowledge_base", "article_id": p["article_id"], "title": p["title"], "version": p["version"], "score": round(score, 2), "provenance": provenance,
+            "citation": p["passage"].citation(score)}

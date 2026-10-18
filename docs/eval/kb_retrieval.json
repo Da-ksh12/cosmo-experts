@@ -1,0 +1,473 @@
+{
+  "schema": "cosmo-eval-1",
+  "name": "kb_retrieval",
+  "created_at": "2026-10-18T23:02:41+0530",
+  "evidence_class": "synthetic_fixture",
+  "real_world_evidence": false,
+  "code_revision": "git-48984a1c0a32+dirty",
+  "config": {
+    "chunk_sizes": {
+      "article": 1000000,
+      "passage240": 240
+    },
+    "max_dev_false_answer_rate": 0.05,
+    "retrievers": [
+      "lexical",
+      "dense",
+      "hybrid0.5"
+    ],
+    "embedder": "st:bge-small-en-v1.5",
+    "passage_max_chars": 240
+  },
+  "config_sha256": "48b86917f926787efd7aecaf8594354d7ae78cfff412a74654f85ddcec8834c0",
+  "dataset": {
+    "corpus": "content/kb_drafts.json (unreviewed drafts, evaluation text only)",
+    "corpus_sha256": "18f5ac0db0dc851c472d808767f396f361df38117d45738bd1aedab36425b584",
+    "queries": {
+      "dev_in": 33,
+      "dev_out": 30,
+      "heldout_in": 33,
+      "heldout_out": 30
+    }
+  },
+  "environment": {
+    "python": "3.11.9",
+    "platform": "Windows",
+    "numpy": "2.2.6",
+    "torch": "2.14.1+cpu"
+  },
+  "notes": [
+    "Queries are hand-written by one author; the held-out set is not independent of the author or the system design.",
+    "The corpus is unreviewed draft text. Nothing here validates the clinical content of any article.",
+    "Thresholds were chosen on the development set only and applied once to the held-out set."
+  ],
+  "results": {
+    "lexical@article": {
+      "retriever_mode": "lexical",
+      "passages": 11,
+      "development": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.667,
+        "hit@3": 0.848,
+        "MRR": 0.753,
+        "AUROC_answerable_vs_not": 0.914,
+        "threshold": 0.1658,
+        "answered_in_scope": "26/33",
+        "answered_with_supporting_passage": "19/33",
+        "correct_answer_rate": 0.576,
+        "correct_answer_rate_ci95": [
+          0.4081,
+          0.7276
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a high TSH value mean for me"
+        ],
+        "answered_but_unsupported": [
+          "what does reference range mean on my lab report",
+          "who decides the normal range printed on a report",
+          "why is a range printed next to each result",
+          "can a doctor diagnose from one number",
+          "what does the H next to my result mean",
+          "why do two labs give different normal ranges",
+          "my old report has another range than the new one"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.818,
+        "hit@3": 0.939,
+        "MRR": 0.879,
+        "AUROC_answerable_vs_not": 0.948,
+        "threshold": 0.1658,
+        "answered_in_scope": "26/33",
+        "answered_with_supporting_passage": "23/33",
+        "correct_answer_rate": 0.697,
+        "correct_answer_rate_ci95": [
+          0.5266,
+          0.8262
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a low vitamin B12 mean for me"
+        ],
+        "answered_but_unsupported": [
+          "if one test value is out of range am I ill",
+          "a lone result does not tell everything, right",
+          "why is my range different from my friend's report"
+        ]
+      }
+    },
+    "dense@article": {
+      "retriever_mode": "dense",
+      "passages": 11,
+      "development": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.909,
+        "hit@3": 1.0,
+        "MRR": 0.949,
+        "AUROC_answerable_vs_not": 0.993,
+        "threshold": 0.5962,
+        "answered_in_scope": "33/33",
+        "answered_with_supporting_passage": "30/33",
+        "correct_answer_rate": 0.909,
+        "correct_answer_rate_ci95": [
+          0.7643,
+          0.9686
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a high TSH value mean for me"
+        ],
+        "answered_but_unsupported": [
+          "who decides the normal range printed on a report",
+          "why is a range printed next to each result",
+          "how can the clinic see my report"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.909,
+        "hit@3": 1.0,
+        "MRR": 0.955,
+        "AUROC_answerable_vs_not": 0.993,
+        "threshold": 0.5962,
+        "answered_in_scope": "32/33",
+        "answered_with_supporting_passage": "30/33",
+        "correct_answer_rate": 0.909,
+        "correct_answer_rate_ci95": [
+          0.7643,
+          0.9686
+        ],
+        "out_of_scope_wrongly_answered": "4/30",
+        "false_answer_rate": 0.133,
+        "false_answer_rate_ci95": [
+          0.0531,
+          0.2968
+        ],
+        "wrongly_answered_near": 4,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what is the normal haemoglobin range in men",
+          "what does a low vitamin B12 mean for me",
+          "what is the usual creatinine range",
+          "how often should I check my blood sugar"
+        ],
+        "answered_but_unsupported": [
+          "different methods can print different ranges, is that so",
+          "how do I add a report so the clinic team can see it"
+        ]
+      }
+    },
+    "hybrid0.5@article": {
+      "retriever_mode": "hybrid(0.5)",
+      "passages": 11,
+      "development": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.879,
+        "hit@3": 1.0,
+        "MRR": 0.934,
+        "AUROC_answerable_vs_not": 0.975,
+        "threshold": 0.3751,
+        "answered_in_scope": "30/33",
+        "answered_with_supporting_passage": "27/33",
+        "correct_answer_rate": 0.818,
+        "correct_answer_rate_ci95": [
+          0.6561,
+          0.9139
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a high TSH value mean for me"
+        ],
+        "answered_but_unsupported": [
+          "who decides the normal range printed on a report",
+          "why is a range printed next to each result",
+          "can a doctor diagnose from one number"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.939,
+        "hit@3": 1.0,
+        "MRR": 0.965,
+        "AUROC_answerable_vs_not": 0.979,
+        "threshold": 0.3751,
+        "answered_in_scope": "28/33",
+        "answered_with_supporting_passage": "26/33",
+        "correct_answer_rate": 0.788,
+        "correct_answer_rate_ci95": [
+          0.6225,
+          0.8932
+        ],
+        "out_of_scope_wrongly_answered": "2/30",
+        "false_answer_rate": 0.067,
+        "false_answer_rate_ci95": [
+          0.0185,
+          0.2132
+        ],
+        "wrongly_answered_near": 2,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a low vitamin B12 mean for me",
+          "what is the usual creatinine range"
+        ],
+        "answered_but_unsupported": [
+          "different methods can print different ranges, is that so",
+          "if one test value is out of range am I ill"
+        ]
+      }
+    },
+    "lexical@passage240": {
+      "retriever_mode": "lexical",
+      "passages": 20,
+      "development": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.697,
+        "hit@3": 0.848,
+        "MRR": 0.768,
+        "AUROC_answerable_vs_not": 0.911,
+        "threshold": 0.2105,
+        "answered_in_scope": "24/33",
+        "answered_with_supporting_passage": "16/33",
+        "correct_answer_rate": 0.485,
+        "correct_answer_rate_ci95": [
+          0.325,
+          0.6478
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a high TSH value mean for me"
+        ],
+        "answered_but_unsupported": [
+          "what does reference range mean on my lab report",
+          "who decides the normal range printed on a report",
+          "why is a range printed next to each result",
+          "what does the H next to my result mean",
+          "what is the meaning of the high and low flags",
+          "why does the unit matter",
+          "how do I take a good photo for the clinic",
+          "is the quotation the final price"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.818,
+        "hit@3": 0.939,
+        "MRR": 0.879,
+        "AUROC_answerable_vs_not": 0.947,
+        "threshold": 0.2105,
+        "answered_in_scope": "27/33",
+        "answered_with_supporting_passage": "23/33",
+        "correct_answer_rate": 0.697,
+        "correct_answer_rate_ci95": [
+          0.5266,
+          0.8262
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a low vitamin B12 mean for me"
+        ],
+        "answered_but_unsupported": [
+          "different methods can print different ranges, is that so",
+          "if one test value is out of range am I ill",
+          "a lone result does not tell everything, right",
+          "why is my range different from my friend's report"
+        ]
+      }
+    },
+    "dense@passage240": {
+      "retriever_mode": "dense",
+      "passages": 20,
+      "development": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.939,
+        "hit@3": 1.0,
+        "MRR": 0.96,
+        "AUROC_answerable_vs_not": 0.995,
+        "threshold": 0.6478,
+        "answered_in_scope": "32/33",
+        "answered_with_supporting_passage": "24/33",
+        "correct_answer_rate": 0.727,
+        "correct_answer_rate_ci95": [
+          0.5578,
+          0.8493
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a high TSH value mean for me"
+        ],
+        "answered_but_unsupported": [
+          "who decides the normal range printed on a report",
+          "why is a range printed next to each result",
+          "why do two labs give different normal ranges",
+          "my old report has another range than the new one",
+          "why does the unit matter",
+          "how should I get ready for a lab test",
+          "has a person checked my result or only the software",
+          "is the quotation the final price"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.909,
+        "hit@3": 1.0,
+        "MRR": 0.949,
+        "AUROC_answerable_vs_not": 0.995,
+        "threshold": 0.6478,
+        "answered_in_scope": "32/33",
+        "answered_with_supporting_passage": "29/33",
+        "correct_answer_rate": 0.879,
+        "correct_answer_rate_ci95": [
+          0.7267,
+          0.9518
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a low vitamin B12 mean for me"
+        ],
+        "answered_but_unsupported": [
+          "different methods can print different ranges, is that so",
+          "if one test value is out of range am I ill",
+          "how do doctors interpret my lab values"
+        ]
+      }
+    },
+    "hybrid0.5@passage240": {
+      "retriever_mode": "hybrid(0.5)",
+      "passages": 20,
+      "development": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.879,
+        "hit@3": 1.0,
+        "MRR": 0.934,
+        "AUROC_answerable_vs_not": 0.977,
+        "threshold": 0.4033,
+        "answered_in_scope": "28/33",
+        "answered_with_supporting_passage": "22/33",
+        "correct_answer_rate": 0.667,
+        "correct_answer_rate_ci95": [
+          0.4961,
+          0.8025
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a high TSH value mean for me"
+        ],
+        "answered_but_unsupported": [
+          "who decides the normal range printed on a report",
+          "why is a range printed next to each result",
+          "what is the meaning of the high and low flags",
+          "why does the unit matter",
+          "how do I take a good photo for the clinic",
+          "is the quotation the final price"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 33,
+        "n_out_of_scope": 30,
+        "hit@1": 0.909,
+        "hit@3": 1.0,
+        "MRR": 0.944,
+        "AUROC_answerable_vs_not": 0.984,
+        "threshold": 0.4033,
+        "answered_in_scope": "29/33",
+        "answered_with_supporting_passage": "27/33",
+        "correct_answer_rate": 0.818,
+        "correct_answer_rate_ci95": [
+          0.6561,
+          0.9139
+        ],
+        "out_of_scope_wrongly_answered": "1/30",
+        "false_answer_rate": 0.033,
+        "false_answer_rate_ci95": [
+          0.0059,
+          0.1667
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "what does a low vitamin B12 mean for me"
+        ],
+        "answered_but_unsupported": [
+          "different methods can print different ranges, is that so",
+          "if one test value is out of range am I ill"
+        ]
+      }
+    }
+  }
+}

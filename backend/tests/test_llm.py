@@ -205,3 +205,21 @@ def test_real_model_through_the_assistant_api(client, patient, monkeypatch):
     if out["mode"] == "llm_verified":
         assert out["model"].startswith("llama.cpp:") and all(s["provenance"] in ("report_fact", "approved_reference", "quotation") for s in out["sources"])
         assert not grounded.PRESCRIPTIVE.search(out["answer"].split("\n", 1)[1])
+
+
+def test_no_model_state_survives_from_one_request_to_the_next():
+    """Each generation starts from a clean model state, so an answer never depends on which request came before it (and one person's prompt prefix is never reused for another's)."""
+    calls = []
+
+    class FakeLlama:
+        def reset(self):
+            calls.append("reset")
+
+        def create_chat_completion(self, **kw):
+            calls.append("generate")
+            return {"choices": [{"message": {"content": "{}"}}], "usage": {"completion_tokens": 1}}
+    b = LlamaCppBackend("unused.gguf")
+    b._llm = FakeLlama()
+    b.generate("system", "first person's prompt")
+    b.generate("system", "second person's prompt")
+    assert calls == ["reset", "generate", "reset", "generate"]

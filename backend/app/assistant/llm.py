@@ -56,7 +56,9 @@ class LlamaCppBackend(LLMBackend):
         t = time.time()
         with self._lock:
             llm = self._load()
-            kw = {"response_format": {"type": "json_object", "schema": json_schema}} if json_schema else {}
+            llm.reset()                                  # no state of an earlier request survives into this one: the prompt is evaluated from scratch (the library would otherwise reuse the
+                                                         # cached prefix of the previous prompt, which makes an answer depend on who asked before, and shifts the numerics enough to flip near-ties)
+            kw ={"response_format": {"type": "json_object", "schema": json_schema}} if json_schema else {}
             out = llm.create_chat_completion(messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
                                              max_tokens=max_tokens, temperature=0.0, **kw)
         dt = time.time() - t
