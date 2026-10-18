@@ -405,6 +405,7 @@ class TrainReq(BaseModel):
     ood_dir: str | None = None
     max_per_split: int | None = None
     seed: int = 17
+    resume: bool = False          # continue from the last completed epoch of an identical run (same data, split, settings and torch version)
 
 
 _jobs: dict[str, dict] = {}
@@ -442,7 +443,7 @@ def train(body: TrainReq, user=Depends(admin)):
             card = trainer.train(body.task_id, body.dataset_id, body.version_id, user["id"], body.architecture, body.epochs, body.lr, body.batch,
                                  weights_path=body.weights_path, seed=body.seed, max_per_split=body.max_per_split, image_size=body.image_size,
                                  finetune=body.finetune, pretrained_note=body.pretrained_note, progress=progress, should_stop=lambda: job in _stop,
-                                 license_info=lic, ood_dir=body.ood_dir)
+                                 license_info=lic, ood_dir=body.ood_dir, resume=body.resume)
             _jobs[job].update(status="done", model_id=card["model_id"], percent=100.0)
         except trainer.Stopped:
             _jobs[job].update(status="stopped")
@@ -452,6 +453,11 @@ def train(body: TrainReq, user=Depends(admin)):
             db.audit(user["id"], "model.train_failed", job, {"error": str(e)[:300]})
     threading.Thread(target=run, daemon=True).start()
     return {"job_id": job}
+
+
+@router.get("/admin/train/checkpoints")
+def train_checkpoints(user=Depends(admin)):
+    return trainer.list_checkpoints()
 
 
 @router.get("/admin/jobs/{job}")

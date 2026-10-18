@@ -280,10 +280,62 @@ def full_metrics(P, y, classes, entries=None, groups_key="fitzpatrick"):
 
 
 # ---------------------------------------------------------------- main training entry
+CHECKPOINT_DIR = MODEL_DIR / "_checkpoints"
+
+
+def fingerprint(config: dict) -> str:
+    """Identity of a run: everything that must be identical for a resume to continue the SAME experiment."""
+    import torch
+    return hashlib.sha256(json.dumps({**config, "torch": torch.__version__.split("+")[0]}, sort_keys=True).encode()).hexdigest()[:32]
+
+
+class Checkpoint:
+    """One checkpoint per run fingerprint, written atomically after every completed epoch, with a SHA-256 sidecar verified before loading.
+    Loaded with weights_only=True (no arbitrary pickles). A checkpoint for a different configuration, dataset version, split or torch version has a different
+    fingerprint and is simply not found: a resume can never continue a different experiment. Progress inside an unfinished epoch is lost on stop."""
+
+    def __init__(self, directory, fp: str):
+        self.dir, self.fp = Path(directory), fp
+        self.pt, self.meta = self.dir / f"{fp}.pt", self.dir / f"{fp}.json"
+
+    def save(self, state: dict):
+        import torch
+        self.dir.mkdir(parents=True, exist_ok=True)
+        tmp = self.pt.with_suffix(".tmp")
+        torch.save(state, tmp)
+        digest = sha256_file(tmp)
+        tmp.replace(self.pt)
+        self.meta.write_text(json.dumps({"fingerprint": self.fp, "sha256": digest, "epoch": state["epoch"], "saved_at": state["saved_at"], **state.get("meta", {})}), encoding="utf-8")
+
+    def load(self):
+        import torch
+        if not self.pt.is_file() or not self.meta.is_file():
+            return None
+        meta = json.loads(self.meta.read_text(encoding="utf-8"))
+        if meta.get("fingerprint") != self.fp or sha256_file(self.pt) != meta.get("sha256"):
+            raise ValueError("The checkpoint failed its integrity check and was not loaded.")
+        return torch.load(self.pt, map_location="cpu", weights_only=True)
+
+    def discard(self):
+        self.pt.unlink(missing_ok=True)
+        self.meta.unlink(missing_ok=True)
+
+
+def list_checkpoints(directory=None) -> list[dict]:
+    d = Path(directory or CHECKPOINT_DIR)
+    out = []
+    for m in sorted(d.glob("*.json")) if d.is_dir() else []:
+        try:
+            out.append(json.loads(m.read_text(encoding="utf-8")))
+        except ValueError:
+            continue
+    return out
+
+
 def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resnet18", epochs=3, lr=1e-3, batch=16,
           weights_path: str | None = None, freeze_backbone=True, seed=17, max_per_split: int | None = None,
           image_size=224, finetune: str | None = None, pretrained_note: str = "", progress=None, should_stop=None,
-          license_info: dict | None = None, extra_eval=None, ood_dir: str | None = None) -> dict:
+          license_info: dict | None = None, extra_eval=None, ood_dir: str | None = None, resume: bool = False, checkpoint_dir=None) -> dict:
     import torch
     import torch.nn as nn
     log_lines: list[str] = []
@@ -328,6 +380,9 @@ def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resn
     model = build_model(arch, len(classes), weights_path, finetune).to(device)
     pre_sha = sha256_file(weights_path) if weights_path else None
     counts = np.bincount(y["train"], minlength=len(classes))
+    split_hash = hashlib.sha256(json.dumps({k: [e["sha256"] for e in v] for k, v in splits.items()}).encode()).hexdigest()
+    ckpt = Checkpoint(checkpoint_dir or CHECKPOINT_DIR, fingerprint(dict(task=task_id, dataset=dataset_id, version=version_id, arch=arch, epochs=epochs, lr=lr, batch=batch, seed=seed,
+                                                                     image_size=image_size, finetune=finetune, pretrained=pre_sha, split_hash=split_hash, max_per_split=max_per_split)))
 
     # ---------- baselines
     baselines = {}
@@ -356,8 +411,19 @@ def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resn
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=lr, total_steps=epochs * steps_per_epoch)
     rng = np.random.default_rng(seed)
     history, best, best_state, step = [], -1.0, None, 0
+    start_ep, resumed = 0, None
+    if resume:
+        st = ckpt.load()
+        if st is None:
+            log("resume requested but no matching checkpoint exists: starting from epoch 1")
+        else:
+            model.load_state_dict(st["model"]); opt.load_state_dict(st["opt"]); sched.load_state_dict(st["sched"])
+            rng.bit_generator.state = st["np_rng"]; torch.set_rng_state(st["torch_rng"])
+            history, best, best_state, step, start_ep = st["history"], st["best"], st["best_state"], st["step"], st["epoch"]
+            resumed = {"from_epoch": start_ep, "checkpoint_code_revision": st["code_revision"], "resumed_code_revision": code_revision(), "checkpoint_saved_at": st["saved_at"]}
+            log(f"resumed from checkpoint after epoch {start_ep}/{epochs}" + ("" if st["code_revision"] == code_revision() else f" (code revision changed: {st['code_revision']} -> {code_revision()})"))
     t0 = time.time()
-    for ep in range(epochs):
+    for ep in range(start_ep, epochs):
         _set_train(model)
         order = rng.permutation(len(y["train"]))
         tot, n = 0.0, 0
@@ -378,6 +444,9 @@ def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resn
         log(f"epoch {ep + 1}/{epochs} loss {history[-1]['train_loss']} val macro-F1 {vf1:.3f} ({time.time() - t0:.0f}s)")
         if vf1 > best:
             best, best_state = vf1, {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+        ckpt.save({"epoch": ep + 1, "model": model.state_dict(), "opt": opt.state_dict(), "sched": sched.state_dict(), "np_rng": rng.bit_generator.state,
+                   "torch_rng": torch.get_rng_state(), "history": history, "best": best, "best_state": best_state, "step": step,
+                   "code_revision": code_revision(), "saved_at": time.time(), "meta": {"task": task_id, "dataset": dataset_id, "epochs": epochs}})
     model.load_state_dict(best_state)
 
     # ---------- calibration (on validation), then the single test evaluation
@@ -441,7 +510,7 @@ def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resn
             "finetune": finetune, "epochs": epochs, "lr": lr, "batch": batch, "class_weights": "sqrt inverse frequency (train)", "label_smoothing": 0.1,
             "split_sizes": {k: len(v) for k, v in splits.items()}, "patients_per_split": {k: len({e["group_id"] for e in v}) for k, v in splits.items()},
             "near_duplicates_vs_train": leak, "near_duplicate_pairs_same_patient": same_pat, "perceptual_hash_flags_unreliable": phash_flag,
-            "split_hash": hashlib.sha256(json.dumps({k: [e["sha256"] for e in v] for k, v in splits.items()}).encode()).hexdigest(),
+            "split_hash": split_hash, "resumed": resumed,
             "pretrained_weights": weights_path or "none (random initialisation)", "pretrained_sha256": pre_sha, "pretrained_provenance": pretrained_note or "none recorded",
             "weights_provenance_note": "Pretrained weights must come from a local file whose source and licence were checked by an administrator.",
             "baselines": baselines, "history": history, "best_val_macro_f1": round(best, 4), "test_metrics": test, "training_seconds": round(time.time() - t0),
@@ -450,6 +519,7 @@ def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resn
             "log": log_lines[-60:],
             "limitations": ["Small-sample metrics are unreliable", "Dataset demographics may not represent target patients"]}
     db.x("INSERT INTO model_versions VALUES(?,?,?,?,?)", (mid, task_id, json.dumps(card), "research_only", db.now()))
+    ckpt.discard()                                  # a finished run needs no checkpoint
     db.audit(actor, "model.train", mid, {"task": task_id, "dataset": dataset_id, "version": mf["version"], "test_macro_f1": test["macro_f1"], "code": card["code_revision"]})
     return card
 

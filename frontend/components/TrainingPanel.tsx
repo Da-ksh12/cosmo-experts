@@ -22,10 +22,13 @@ export default function TrainingPanel({ tasks, datasets, onFinished }: { tasks: 
   const [finetune, setFinetune] = useState("layer4");
   const [weights, setWeights] = useState("");
   const [note, setNote] = useState("");
+  const [resume, setResume] = useState(false);
+  const [ckpts, setCkpts] = useState<{ fingerprint: string; epoch: number; epochs: number; dataset: string; saved_at: number }[]>([]);
   const [job, setJob] = useState<{ id: string; s: Job } | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const logRef = useRef<HTMLPreElement>(null);
 
+  useEffect(() => { api<typeof ckpts>("/api/admin/train/checkpoints").then(setCkpts).catch(() => {}); }, [job?.s.status]);
   useEffect(() => { if (ds) api<Ver[]>(`/api/admin/datasets/${ds}/versions`).then((v) => { setVers(v); setVer(v[0]?.id ?? ""); }).catch(() => setVers([])); }, [ds]);
 
   const stopPolling = useCallback(() => { if (timer.current) clearInterval(timer.current); timer.current = null; }, []);
@@ -45,7 +48,7 @@ export default function TrainingPanel({ tasks, datasets, onFinished }: { tasks: 
 
   async function start() {
     try {
-      const r = await post<{ job_id: string }>("/api/admin/train", { task_id: task, dataset_id: ds, version_id: ver, epochs, finetune, weights_path: weights || null, pretrained_note: note, lr: 5e-4, batch: 32 });
+      const r = await post<{ job_id: string }>("/api/admin/train", { task_id: task, dataset_id: ds, version_id: ver, epochs, finetune, weights_path: weights || null, pretrained_note: note, lr: 5e-4, batch: 32, resume });
       setJob({ id: r.job_id, s: { status: "running", phase: "starting", percent: 0, log: [] } });
       watch(r.job_id);
     } catch (e) { toast(e instanceof Error ? e.message : "Could not start training.", "bad"); }
@@ -64,6 +67,8 @@ export default function TrainingPanel({ tasks, datasets, onFinished }: { tasks: 
         <label className="text-sm font-semibold">Layers to fine-tune<select className="input mt-1 font-normal" value={finetune} onChange={(e) => setFinetune(e.target.value)}><option value="head">Head only</option><option value="layer4">Last block + head</option><option value="all">All layers (slow)</option></select></label>
         <label className="text-sm font-semibold">Pretrained weights file (local path)<input className="input mt-1 font-normal" placeholder="Blank = random initialisation" value={weights} onChange={(e) => setWeights(e.target.value)} /></label>
       </div>
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={resume} onChange={(e) => setResume(e.target.checked)} />
+        <span>Resume from the last saved epoch if an identical run was stopped (same dataset version, split, settings and software). {ckpts.length ? `${ckpts.length} checkpoint${ckpts.length > 1 ? "s" : ""} available.` : "No checkpoints saved."} Progress inside an unfinished epoch is not kept.</span></label>
       <label className="block text-sm font-semibold">Weights provenance &amp; licence note (stored on the model card)<input className="input mt-1 font-normal" value={note} onChange={(e) => setNote(e.target.value)} /></label>
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn btn-primary" disabled={!ds || !ver || running} onClick={start}>{running ? <Loader2 className="spin h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />} Start training</button>
