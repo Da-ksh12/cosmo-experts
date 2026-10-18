@@ -1,59 +1,59 @@
 {
-  "when": "2026-10-18T11:26:15",
+  "when": "2026-10-18T11:47:41",
   "base": "http://127.0.0.1:8000",
   "seconds_per_level": 12,
-  "rss_mb_before": 474.9,
+  "rss_mb_before": 644.3,
   "scenarios": {
     "health_live": [
       {
         "workers": 1,
-        "requests": 4938,
-        "rps": 411.1,
-        "p50_ms": 2.1,
-        "p95_ms": 3.4,
-        "p99_ms": 3.9,
-        "max_ms": 34.3,
+        "requests": 4588,
+        "rps": 382.3,
+        "p50_ms": 2.3,
+        "p95_ms": 3.7,
+        "p99_ms": 4.5,
+        "max_ms": 32.3,
         "status_counts": {
-          "200": 4938
+          "200": 4588
         },
         "error_rate": 0.0
       },
       {
         "workers": 2,
-        "requests": 5003,
-        "rps": 416.8,
-        "p50_ms": 4.1,
-        "p95_ms": 6.8,
-        "p99_ms": 9.4,
-        "max_ms": 259.0,
+        "requests": 4832,
+        "rps": 402.4,
+        "p50_ms": 4.4,
+        "p95_ms": 7.0,
+        "p99_ms": 14.4,
+        "max_ms": 191.0,
         "status_counts": {
-          "200": 5003
+          "200": 4832
         },
         "error_rate": 0.0
       },
       {
         "workers": 4,
-        "requests": 4555,
-        "rps": 379.4,
-        "p50_ms": 10.6,
-        "p95_ms": 14.5,
-        "p99_ms": 18.3,
-        "max_ms": 60.6,
+        "requests": 4381,
+        "rps": 364.8,
+        "p50_ms": 9.2,
+        "p95_ms": 18.7,
+        "p99_ms": 40.3,
+        "max_ms": 321.5,
         "status_counts": {
-          "200": 4555
+          "200": 4381
         },
         "error_rate": 0.0
       },
       {
         "workers": 8,
-        "requests": 4811,
-        "rps": 400.4,
-        "p50_ms": 18.6,
-        "p95_ms": 27.2,
-        "p99_ms": 38.5,
-        "max_ms": 120.5,
+        "requests": 4622,
+        "rps": 384.6,
+        "p50_ms": 20.1,
+        "p95_ms": 27.6,
+        "p99_ms": 35.1,
+        "max_ms": 123.5,
         "status_counts": {
-          "200": 4811
+          "200": 4622
         },
         "error_rate": 0.0
       }
@@ -61,53 +61,53 @@
     "history_db_read": [
       {
         "workers": 1,
-        "requests": 669,
-        "rps": 55.7,
-        "p50_ms": 16.0,
-        "p95_ms": 27.2,
-        "p99_ms": 57.3,
-        "max_ms": 113.5,
+        "requests": 869,
+        "rps": 72.4,
+        "p50_ms": 11.8,
+        "p95_ms": 19.5,
+        "p99_ms": 47.1,
+        "max_ms": 121.0,
         "status_counts": {
-          "200": 669
+          "200": 869
         },
         "error_rate": 0.0
       },
       {
         "workers": 2,
-        "requests": 737,
-        "rps": 61.3,
-        "p50_ms": 28.1,
-        "p95_ms": 52.1,
-        "p99_ms": 92.8,
-        "max_ms": 144.5,
+        "requests": 993,
+        "rps": 82.6,
+        "p50_ms": 23.0,
+        "p95_ms": 30.1,
+        "p99_ms": 39.9,
+        "max_ms": 134.1,
         "status_counts": {
-          "200": 737
+          "200": 993
         },
         "error_rate": 0.0
       },
       {
         "workers": 4,
-        "requests": 657,
-        "rps": 54.6,
-        "p50_ms": 69.6,
-        "p95_ms": 99.6,
-        "p99_ms": 149.8,
-        "max_ms": 234.2,
+        "requests": 1135,
+        "rps": 94.4,
+        "p50_ms": 39.4,
+        "p95_ms": 52.3,
+        "p99_ms": 59.1,
+        "max_ms": 135.7,
         "status_counts": {
-          "200": 657
+          "200": 1135
         },
         "error_rate": 0.0
       },
       {
         "workers": 8,
-        "requests": 660,
-        "rps": 54.6,
-        "p50_ms": 145.4,
-        "p95_ms": 181.8,
-        "p99_ms": 203.3,
-        "max_ms": 238.0,
+        "requests": 1200,
+        "rps": 99.5,
+        "p50_ms": 77.1,
+        "p95_ms": 99.6,
+        "p99_ms": 113.6,
+        "max_ms": 186.5,
         "status_counts": {
-          "200": 660
+          "200": 1200
         },
         "error_rate": 0.0
       }
@@ -115,53 +115,53 @@
     "assistant_urgent_redirect": [
       {
         "workers": 1,
-        "requests": 258,
-        "rps": 21.3,
-        "p50_ms": 45.5,
-        "p95_ms": 54.0,
-        "p99_ms": 114.5,
-        "max_ms": 144.3,
+        "requests": 353,
+        "rps": 29.4,
+        "p50_ms": 32.3,
+        "p95_ms": 40.4,
+        "p99_ms": 103.5,
+        "max_ms": 136.0,
         "status_counts": {
-          "200": 258
+          "200": 353
         },
         "error_rate": 0.0
       },
       {
         "workers": 2,
-        "requests": 278,
-        "rps": 23.1,
-        "p50_ms": 82.6,
-        "p95_ms": 106.8,
-        "p99_ms": 173.5,
-        "max_ms": 204.0,
+        "requests": 368,
+        "rps": 30.5,
+        "p50_ms": 61.2,
+        "p95_ms": 81.0,
+        "p99_ms": 157.9,
+        "max_ms": 172.2,
         "status_counts": {
-          "200": 278
+          "200": 368
         },
         "error_rate": 0.0
       },
       {
         "workers": 4,
-        "requests": 292,
-        "rps": 24.1,
-        "p50_ms": 165.0,
-        "p95_ms": 213.3,
-        "p99_ms": 254.6,
-        "max_ms": 268.4,
+        "requests": 333,
+        "rps": 27.5,
+        "p50_ms": 141.9,
+        "p95_ms": 173.3,
+        "p99_ms": 251.0,
+        "max_ms": 318.5,
         "status_counts": {
-          "200": 292
+          "200": 333
         },
         "error_rate": 0.0
       },
       {
         "workers": 8,
-        "requests": 303,
-        "rps": 24.8,
-        "p50_ms": 303.7,
-        "p95_ms": 454.8,
-        "p99_ms": 597.5,
-        "max_ms": 743.0,
+        "requests": 326,
+        "rps": 26.6,
+        "p50_ms": 271.8,
+        "p95_ms": 432.0,
+        "p99_ms": 604.0,
+        "max_ms": 608.7,
         "status_counts": {
-          "200": 303
+          "200": 326
         },
         "error_rate": 0.0
       }
@@ -169,53 +169,53 @@
     "assistant_retrieval_abstain": [
       {
         "workers": 1,
-        "requests": 58,
-        "rps": 4.8,
-        "p50_ms": 163.7,
-        "p95_ms": 494.2,
-        "p99_ms": 713.3,
-        "max_ms": 713.3,
+        "requests": 299,
+        "rps": 24.9,
+        "p50_ms": 38.0,
+        "p95_ms": 48.1,
+        "p99_ms": 123.8,
+        "max_ms": 138.9,
         "status_counts": {
-          "200": 58
+          "200": 299
         },
         "error_rate": 0.0
       },
       {
         "workers": 2,
-        "requests": 50,
-        "rps": 4.1,
-        "p50_ms": 388.6,
-        "p95_ms": 1185.2,
-        "p99_ms": 1481.2,
-        "max_ms": 1481.2,
+        "requests": 317,
+        "rps": 26.3,
+        "p50_ms": 72.8,
+        "p95_ms": 88.7,
+        "p99_ms": 166.8,
+        "max_ms": 178.2,
         "status_counts": {
-          "200": 50
+          "200": 317
         },
         "error_rate": 0.0
       },
       {
         "workers": 4,
-        "requests": 97,
-        "rps": 7.9,
-        "p50_ms": 502.0,
-        "p95_ms": 750.4,
-        "p99_ms": 829.1,
-        "max_ms": 829.1,
+        "requests": 308,
+        "rps": 25.4,
+        "p50_ms": 149.5,
+        "p95_ms": 206.6,
+        "p99_ms": 242.4,
+        "max_ms": 281.8,
         "status_counts": {
-          "200": 97
+          "200": 308
         },
         "error_rate": 0.0
       },
       {
         "workers": 8,
-        "requests": 143,
-        "rps": 11.4,
-        "p50_ms": 750.6,
-        "p95_ms": 896.4,
-        "p99_ms": 935.4,
-        "max_ms": 946.8,
+        "requests": 296,
+        "rps": 24.3,
+        "p50_ms": 313.3,
+        "p95_ms": 390.9,
+        "p99_ms": 463.5,
+        "max_ms": 465.5,
         "status_counts": {
-          "200": 143
+          "200": 296
         },
         "error_rate": 0.0
       }
@@ -224,26 +224,26 @@
   "soak": {
     "seconds": 240,
     "workers": 4,
-    "requests": 4943,
+    "requests": 8265,
     "error_rate": 0.0,
     "status_counts": {
-      "200": 4943
+      "200": 8265
     },
     "rss_mb_samples": [
-      447.8,
-      446.2,
-      445.6,
-      445.6,
-      445.4,
-      442.3,
-      443.0,
-      442.2,
-      442.7,
-      443.1,
-      442.9,
-      442.5
+      648.0,
+      647.8,
+      647.8,
+      648.1,
+      648.2,
+      648.4,
+      648.4,
+      648.4,
+      648.4,
+      648.4,
+      648.4,
+      640.7
     ],
-    "rss_mb_growth": -5.3
+    "rss_mb_growth": -7.3
   },
-  "rss_mb_after": 443.2
+  "rss_mb_after": 640.7
 }
