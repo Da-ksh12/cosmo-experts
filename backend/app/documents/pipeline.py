@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from xml.etree import ElementTree
 
 from ..config import MAX_PDF_PAGES, MAX_UPLOAD_BYTES
+from . import safety
 
 PROCESSING_VERSION = "docpipe-1.0.0"
 ALLOWED = {"pdf": "application/pdf", "jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
@@ -186,6 +187,10 @@ def _extract_pdf(data: bytes) -> list[Page]:
         raise DocumentError("This PDF has no pages.")
     if doc.page_count > MAX_PDF_PAGES:
         raise DocumentError(f"This PDF has too many pages (limit {MAX_PDF_PAGES}). Please upload the relevant pages.")
+    try:
+        safety.check_pdf(doc)                     # active content, attachments, forms, object/page-size bombs
+    except safety.Rejected as e:
+        raise DocumentError(str(e)) from None
     pages = []
     for i, page in enumerate(doc, start=1):
         text = _page_lines(page) or page.get_text("text") or ""
@@ -207,7 +212,12 @@ def _extract_image(data: bytes) -> list[Page]:
     from PIL import Image, UnidentifiedImageError
     try:
         img = Image.open(io.BytesIO(data))
+        safety.check_image_size(*img.size)         # dimensions come from the header: checked BEFORE the pixels are decoded
         img.load()
+    except safety.Rejected as e:
+        raise DocumentError(str(e)) from None
+    except (Image.DecompressionBombError, Image.DecompressionBombWarning):
+        raise DocumentError("This image is too large to process safely. Please upload a smaller copy.") from None
     except (UnidentifiedImageError, OSError):
         raise DocumentError("We couldn't open this image. Please upload a clear JPG or PNG.")
     if not ocr_available():
@@ -219,7 +229,11 @@ def _extract_image(data: bytes) -> list[Page]:
 def _extract_docx(data: bytes) -> list[Page]:
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as z:
+            safety.check_docx(z)
             xml = z.read("word/document.xml")
+            safety.check_xml(xml)
+    except safety.Rejected as e:
+        raise DocumentError(str(e)) from None
     except Exception:
         raise DocumentError("We couldn't read this Word file. Please save it as PDF and upload again.")
     ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
