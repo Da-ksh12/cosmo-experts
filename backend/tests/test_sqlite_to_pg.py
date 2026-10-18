@@ -1,5 +1,6 @@
 """SQLite -> PostgreSQL development-data migration: read-only source, idempotent, resumable, validated, no sensitive output."""
 import hashlib
+import re
 import json
 import sqlite3
 import time
@@ -31,7 +32,11 @@ def source(tmp_path):
     for i in range(5):
         con.execute("insert into documents(id,owner_id,filename,stored_path,mime,sha256,doc_type,page_count,status,created_at,deleted,size_bytes,user_category) values(?,?,?,?,?,?,?,?,?,?,0,?,?)",
                     (f"doc{i}", "u1", f"{MARK}-{i}.pdf", f"/private/{i}", "application/pdf", f"sha{i}", "laboratory_report", 1, "processed", T0 + i, 100 + i, ""))
-        con.execute("insert into doc_pages values(?,?,?,?,?,?)", (f"pg{i}", f"doc{i}", 1, f"{MARK} page text {i}", "embedded", 1.0))
+        con.execute("insert into doc_pages(id,document_id,page_no,text,method,ocr_confidence,layout,script) values(?,?,?,?,?,?,?,?)", (f"pg{i}", f"doc{i}", 1, f"{MARK} page text {i}", "embedded", 1.0, None, "latin"))
+        con.execute("insert into doc_facts(id,document_id,kind,label,value,source_page,source_text,confidence,provenance,normalized,ambiguity,field_no) values(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (f"fa{i}", f"doc{i}", "report_date", "Report date", "12/03/2025", 1, "Reported: 12/03/2025", 0.9, "{}", "{}", '["day_month_order_unclear"]', 0))
+        con.execute("insert into doc_medications(id,document_id,item_no,source_page,raw,name,entry,ambiguity,inferences,confidence,parser) values(?,?,?,?,?,?,?,?,?,?,?)",
+                    (f"md{i}", f"doc{i}", 0, 1, "Tab Metformin 500 mg BD", "Metformin", "{}", "[]", "[]", 0.8, "medparse-1.1.0"))
         for n in range(3):
             con.execute("insert into doc_fields(id,document_id,name,value,unit,ref_range,source_page,source_text,confidence,flag,review_status,corrected_by,processing_version,patient_flag,field_no)"
                         " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (f"f{i}-{n}", f"doc{i}", "Ferritin", "8", "ng/mL", "15-150", 1, "line", 0.93, "L", "pending", "", "v", "", n))
@@ -82,6 +87,7 @@ def test_full_copy_is_validated_and_the_source_is_untouched(source, target):
     rep = m.migrate_data(source, target, batch=2)
     assert rep["validation"]["ok"] is True, rep["validation"]
     assert {t: v["target_rows"] for t, v in rep["validation"]["tables"].items()}["doc_fields"] == 15
+    assert {t: v["target_rows"] for t, v in rep["validation"]["tables"].items()}["doc_facts"] == 5 and {t: v["target_rows"] for t, v in rep["validation"]["tables"].items()}["doc_medications"] == 5
     assert all(v["count_ok"] and v.get("key_set_ok", True) and v.get("critical_fields_ok", True) for v in rep["validation"]["tables"].values())
     assert (file_hash(source), source.stat().st_mtime_ns) == before                                        # read-only: byte-identical and not even touched
     with psycopg.connect(target) as c:
@@ -134,7 +140,8 @@ def test_an_interrupted_run_resumes_from_the_progress_file(source, target, tmp_p
 def test_foreign_key_orphans_stop_the_run_unless_explicitly_skipped(source, target):
     con = sqlite3.connect(source)
     con.execute("insert into documents(id,owner_id,filename,stored_path,mime,sha256,doc_type,status,created_at,deleted) values('orph','ghost','x','/p','a','s','t','processed',?,0)", (T0,))
-    con.execute("insert into doc_pages values('orphpg','orph',1,'t','embedded',1.0)")
+    con.execute("insert into doc_pages(id,document_id,page_no,text,method,ocr_confidence) values('orphpg','orph',1,'t','embedded',1.0)")
+    con.execute("insert into doc_medications(id,document_id,item_no,raw,entry) values('orphmd','orph',0,'Tab X','{}')")
     con.commit(); con.close()
     with pytest.raises(m.MigrationAbort, match="foreign-key orphan"):
         m.migrate_data(source, target)
@@ -142,6 +149,7 @@ def test_foreign_key_orphans_stop_the_run_unless_explicitly_skipped(source, targ
     assert rep["orphans_skipped"] == {"documents": 1} and rep["validation"]["ok"] is True
     with psycopg.connect(target) as c:
         assert c.execute("select count(*) from app.documents where id='orph'").fetchone()[0] == 0 and c.execute("select count(*) from app.doc_pages where id='orphpg'").fetchone()[0] == 0
+        assert c.execute("select count(*) from app.doc_medications where id='orphmd'").fetchone()[0] == 0           # a child of a skipped orphan is skipped with it
 
 
 def test_a_schema_mismatch_or_an_unmigrated_target_is_refused(source, target, pg_server, tmp_path):
@@ -186,3 +194,15 @@ def test_a_corrupt_progress_file_is_refused_not_ignored(source, target, tmp_path
         m.migrate_data(source, target, progress_path=p)
     assert count(target, "users") == 0
     time.sleep(0)
+
+
+def test_a_table_the_tool_does_not_copy_stops_the_run_instead_of_leaving_data_behind(source, target):
+    con = sqlite3.connect(source); con.execute("create table brand_new_table(id text, secret text)"); con.execute("insert into brand_new_table values('1','x')"); con.commit(); con.close()
+    with pytest.raises(m.MigrationAbort, match="brand_new_table"):
+        m.migrate_data(source, target)
+
+
+def test_every_application_table_in_the_sqlite_schema_is_covered_by_the_copy_order():
+    from app import db as appdb
+    declared = set(re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", appdb.SCHEMA))
+    assert declared <= set(m.ORDER) | m.IGNORED, sorted(declared - set(m.ORDER))

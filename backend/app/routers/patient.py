@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from .. import consent, db, retention, security
 from ..assistant import engine
 from ..config import MAX_UPLOAD_BYTES, UPLOAD_DIR
-from ..documents import explain, pipeline
+from ..documents import explain, pipeline, store
 from ..imaging import suitability
 from ..quotes import service as quotes
 from .. import storage
@@ -149,8 +149,8 @@ def get_document(doc_id: str, user=Depends(current_user)):
     d = _doc_or_404(doc_id, user)
     d.pop("stored_path", None)
     return {"document": d,
-            "pages": db.q("SELECT page_no,text,method,ocr_confidence FROM doc_pages WHERE document_id=? ORDER BY page_no", (doc_id,)),
-            "fields": db.q("SELECT * FROM doc_fields WHERE document_id=? ORDER BY source_page,field_no", (doc_id,))}
+            "pages": db.q("SELECT page_no,text,method,ocr_confidence,script FROM doc_pages WHERE document_id=? ORDER BY page_no", (doc_id,)),
+            "fields": store.load_fields(doc_id), "facts": store.load_facts(doc_id), "medications": store.load_medications(doc_id)}
 
 
 @router.get("/documents/{doc_id}/file")
@@ -179,10 +179,10 @@ def get_explanation(doc_id: str, lang: str = "en", user=Depends(current_user)):
 def delete_document(doc_id: str, user=Depends(require("patient"))):
     d = _doc_or_404(doc_id, user)
     storage.delete(d["stored_path"])
-    db.x("DELETE FROM doc_pages WHERE document_id=?", (doc_id,))
-    db.x("DELETE FROM doc_fields WHERE document_id=?", (doc_id,))
-    db.x("UPDATE documents SET deleted=1, stored_path='', filename='deleted' WHERE id=?", (doc_id,))
-    db.audit(user["id"], "document.delete", doc_id)
+    with db.tx() as t:
+        store.delete_children(t, doc_id)
+        t.x("UPDATE documents SET deleted=1, stored_path='', filename='deleted' WHERE id=?", (doc_id,))
+        db.audit(user["id"], "document.delete", doc_id, t=t)
     return {"deleted": True}
 
 

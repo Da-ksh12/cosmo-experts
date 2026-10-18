@@ -1,0 +1,372 @@
+{
+  "schema": "cosmo-eval-1",
+  "name": "medication_parser",
+  "created_at": "2026-10-18T22:18:03+0530",
+  "evidence_class": "synthetic_fixture",
+  "real_world_evidence": false,
+  "code_revision": "git-59bd5d5fdb70+dirty",
+  "config": {
+    "parser": "medparse-1.1.0",
+    "development_lines": 34,
+    "heldout_lines": 26
+  },
+  "config_sha256": "af7ca871041d3947b4c2f4ab5e302c4e2f34ddf6d1bcb46ff81278d15d3bdf34",
+  "dataset": {
+    "id": "eval/medication_fixtures.py",
+    "kind": "written by the project; not real prescriptions"
+  },
+  "environment": {
+    "python": "3.11.9",
+    "platform": "Windows",
+    "numpy": "2.2.6",
+    "torch": "2.14.1+cpu"
+  },
+  "notes": [
+    "Synthetic fixtures: they test the rules, not accuracy on real prescriptions (none were available).",
+    "The held-out set was written after tuning on the development set."
+  ],
+  "development": {
+    "lines": 34,
+    "components": {
+      "name": {
+        "tp": 34,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "form": {
+        "tp": 33,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "dose": {
+        "tp": 7,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "pattern": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "frequency": {
+        "tp": 30,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "duration": {
+        "tp": 19,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "route": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "alias": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "strengths": {
+        "tp": 33,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "instructions": {
+        "tp": 13,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.929,
+        "recall": 1.0
+      }
+    },
+    "overall": {
+      "tp": 176,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.994,
+      "recall": 1.0
+    },
+    "ambiguity": {
+      "expected_flags": 15,
+      "found": 15,
+      "recall": 1.0,
+      "extra_flags_per_line": 0.24
+    },
+    "false_fill": {
+      "components_that_must_stay_empty": 52,
+      "filled": 0,
+      "rate": 0.0
+    },
+    "span_correctness": {
+      "components": 178,
+      "correct": 178,
+      "rate": 1.0
+    },
+    "item_detection": {
+      "entries_detected": 34,
+      "entries_missed": 0,
+      "of": 34,
+      "non_medication_lines": 8,
+      "false_positives": [],
+      "false_positive_rate": 0.0
+    },
+    "failures": []
+  },
+  "heldout": {
+    "lines": 26,
+    "components": {
+      "name": {
+        "tp": 26,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "form": {
+        "tp": 26,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "dose": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "pattern": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "frequency": {
+        "tp": 23,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "duration": {
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "route": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "alias": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null
+      },
+      "strengths": {
+        "tp": 23,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "instructions": {
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      }
+    },
+    "overall": {
+      "tp": 131,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    "ambiguity": {
+      "expected_flags": 4,
+      "found": 4,
+      "recall": 1.0,
+      "extra_flags_per_line": 0.62
+    },
+    "false_fill": {
+      "components_that_must_stay_empty": 42,
+      "filled": 0,
+      "rate": 0.0
+    },
+    "span_correctness": {
+      "components": 133,
+      "correct": 133,
+      "rate": 1.0
+    },
+    "item_detection": {
+      "entries_detected": 26,
+      "entries_missed": 0,
+      "of": 26,
+      "non_medication_lines": 9,
+      "false_positives": [],
+      "false_positive_rate": 0.0
+    },
+    "failures": []
+  },
+  "heldout_first_run": {
+    "lines": 26,
+    "components": {
+      "name": {
+        "tp": 25,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.962
+      },
+      "form": {
+        "tp": 25,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.962
+      },
+      "dose": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.8
+      },
+      "pattern": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "frequency": {
+        "tp": 20,
+        "fp": 1,
+        "fn": 3,
+        "precision": 0.952,
+        "recall": 0.87
+      },
+      "duration": {
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "route": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.667
+      },
+      "alias": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null
+      },
+      "strengths": {
+        "tp": 23,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "instructions": {
+        "tp": 10,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.909
+      }
+    },
+    "overall": {
+      "tp": 123,
+      "fp": 1,
+      "fn": 8,
+      "precision": 0.992,
+      "recall": 0.939
+    },
+    "ambiguity": {
+      "expected_flags": 4,
+      "found": 4,
+      "recall": 1.0,
+      "extra_flags_per_line": 0.65
+    },
+    "false_fill": {
+      "components_that_must_stay_empty": 39,
+      "filled": 0,
+      "rate": 0.0
+    },
+    "span_correctness": {
+      "components": 126,
+      "correct": 126,
+      "rate": 1.0
+    },
+    "item_detection": {
+      "entries_detected": 25,
+      "entries_missed": 1,
+      "of": 26,
+      "non_medication_lines": 9,
+      "false_positives": [],
+      "false_positive_rate": 0.0
+    },
+    "failures": [
+      {
+        "text": "Lotion Calamine apply as needed",
+        "problems": [
+          "frequency: expected 'as needed', got None"
+        ]
+      },
+      {
+        "text": "T. Zincovit 1 tab OD after lunch",
+        "problem": "0 entries found"
+      },
+      {
+        "text": "Drops Tobramycin 0.3% 1 drop QID right eye",
+        "problems": [
+          "route: expected 'right eye', got None"
+        ]
+      },
+      {
+        "text": "Tab. Paracetamol 650 mg q6h prn",
+        "problems": [
+          "frequency: expected 'q6h prn', got 'q6h'"
+        ]
+      }
+    ]
+  }
+}

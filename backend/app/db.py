@@ -35,6 +35,12 @@ CREATE TABLE IF NOT EXISTS kb_articles(id TEXT PRIMARY KEY, title TEXT, body TEX
 CREATE TABLE IF NOT EXISTS datasets(id TEXT PRIMARY KEY, data TEXT, approval_status TEXT, updated_at REAL);
 CREATE TABLE IF NOT EXISTS dataset_versions(id TEXT PRIMARY KEY, dataset_id TEXT, manifest TEXT, created_at REAL);
 CREATE TABLE IF NOT EXISTS model_versions(id TEXT PRIMARY KEY, task TEXT, data TEXT, status TEXT, created_at REAL);
+CREATE TABLE IF NOT EXISTS doc_facts(id TEXT PRIMARY KEY, document_id TEXT, kind TEXT, label TEXT, value TEXT, source_page INTEGER, source_text TEXT, confidence REAL,
+  provenance TEXT DEFAULT '{}', normalized TEXT DEFAULT '{}', ambiguity TEXT DEFAULT '[]', review_status TEXT DEFAULT 'unreviewed', field_no INTEGER DEFAULT 0);
+CREATE INDEX IF NOT EXISTS doc_facts_doc_ix ON doc_facts(document_id);
+CREATE TABLE IF NOT EXISTS doc_medications(id TEXT PRIMARY KEY, document_id TEXT, item_no INTEGER, source_page INTEGER, raw TEXT, name TEXT, entry TEXT, ambiguity TEXT DEFAULT '[]',
+  inferences TEXT DEFAULT '[]', confidence REAL, review_status TEXT DEFAULT 'unreviewed', reviewed_by TEXT DEFAULT '', original TEXT DEFAULT '', parser TEXT);
+CREATE INDEX IF NOT EXISTS doc_medications_doc_ix ON doc_medications(document_id);
 CREATE TABLE IF NOT EXISTS training_runs(id TEXT PRIMARY KEY, task TEXT, dataset_id TEXT, version_id TEXT, config TEXT, config_hash TEXT, plan TEXT, status TEXT, started_at REAL,
   finished_at REAL, model_id TEXT, error TEXT, actor TEXT, device TEXT);
 CREATE TABLE IF NOT EXISTS audit(id TEXT PRIMARY KEY, ts REAL, actor TEXT, action TEXT, target TEXT, detail TEXT);
@@ -68,6 +74,8 @@ COLUMNS = [
     ("kb_articles", "source_note", "TEXT DEFAULT ''"), ("kb_articles", "content_origin", "TEXT DEFAULT 'clinic'"), ("kb_articles", "claims_to_verify", "TEXT DEFAULT '[]'"),
     ("doc_fields", "field_no", "INTEGER DEFAULT 0"), ("users", "disabled", "INTEGER DEFAULT 0"), ("quotes", "valid_until", "REAL"),
     ("documents", "scan_status", "TEXT DEFAULT 'unscanned'"), ("images", "scan_status", "TEXT DEFAULT 'unscanned'"), ("images", "size_bytes", "INTEGER DEFAULT 0"),
+    ("doc_fields", "provenance", "TEXT DEFAULT '{}'"), ("doc_fields", "normalized", "TEXT DEFAULT '{}'"), ("doc_fields", "ambiguity", "TEXT DEFAULT '[]'"),
+    ("doc_pages", "layout", "TEXT"), ("doc_pages", "script", "TEXT"),
     ("quotes", "subtotal", "REAL DEFAULT 0"), ("quotes", "tax_percent", "REAL DEFAULT 0"), ("quotes", "tax_amount", "REAL DEFAULT 0"),
 ]
 

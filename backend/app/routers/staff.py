@@ -83,6 +83,42 @@ def review_field(fid: str, body: FieldEdit, user=Depends(doctor)):
     return after
 
 
+class MedReview(BaseModel):
+    status: str = Field(pattern="^(confirmed|corrected|rejected)$")
+    corrections: dict[str, str] = Field(default_factory=dict, max_length=12)     # component -> the text as it should read
+
+
+MED_COMPONENTS = {"name", "form", "dose", "dose_pattern", "route", "frequency", "duration"}
+
+
+@router.post("/clinic/medications/{mid}/review")
+def review_medication(mid: str, body: MedReview, user=Depends(require("doctor"))):
+    """A clinician confirms, rejects or corrects an automatically read medicine entry. The original reading is kept; a correction replaces the printed text of the named components,
+    drops their source position (it no longer points at the document) and says who changed it. Nothing is recommended or changed about the medicine itself."""
+    row = db.q1("SELECT * FROM doc_medications WHERE id=?", (mid,))
+    if not row:
+        raise HTTPException(404, "Medicine entry not found.")
+    entry = json.loads(row["entry"])
+    if body.status == "corrected":
+        bad = sorted(set(body.corrections) - MED_COMPONENTS - {"strength"})
+        if not body.corrections or bad:
+            raise HTTPException(422, "Name the components to correct" + (f"; unknown: {bad}" if bad else "") + f" (allowed: {sorted(MED_COMPONENTS | {'strength'})}).")
+        for k, v in body.corrections.items():
+            v = v.strip()[:120]
+            comp = {"raw": v, "span": None, "normalized": None, "note": f"corrected by {user['id']}"} if v else None
+            if k == "strength":
+                entry["strengths"] = [comp] if comp else []
+            else:
+                entry[k] = comp
+        entry["ambiguity"] = [a for a in entry.get("ambiguity", [])] + ["corrected_by_clinician"]
+    original = row["original"] or (row["entry"] if body.status == "corrected" else "")
+    name = (entry.get("name") or {}).get("raw", "") if body.status == "corrected" else row["name"]
+    db.x("UPDATE doc_medications SET entry=?, review_status=?, reviewed_by=?, original=?, name=? WHERE id=?",
+         (json.dumps(entry, ensure_ascii=False), body.status, user["id"], original, name, mid))
+    db.audit(user["id"], "medication.review", mid, {"status": body.status, "components": sorted(body.corrections)})
+    return {"id": mid, "review_status": body.status, "entry": entry}
+
+
 @router.post("/clinic/documents/{doc_id}/review")
 def review_document(doc_id: str, user=Depends(doctor)):
     if not db.q1("SELECT id FROM documents WHERE id=? AND deleted=0", (doc_id,)):

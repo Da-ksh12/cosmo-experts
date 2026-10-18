@@ -163,11 +163,11 @@ def _image_defs() -> list[CapabilityDef]:
 
 
 DEFS: list[CapabilityDef] = _image_defs() + [
-    CapabilityDef("document.extract", "document", "Document text and lab-result extraction", "docpipe-1.0.0",
-                  "Reads PDFs, photos of documents, Word and text files; extracts printed lab results with source text, page and confidence. Everything extracted is a draft for clinician review.",
+    CapabilityDef("document.extract", "document", "Document text and lab-result extraction", "docpipe-2.0.0",
+                  "Reads PDFs, photos of documents, Word and text files; extracts printed lab results, header facts (dates, laboratory, clinician names, explicit allergy and follow-up statements) and medicine entries with source text, page and confidence. Everything extracted is a draft for clinician review.",
                   "deterministic", limits=_DOC_LIMITS, optional=("tesseract",), review_required=True,
                   limitations=("Scanned pages need OCR (Tesseract).", "Values are copied as printed; nothing is converted or interpreted.")),
-    CapabilityDef("document.medications", "document", "Prescription field extraction", "medparse-1.0.0",
+    CapabilityDef("document.medications", "document", "Prescription field extraction", "medparse-1.1.0",
                   "Rule-based extraction of printed medicine entries (name, strength, form, dose, route, frequency, duration, instructions) with the original text and ambiguity flags.",
                   "deterministic", limits=_DOC_LIMITS, optional=("tesseract",), review_required=True,
                   limitations=("Never recommends starting, stopping or changing a medicine.", "No brand/generic substitution.", "Evaluated on synthetic fixtures only.")),

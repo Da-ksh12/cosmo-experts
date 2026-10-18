@@ -34,8 +34,9 @@ from app.dbcore import migrate  # noqa: E402
 from app.redact import safe_exc  # noqa: E402
 
 # parents before children (foreign-key safe)
-ORDER = ["users", "settings", "price_items", "kb_articles", "datasets", "dataset_versions", "model_versions", "documents", "doc_pages", "doc_fields", "images",
-         "conversations", "messages", "quotes", "care_plans", "field_corrections", "consents", "notifications", "jobs", "audit"]
+ORDER = ["users", "settings", "price_items", "kb_articles", "datasets", "dataset_versions", "model_versions", "training_runs", "documents", "doc_pages", "doc_fields", "doc_facts",
+         "doc_medications", "images", "conversations", "messages", "quotes", "care_plans", "field_corrections", "consents", "consent_events", "legal_holds", "notifications", "jobs", "audit"]
+IGNORED = {"sqlite_sequence"}                         # any OTHER table in the SQLite file that is not listed in ORDER stops the run: data must never be left behind silently
 PK = {"consents": ("user_id", "notice_sha256"), "settings": ("key",)}
 CRITICAL = {"users": ("id", "role", "password_hash", "disabled"), "documents": ("id", "owner_id", "sha256", "status", "deleted"), "images": ("id", "owner_id", "verdict", "deleted"),
             "quotes": ("id", "patient_id", "status", "total"), "care_plans": ("id", "patient_id", "status"), "consents": ("user_id", "notice_sha256"),
@@ -97,6 +98,9 @@ def migrate_data(sqlite_path: Path, target_url: str, batch: int = 500, dry_run: 
     try:
         with psycopg.connect(target_url, row_factory=dict_row, connect_timeout=10, autocommit=True) as pg:      # autocommit: each batch's `transaction()` is a real, durable transaction
             src_tables = {r[0] for r in src.execute("select name from sqlite_master where type='table' and name not like 'sqlite_%'")}
+            unhandled = sorted(src_tables - set(ORDER) - IGNORED)
+            if unhandled:
+                raise MigrationAbort(f"the SQLite file has tables this tool does not copy ({', '.join(unhandled)}): refusing to leave data behind silently")
             user_ids = {r[0] for r in src.execute("select id from users")} if "users" in src_tables else set()
             for table in ORDER:
                 if table not in src_tables:
@@ -126,7 +130,7 @@ def migrate_data(sqlite_path: Path, target_url: str, batch: int = 500, dry_run: 
                             report["orphans_skipped"][table] = report["orphans_skipped"].get(table, 0) + 1
                             continue
                         keep.append(r)
-                    if table == "doc_pages" or table == "doc_fields":              # children of documents: drop rows whose document was skipped as an orphan
+                    if table in ("doc_pages", "doc_fields", "doc_facts", "doc_medications"):              # children of documents: drop rows whose document was skipped as an orphan
                         ids = [r["document_id"] for r in keep]
                         present = {x["id"] for x in pg.execute("select id from app.documents where id = any(%s)", (ids,)).fetchall()} if ids and not dry_run else set(ids)
                         kept = [r for r in keep if r["document_id"] in present or dry_run]

@@ -204,8 +204,8 @@ def _files(table, with_pages):
                 continue
             with db.tx() as t:
                 if with_pages:
-                    t.x("DELETE FROM doc_pages WHERE document_id=?", (r["id"],))
-                    t.x("DELETE FROM doc_fields WHERE document_id=?", (r["id"],))
+                    from .documents import store
+                    store.delete_children(t, r["id"])
                     t.x("UPDATE documents SET deleted=1, stored_path='', filename='deleted' WHERE id=?", (r["id"],))
                 else:
                     t.x("UPDATE images SET deleted=1, stored_path='' WHERE id=?", (r["id"],))
@@ -305,8 +305,8 @@ def erase_patient(uid: str, actor: str | None = None) -> dict:
     docs = db.q("SELECT id,stored_path FROM documents WHERE owner_id=? AND deleted=0", (uid,))
     for d in docs:
         storage.delete(d["stored_path"])
-        db.x("DELETE FROM doc_pages WHERE document_id=?", (d["id"],))
-        db.x("DELETE FROM doc_fields WHERE document_id=?", (d["id"],))
+        from .documents import store
+        store.delete_children(db, d["id"])
     db.x("UPDATE documents SET deleted=1, stored_path='', filename='deleted' WHERE owner_id=?", (uid,))
     imgs = db.q("SELECT id,stored_path FROM images WHERE owner_id=? AND deleted=0", (uid,))
     for i in imgs:

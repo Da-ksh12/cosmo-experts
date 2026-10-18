@@ -93,10 +93,38 @@ def h_document_extract(payload, ctx: HandlerContext) -> HandlerResult:
         res = pipeline.process(p.data, p.filename)
     except pipeline.DocumentError as e:
         raise RejectedInput(str(e)) from None
-    result = {"doc_type": res.doc_type, "doc_date": res.doc_date, "page_count": len(res.pages),
-              "pages": [{"page_no": pg.page_no, "method": pg.method, "confidence": pg.confidence, "characters": len(pg.text)} for pg in res.pages],
-              "fields": [asdict(f) for f in res.fields], "needs_review": res.needs_review}
+    result = {"doc_type": res.doc_type, "doc_date": res.doc_date, "page_count": len(res.pages), "readable": res.readable, "language": res.language,
+              "pages": [{"page_no": pg.page_no, "method": pg.method, "confidence": pg.confidence, "characters": len(pg.text), "script": pg.script} for pg in res.pages],
+              "fields": [asdict(f) for f in res.fields], "facts": [asdict(f) for f in res.facts], "medications": [m.to_dict() for m in res.medications], "needs_review": res.needs_review}
     return HandlerResult("review_required", result, "", res.warnings, processing_version=res.version)
+
+
+def h_document_medications(payload, ctx: HandlerContext) -> HandlerResult:
+    from ..documents import medication, pipeline
+    p = _typed(DocumentPayload, payload)
+    try:
+        res = pipeline.process(p.data, p.filename, cancel=ctx.cancel)
+    except pipeline.DocumentError as e:
+        raise RejectedInput(str(e)) from None
+    meds = [m.to_dict() for m in res.medications]
+    warns = list(res.warnings) + ([] if meds else ["No medicine entries were found in this document."])
+    return HandlerResult("review_required", {"doc_type": res.doc_type, "medications": meds, "readable": res.readable, "needs_review": True}, "", warns, processing_version=medication.VERSION)
+
+
+def h_hindi_ocr(payload, ctx: HandlerContext) -> HandlerResult:
+    """Research use only: recognition with the Hindi pack added. Not evaluated on real documents."""
+    from ..documents import pipeline
+    p = _typed(DocumentPayload, payload)
+    token = pipeline.OCR_OVERRIDE.set(["eng", "hin"])
+    try:
+        res = pipeline.process(p.data, p.filename, cancel=ctx.cancel)
+    except pipeline.DocumentError as e:
+        raise RejectedInput(str(e)) from None
+    finally:
+        pipeline.OCR_OVERRIDE.reset(token)
+    return HandlerResult("review_required", {"language": res.language, "pages": [{"page_no": pg.page_no, "method": pg.method, "confidence": pg.confidence, "script": pg.script, "text": pg.text} for pg in res.pages],
+                                              "evaluation": "Hindi recognition has not been evaluated on real documents; treat the text as unverified."}, "", res.warnings, labels=["research_only"],
+                         processing_version=res.version)
 
 
 # ---------------------------------------------------------------- image.lesion_classification_research
@@ -152,6 +180,8 @@ def h_synthesize(payload, ctx: HandlerContext) -> HandlerResult:
 def register_all(engine: AIEngine) -> None:
     engine.register("image.quality", h_image_quality, validate_image)
     engine.register("document.extract", h_document_extract, validate_document)
+    engine.register("document.medications", h_document_medications, validate_document)
+    engine.register("document.ocr.hindi", h_hindi_ocr, validate_document)
     engine.register("image.lesion_classification_research", h_research_image, validate_research)
     engine.register("speech.transcribe", h_transcribe, validate_audio)
     engine.register("speech.synthesize", h_synthesize, validate_speech_text)

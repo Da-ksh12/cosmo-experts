@@ -7,7 +7,7 @@ import re
 from .. import db, malware, storage
 from . import notify
 from ..config import UPLOAD_DIR
-from ..documents import pipeline
+from ..documents import pipeline, store
 from ..imaging import quality, suitability
 
 
@@ -70,16 +70,12 @@ def ingest_document(owner_id: str, filename: str, data: bytes, category: str = "
                 "review_status,language,error,created_at,deleted,size_bytes,user_category,scan_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?)",
                 (did, owner_id, re.sub(r"[^\w .()-]", "_", filename or "upload")[:120], path, pipeline.ALLOWED[ext], hashlib.sha256(data).hexdigest(), res.doc_type,
                  res.doc_date, len(res.pages), "processed", res.version, "pending_clinician_review", "en", "; ".join(res.warnings), db.now(), len(data), category, scan))
-            for p in res.pages:
-                t.x("INSERT INTO doc_pages VALUES(?,?,?,?,?,?)", (db.uid(), did, p.page_no, p.text, p.method, p.confidence))
-            for n, f in enumerate(res.fields):
-                t.x("INSERT INTO doc_fields(id,document_id,name,value,unit,ref_range,source_page,source_text,confidence,flag,review_status,corrected_by,processing_version,field_no)"
-                    " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (db.uid(), did, f.name, f.value, f.unit, f.ref_range, f.source_page, f.source_text, f.confidence, f.flag, f.review_status, "", res.version, n))
-            db.audit(owner_id, "document.upload", did, {"type": res.doc_type, "pages": len(res.pages), "fields": len(res.fields), "request_id": request_id}, t=t)
+            store.save_extraction(t, did, res)
+            db.audit(owner_id, "document.upload", did, {"type": res.doc_type, "pages": len(res.pages), "fields": len(res.fields), "facts": len(res.facts), "medications": len(res.medications), "request_id": request_id}, t=t)
     except Exception:
         storage.delete(path)                                  # never leave a private file behind without its database record
         raise
     notify.send(owner_id, "report_ready", "Your report is ready", "It was processed and is waiting for clinician review.", f"/reports/{did}", f"report-ready:{did}")
     notify.to_role("doctor", "submission", "New report to review", "A patient uploaded a report.", "/clinic", f"doc-submitted:{did}")
     return {"id": did, "doc_type": res.doc_type, "doc_date": res.doc_date, "user_category": category, "pages": len(res.pages), "fields": len(res.fields),
-            "warnings": res.warnings, "status": "clinician_review_required"}
+            "facts": len(res.facts), "medications": len(res.medications), "readable": res.readable, "warnings": res.warnings, "status": "clinician_review_required"}

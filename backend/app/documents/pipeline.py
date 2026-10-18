@@ -8,17 +8,22 @@ Rules enforced here:
 * anything without a source page/text is never emitted as an extracted fact."""
 from __future__ import annotations
 
+import contextvars
 import io
+import os
 import re
 import shutil
+import time
 import zipfile
 from dataclasses import dataclass, field
 from xml.etree import ElementTree
 
 from ..config import MAX_PDF_PAGES, MAX_UPLOAD_BYTES
-from . import safety
+from . import languages, medication, safety, structured
 
-PROCESSING_VERSION = "docpipe-1.0.0"
+PROCESSING_VERSION = "docpipe-2.0.0"
+OCR_OVERRIDE: contextvars.ContextVar = contextvars.ContextVar("cosmo_ocr_langs", default=None)   # a request-scoped list of OCR languages that replaces COSMO_OCR_LANGS
+OCR_PAGE_TIMEOUT_S = 40                                   # one page of OCR may not run longer than this
 ALLOWED = {"pdf": "application/pdf", "jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
            "txt": "text/plain", "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
 
@@ -62,8 +67,10 @@ def ocr_languages() -> list[str]:
 class Page:
     page_no: int
     text: str
-    method: str            # embedded | ocr | plain | ocr_unavailable
+    method: str            # embedded | ocr | plain | ocr_unavailable | ocr_failed
     confidence: float | None = None
+    layout: list | None = None      # native PDFs: [{"start", "end", "box": [x0, y0, x1, y1] as fractions of the page}] per text line; OCR pages have none
+    script: str | None = None       # script reported by Tesseract OSD for scanned pages (for example "Latin", "Devanagari")
 
 
 @dataclass
@@ -77,6 +84,9 @@ class Field:
     confidence: float
     flag: str              # "" | "printed_flag_high" | "printed_flag_low" | "outside_printed_range" | "within_printed_range"
     review_status: str = "unreviewed"
+    provenance: dict = field(default_factory=dict)   # page, method, character spans of the line / name / value / unit / range in the page text, box if known
+    normalized: dict = field(default_factory=dict)   # machine-readable reading of what is printed (never replaces it): value_number, qualifier, unit_canonical, name_key
+    ambiguity: list = field(default_factory=list)    # reasons this reading may be wrong (OCR-corrected unit, decimal comma, missing range, ...)
 
 
 @dataclass
@@ -88,6 +98,10 @@ class Result:
     warnings: list = field(default_factory=list)
     needs_review: bool = True
     version: str = PROCESSING_VERSION
+    facts: list = field(default_factory=list)          # structured.Fact: dates, provider, clinician, allergy statement, follow-up instruction
+    medications: list = field(default_factory=list)    # medication.Medication
+    readable: bool = True                              # False: nothing usable could be read
+    language: dict = field(default_factory=dict)       # script hints per page, OCR languages used / missing
 
 
 # ---------- validation ----------
@@ -115,8 +129,38 @@ def validate(data: bytes, filename: str) -> str:
 
 # ---------- text extraction ----------
 
+class _Budget:
+    """Time and cancellation limits for one document. `DocumentError` carries a patient-safe message."""
+
+    def __init__(self, cancel=None, seconds: float | None = None):
+        self.cancel = cancel
+        self.deadline = time.monotonic() + (seconds if seconds is not None else float(os.environ.get("COSMO_DOC_MAX_SECONDS", "90")))
+
+    def check(self) -> None:
+        if self.cancel is not None:
+            self.cancel.raise_if_cancelled()
+        if time.monotonic() > self.deadline:
+            raise DocumentError("This document took too long to read. Please upload fewer pages or a simpler copy.")
+
+
+_plan_cache: tuple[float, "languages.OcrPlan"] | None = None
+
+
+def ocr_plan() -> "languages.OcrPlan":
+    """The OCR languages that will be used: what COSMO_OCR_LANGS asks for, limited to the Tesseract language packs actually installed (cached for a minute: listing them starts a process)."""
+    global _plan_cache
+    override = OCR_OVERRIDE.get()
+    if override:
+        return languages.make_plan(ocr_languages(), override)
+    if _plan_cache and _plan_cache[0] > time.monotonic():
+        return _plan_cache[1]
+    plan = languages.make_plan(ocr_languages())
+    _plan_cache = (time.monotonic() + 60.0, plan)
+    return plan
+
+
 def _preprocess(pil_image):
-    """Orientation fix (Tesseract OSD), upscale small scans, grayscale + light denoise. Returns (image, rotation_degrees)."""
+    """Orientation fix (Tesseract OSD), upscale small scans, grayscale + light denoise. Returns (image, rotation_degrees, script reported by OSD or None)."""
     import cv2
     import numpy as np
     import pytesseract
@@ -125,10 +169,12 @@ def _preprocess(pil_image):
     if min(img.shape) < 1200:
         k = 1500 / min(img.shape)
         img = cv2.resize(img, None, fx=k, fy=k, interpolation=cv2.INTER_CUBIC)
-    rot = 0
+    rot, script = 0, None
     try:
-        osd = pytesseract.image_to_osd(img, config="--psm 0", output_type=pytesseract.Output.DICT)
+        osd = pytesseract.image_to_osd(img, config="--psm 0", output_type=pytesseract.Output.DICT, timeout=OCR_PAGE_TIMEOUT_S)
         rot = int(osd.get("rotate", 0)) if float(osd.get("orientation_conf", 0)) >= 2.0 else 0
+        if float(osd.get("script_conf", 0)) >= 1.0:
+            script = osd.get("script")
     except Exception:
         rot = 0   # OSD fails on sparse pages; keep the original orientation rather than guess
     if rot:
@@ -136,24 +182,29 @@ def _preprocess(pil_image):
         img = np.ascontiguousarray(img)
     img = cv2.fastNlMeansDenoising(img, None, 8, 7, 21) if img.std() < 60 else img
     from PIL import Image
-    return Image.fromarray(img), rot
+    return Image.fromarray(img), rot, script
 
 
-def _ocr_image(pil_image) -> tuple[str, float | None]:
+def _ocr_image(pil_image) -> tuple[str, float | None, str | None]:
+    """(text, mean word confidence 0..1, script). Raises RuntimeError if Tesseract exceeds the per-page time limit."""
     import pytesseract
-    img, _ = _preprocess(pil_image)
+    img, _, script = _preprocess(pil_image)
     cfg = "--psm 6"
-    d = pytesseract.image_to_data(img, config=cfg, output_type=pytesseract.Output.DICT)
+    lang = ocr_plan().lang_arg
+    kw = {"lang": lang} if lang else {}
+    d = pytesseract.image_to_data(img, config=cfg, output_type=pytesseract.Output.DICT, timeout=OCR_PAGE_TIMEOUT_S, **kw)
     confs = [float(c) for c, w in zip(d["conf"], d["text"]) if w.strip() and float(c) >= 0]
-    text = pytesseract.image_to_string(img, config=cfg)
-    return text, (sum(confs) / len(confs) / 100 if confs else None)
+    text = pytesseract.image_to_string(img, config=cfg, timeout=OCR_PAGE_TIMEOUT_S, **kw)
+    return text, (sum(confs) / len(confs) / 100 if confs else None), script
 
 
-def _page_lines(page) -> str:
-    """Rebuild visual lines from word boxes so table rows stay on one line (plain get_text splits cells apart)."""
+def _page_text_and_layout(page) -> tuple[str, list]:
+    """Rebuild visual lines from word boxes so table rows stay on one line (plain get_text splits cells apart), and record each line's box (fractions of the page) and its
+    character range in the returned text."""
     words = page.get_text("words")
     if not words:
-        return ""
+        return "", []
+    W, H = max(page.rect.width, 1.0), max(page.rect.height, 1.0)
     words.sort(key=lambda w: ((w[1] + w[3]) / 2, w[0]))
     lines, cur, cy = [], [], None
     for w in words:
@@ -163,7 +214,7 @@ def _page_lines(page) -> str:
         cur.append(w); cy = yc if not cur[:-1] else cy
     if cur:
         lines.append(cur)
-    out = []
+    out, layout, pos = [], [], 0
     for ln in lines:
         ln.sort(key=lambda w: w[0])
         text, prev = "", None
@@ -171,12 +222,21 @@ def _page_lines(page) -> str:
             if prev is not None:
                 text += "  " if w[0] - prev[2] > 9 else " "
             text += w[4]; prev = w
+        layout.append({"start": pos, "end": pos + len(text), "box": [round(min(w[0] for w in ln) / W, 4), round(min(w[1] for w in ln) / H, 4),
+                                                                    round(max(w[2] for w in ln) / W, 4), round(max(w[3] for w in ln) / H, 4)]})
+        pos += len(text) + 1
         out.append(text)
-    return "\n".join(out)
+    return "\n".join(out), layout
 
 
-def _extract_pdf(data: bytes) -> list[Page]:
+def _native_script(text: str) -> str | None:
+    h = languages.script_hint(text)
+    return {"devanagari": "Devanagari", "latin": "Latin", "mixed": "Mixed"}.get(h)
+
+
+def _extract_pdf(data: bytes, budget: "_Budget | None" = None) -> list[Page]:
     import pymupdf
+    budget = budget or _Budget()
     try:
         doc = pymupdf.open(stream=data, filetype="pdf")
     except Exception:
@@ -193,23 +253,29 @@ def _extract_pdf(data: bytes) -> list[Page]:
         raise DocumentError(str(e)) from None
     pages = []
     for i, page in enumerate(doc, start=1):
-        text = _page_lines(page) or page.get_text("text") or ""
+        budget.check()
+        text, layout = _page_text_and_layout(page)
+        text = text or page.get_text("text") or ""
         if len(text.strip()) >= 30:
-            pages.append(Page(i, text, "embedded", 1.0))
+            pages.append(Page(i, text, "embedded", 1.0, layout or None, _native_script(text)))
             continue
         if ocr_available():
             from PIL import Image
             pix = page.get_pixmap(dpi=250)
             img = Image.open(io.BytesIO(pix.tobytes("png")))
-            t, c = _ocr_image(img)
-            pages.append(Page(i, t, "ocr", c))
+            try:
+                t, c, script = _ocr_image(img)
+                pages.append(Page(i, t, "ocr", c, None, script))
+            except RuntimeError:                   # Tesseract exceeded the per-page limit: this page is unreadable, the document is not thrown away
+                pages.append(Page(i, "", "ocr_failed", None))
         else:
             pages.append(Page(i, text, "ocr_unavailable", None))
     return pages
 
 
-def _extract_image(data: bytes) -> list[Page]:
+def _extract_image(data: bytes, budget: "_Budget | None" = None) -> list[Page]:
     from PIL import Image, UnidentifiedImageError
+    budget = budget or _Budget()
     try:
         img = Image.open(io.BytesIO(data))
         safety.check_image_size(*img.size)         # dimensions come from the header: checked BEFORE the pixels are decoded
@@ -222,8 +288,12 @@ def _extract_image(data: bytes) -> list[Page]:
         raise DocumentError("We couldn't open this image. Please upload a clear JPG or PNG.")
     if not ocr_available():
         return [Page(1, "", "ocr_unavailable", None)]
-    t, c = _ocr_image(img.convert("RGB"))
-    return [Page(1, t, "ocr", c)]
+    budget.check()
+    try:
+        t, c, script = _ocr_image(img.convert("RGB"))
+    except RuntimeError:
+        return [Page(1, "", "ocr_failed", None)]
+    return [Page(1, t, "ocr", c, None, script)]
 
 
 def _extract_docx(data: bytes) -> list[Page]:
@@ -239,18 +309,20 @@ def _extract_docx(data: bytes) -> list[Page]:
     ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
     root = ElementTree.fromstring(xml)
     paras = ["".join(t.text or "" for t in p.iter("{%s}t" % ns["w"])) for p in root.iter("{%s}p" % ns["w"])]
-    return [Page(1, "\n".join(paras), "plain", 1.0)]
+    text = "\n".join(paras)
+    return [Page(1, text, "plain", 1.0, None, _native_script(text))]
 
 
-def extract_pages(data: bytes, ext: str) -> list[Page]:
+def extract_pages(data: bytes, ext: str, cancel=None, max_seconds: float | None = None) -> list[Page]:
+    budget = _Budget(cancel, max_seconds)
     if ext == "pdf":
-        return _extract_pdf(data)
+        return _extract_pdf(data, budget)
     if ext in ("jpg", "jpeg", "png"):
-        return _extract_image(data)
+        return _extract_image(data, budget)
     if ext == "docx":
         return _extract_docx(data)
     text = data.decode("utf-8", errors="replace")
-    return [Page(1, text, "plain", 1.0)]
+    return [Page(1, text, "plain", 1.0, None, _native_script(text))]
 
 
 # ---------- classification ----------
@@ -359,11 +431,77 @@ def _range_bounds(ref: str):
     return None, None
 
 
-def extract_fields(pages: list[Page]) -> list[Field]:
+def _collapse(raw: str) -> tuple[str, list[int]]:
+    """The line with every run of two or more whitespace characters reduced to two spaces (as the extractor has always matched it), plus, for every character of the result, its index
+    in `raw`: so a match in the collapsed line can be mapped back to the exact characters of the page text."""
+    out, idx, i, n = [], [], 0, len(raw)
+    while i < n:
+        if raw[i].isspace():
+            j = i
+            while j < n and raw[j].isspace():
+                j += 1
+            if j - i == 1:
+                out.append(raw[i]); idx.append(i)
+            else:
+                out += [" ", " "]; idx += [i, i + 1]
+            i = j
+        else:
+            out.append(raw[i]); idx.append(i); i += 1
+    return "".join(out), idx
+
+
+def _normalize_field(name: str, value: str, unit: str, ref: str, unit_changed: bool, page: "Page", conf: float) -> tuple[dict, list]:
+    """A machine-readable reading beside the printed one. It never replaces the printed text; a reading that cannot be made safely is left empty and the reason is listed."""
+    amb: list[str] = []
+    v = value.strip()
+    qualifier = v[0] if v[:1] in ("<", ">") else None
+    body = languages.to_ascii_digits(v.lstrip("<>").strip())
+    if languages.has_non_latin_digits(v):
+        amb.append("non_latin_digits")
+    number = None
+    if re.fullmatch(r"\d+,\d{3}", body):
+        amb.append("thousands_or_decimal_comma")                    # 1,200 may be one thousand two hundred or 1.200: no number is chosen
+    elif re.fullmatch(r"\d+,\d+", body):
+        amb.append("decimal_comma")
+        number = float(body.replace(",", "."))
+    else:
+        try:
+            number = float(body)
+        except ValueError:
+            number = None
+    if qualifier:
+        amb.append("value_qualifier")
+    if not unit:
+        amb.append("unit_missing")
+    elif unit not in KNOWN_UNITS:
+        amb.append("unit_not_in_lexicon")
+    if unit_changed:
+        amb.append("unit_ocr_corrected")
+    if not ref:
+        amb.append("reference_range_missing")
+    if page.method == "ocr" and (page.confidence or 0) < 0.6:
+        amb.append("ocr_low_confidence")
+    if conf < 0.6:
+        amb.append("low_field_confidence")
+    if len(name) >= 48:
+        amb.append("possible_name_truncation")
+    norm = {"name_key": re.sub(r"[^a-z0-9]+", " ", name.lower()).strip(), "value_number": number, "qualifier": qualifier, "unit_canonical": unit if unit in KNOWN_UNITS else None}
+    return norm, amb
+
+
+def extract_fields(pages: list[Page], skip: dict | None = None) -> list[Field]:
+    """Printed lab-result lines. `skip`: {page_no: [(start, end), ...]} character ranges already claimed by another extractor (for example medicine entries)."""
     out: list[Field] = []
     for p in pages:
-        for raw in p.text.splitlines():
-            line = re.sub(r"\s{2,}", "  ", raw.rstrip())
+        claimed = (skip or {}).get(p.page_no, [])
+        pos = 0
+        for raw_full in p.text.splitlines(keepends=True):
+            line_start = pos
+            pos += len(raw_full)
+            raw = raw_full.rstrip("\r\n")
+            if any(a <= line_start < b for a, b in claimed):
+                continue
+            line, idx = _collapse(raw.rstrip())
             m = LAB_LINE.match(line)
             if not m:
                 continue
@@ -381,11 +519,12 @@ def extract_fields(pages: list[Page]) -> list[Field]:
                 continue   # a bare "word number" is too ambiguous to call a result
             printed = (m.group("flag") or m.group("flag2") or "").upper()
             flag = ""
+            norm, amb = _normalize_field(name, value, unit, ref, snapped, p, 0.9)
             if printed in ("H", "HIGH", "HH"):
                 flag = "printed_flag_high"
             elif printed in ("L", "LOW", "LL"):
                 flag = "printed_flag_low"
-            elif ref and not value.startswith(("<", ">")):
+            elif ref and not value.startswith(("<", ">")) and "thousands_or_decimal_comma" not in amb:
                 lo, hi = _range_bounds(ref)
                 v = _num(value)
                 if v is not None and (lo is not None or hi is not None):
@@ -395,26 +534,57 @@ def extract_fields(pages: list[Page]) -> list[Field]:
                 conf -= 0.1
             if snapped:
                 conf -= 0.1     # corrected for a known OCR confusion; the raw line stays in source_text for review
-            out.append(Field(name, value, unit, ref, p.page_no, line.strip(), round(conf, 2), flag))
+            conf = round(conf, 2)
+            if conf < 0.6 and "low_field_confidence" not in amb:
+                amb.append("low_field_confidence")
+
+            def span(group: str):
+                a, b = m.span(group)
+                return None if a < 0 else [line_start + idx[a], line_start + idx[b - 1] + 1]
+            ls, le = line_start + (len(raw) - len(raw.lstrip())), line_start + len(raw.rstrip())
+            box = next((e["box"] for e in (p.layout or []) if e["start"] <= ls < e["end"] + 1), None)
+            prov = {"page": p.page_no, "method": p.method, "ocr_confidence": p.confidence, "line_span": [ls, le], "name_span": span("name"), "value_span": span("value"),
+                    "unit_span": span("unit") if m.group("unit") else None, "range_span": span("ref") if m.group("ref") else None, "box": box, "extractor": PROCESSING_VERSION}
+            out.append(Field(name, value, unit, ref, p.page_no, line.strip(), conf, flag, "unreviewed", prov, norm, amb))
     return out
 
 
-def process(data: bytes, filename: str) -> Result:
+def process(data: bytes, filename: str, cancel=None) -> Result:
     ext = validate(data, filename)
-    pages = extract_pages(data, ext)
+    pages = extract_pages(data, ext, cancel=cancel)
     full = "\n".join(p.text for p in pages)
     warnings: list[str] = []
     if any(p.method == "ocr_unavailable" for p in pages):
         warnings.append("This looks like a scanned document, and text recognition (OCR) is not installed on the server, "
                         "so it could not be read. Please upload a text-based PDF or ask the clinic to enable OCR.")
+    failed = [p.page_no for p in pages if p.method == "ocr_failed"]
+    if failed:
+        warnings.append(f"Page(s) {', '.join(map(str, failed))} took too long to read and were skipped. Please upload a clearer or smaller copy of them.")
     low_ocr = [p.page_no for p in pages if p.method == "ocr" and (p.confidence or 0) < 0.6]
     if low_ocr:
         warnings.append(f"Text on page(s) {', '.join(map(str, low_ocr))} was hard to read. Please check it or upload a clearer copy.")
+    readable = any(len(p.text.strip()) >= 30 for p in pages)
     if not full.strip() and not warnings:
         warnings.append("We could not find any readable text in this document.")
+    scripts = {p.page_no: (p.script or languages.script_hint(p.text) or "unknown") for p in pages}
+    lang: dict = {"scripts": scripts}
+    if any(p.method == "ocr" for p in pages):
+        plan = ocr_plan()
+        lang.update(ocr_requested=plan.requested, ocr_used=plan.used, ocr_missing=plan.missing)
+        warnings += plan.warnings
+        if "hin" in plan.missing or ("hin" not in plan.used and any(str(s).lower().startswith("devanagari") for s in scripts.values())):
+            if any(str(s).lower().startswith("devanagari") for s in scripts.values()):
+                warnings.append("This document appears to contain Hindi (Devanagari) text, but Hindi text recognition is not installed. The text may be unreadable or wrong; please check it against the original.")
+    elif any(str(s).lower().startswith("devanagari") for s in scripts.values()):
+        warnings.append("This document contains Hindi (Devanagari) text read directly from the file. It has not been checked for accuracy and is not translated.")
     dtype, _ = classify(full)
-    fields = extract_fields(pages)
-    return Result(dtype, find_date(full), pages, fields, warnings, needs_review=True)
+    meds = medication.extract_medications(pages, dtype)
+    claimed: dict[int, list] = {}
+    for md in meds:
+        claimed.setdefault(md.page, []).extend(md.line_spans)
+    fields = extract_fields(pages, claimed)
+    facts = structured.extract_facts(pages, dtype)
+    return Result(dtype, find_date(full), pages, fields, warnings, needs_review=True, facts=facts, medications=meds, readable=readable, language=lang)
 
 
 # ---------- comparison ----------

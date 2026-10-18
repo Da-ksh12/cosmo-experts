@@ -13,7 +13,7 @@ from tests.pg_harness import get_server  # noqa: F401
 from tests.test_pg_backend import CTX_SECRET, pg_server  # noqa: F401  (fixtures)
 
 T = "2026-10-18T10:00:00Z"
-TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
+TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "doc_facts", "doc_medications", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
           "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "notifications", "jobs"]
 
 
@@ -38,6 +38,8 @@ def rls(pg_server):
         x("insert into documents(id,owner_id,filename,status,created_at,deleted) values(?,?,?,?,now(),0)", (f"doc-{p}", p, f"{p}.pdf", "processed"))
         x("insert into doc_pages(id,document_id,page_no,text) values(?,?,1,?)", (f"pg-{p}", f"doc-{p}", f"secret text of {p}"))
         x("insert into doc_fields(id,document_id,name,value) values(?,?,'Ferritin','8')", (f"f-{p}", f"doc-{p}"))
+        x("insert into doc_facts(id,document_id,kind,label,value) values(?,?,'report_date','Report date','12/03/2025')", (f"fa-{p}", f"doc-{p}"))
+        x("insert into doc_medications(id,document_id,item_no,raw,name,entry) values(?,?,0,?,'Metformin','{}')", (f"md-{p}", f"doc-{p}", f"Tab Metformin 500 mg BD for {p}"))
         x("insert into images(id,owner_id,region,verdict,created_at,deleted) values(?,?,'face','accepted',now(),0)", (f"img-{p}", p))
         x("insert into conversations(id,owner_id,created_at) values(?,?,now())", (f"conv-{p}", p))
         x("insert into messages(id,conversation_id,role,content,created_at) values(?,?,'patient',?,now())", (f"msg-{p}", f"conv-{p}", f"private question of {p}"))
@@ -103,6 +105,7 @@ def test_a_patient_sees_only_their_own_records_everywhere(rls):
     for t in ("documents", "images", "conversations", "quotes", "notifications", "jobs"):
         assert len(ids(be, P1, t)) == 1 and ids(be, P1, t)[0].endswith("p1"), t
     assert ids(be, P1, "doc_pages") == ["pg-p1"] and ids(be, P1, "doc_fields") == ["f-p1"] and ids(be, P1, "messages") == ["msg-p1"]
+    assert ids(be, P1, "doc_facts") == ["fa-p1"] and ids(be, P1, "doc_medications") == ["md-p1"] and ids(be, P2, "doc_medications") == ["md-p2"]
     assert ids(be, P1, "consents", "user_id") == ["p1"] and ids(be, P1, "consent_events") == ["ce-p1"] and ids(be, P1, "users") == ["p1"]
     assert ids(be, P2, "documents") == ["doc-p2"] and ids(be, P2, "messages") == ["msg-p2"] and ids(be, P2, "care_plans") == []
     for t in ("audit", "datasets", "dataset_versions", "model_versions", "field_corrections"):
@@ -166,6 +169,7 @@ def test_audit_is_append_only_and_cannot_be_forged_for_someone_else(rls):
 def test_clinicians_read_clinical_records_but_not_private_conversations_or_other_domains(rls):
     be, _ = rls
     assert ids(be, DOC, "documents") == ["doc-p1", "doc-p2"] and ids(be, DOC, "images") == ["img-p1", "img-p2"] and ids(be, DOC, "doc_fields") == ["f-p1", "f-p2"]
+    assert ids(be, DOC, "doc_facts") == ["fa-p1", "fa-p2"] and ids(be, DOC, "doc_medications") == ["md-p1", "md-p2"]
     assert ids(be, DOC, "care_plans") == ["cp-draft", "cp-ok"] and len(ids(be, DOC, "users")) == 4 and {"q-p1", "q-p2"} <= set(ids(be, DOC, "quotes"))
     for t in ("conversations", "messages", "consents", "consent_events", "notifications", "datasets", "dataset_versions", "model_versions", "audit"):
         assert be.q(f"select count(*) c from {t}", (), DOC)[0]["c"] == 0, t
@@ -179,7 +183,7 @@ def test_administrators_manage_accounts_and_the_ml_domain_but_do_not_read_clinic
     be, _ = rls
     assert len(ids(be, ADM, "users")) == 4 and be.q("select count(*) c from audit", (), ADM)[0]["c"] >= 1
     assert ids(be, ADM, "datasets") == ["ds1"] and ids(be, ADM, "model_versions") == ["mv1"] and len(ids(be, ADM, "jobs")) == 2
-    for t in ("documents", "images", "doc_pages", "doc_fields", "care_plans", "conversations", "messages", "consents", "consent_events", "notifications"):
+    for t in ("documents", "images", "doc_pages", "doc_fields", "doc_facts", "doc_medications", "care_plans", "conversations", "messages", "consents", "consent_events", "notifications"):
         assert be.q(f"select count(*) c from {t}", (), ADM)[0]["c"] == 0, t
     assert writes(be, ADM, "update users set disabled=1 where id='p2'") == 1                            # administrative function: allowed
     assert writes(be, ADM, "update users set disabled=0 where id='p2'") == 1
@@ -311,3 +315,26 @@ def test_training_runs_are_visible_to_administrators_and_the_system_only_and_nev
         writes(be, ADM, "delete from training_runs where id='tr1'")
     with pytest.raises(psycopg.errors.CheckViolation):
         writes(be, ADM, "update training_runs set status='whatever' where id='tr1'")
+
+
+def test_extracted_facts_and_medicines_follow_the_document_they_were_read_from(rls):
+    be, _ = rls
+    # a patient cannot plant extracted content on another patient's document, nor change or remove it
+    for sql in ("insert into doc_facts(id,document_id,kind,value) values('fa-forged','doc-p2','report_date','1 Jan 2020')",
+                "insert into doc_medications(id,document_id,item_no,raw,entry) values('md-forged','doc-p2',9,'Tab Evil 1 g','{}')"):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            writes(be, P1, sql)
+    assert writes(be, P1, "update doc_medications set raw='changed' where id='md-p2'") == 0
+    assert writes(be, P1, "delete from doc_medications where id='md-p2'") == 0
+    assert writes(be, P1, "delete from doc_facts where id='fa-p2'") == 0
+    # the review state is a closed vocabulary
+    with pytest.raises(psycopg.errors.CheckViolation):
+        writes(be, DOC, "update doc_medications set review_status='approved_by_magic' where id='md-p1'")
+    assert writes(be, DOC, "update doc_medications set review_status='confirmed', reviewed_by='d1' where id='md-p1'") == 1
+    assert be.q("select review_status from doc_medications where id='md-p1'", (), P1)[0]["review_status"] == "confirmed"
+    # deleting a document removes what was read from it (nothing is left behind)
+    assert writes(be, SYS, "insert into documents(id,owner_id,filename,status,created_at,deleted) values('doc-tmp','p1','t.pdf','processed',now(),0)") == 1
+    assert writes(be, SYS, "insert into doc_facts(id,document_id,kind,value) values('fa-tmp','doc-tmp','report_date','x')") == 1
+    assert writes(be, SYS, "insert into doc_medications(id,document_id,item_no,raw,entry) values('md-tmp','doc-tmp',0,'Tab X','{}')") == 1
+    assert writes(be, SYS, "delete from documents where id='doc-tmp'") == 1
+    assert be.q("select count(*) c from doc_facts where id='fa-tmp'", (), SYS)[0]["c"] == 0 and be.q("select count(*) c from doc_medications where id='md-tmp'", (), SYS)[0]["c"] == 0
