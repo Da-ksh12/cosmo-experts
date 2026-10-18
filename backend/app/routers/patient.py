@@ -126,7 +126,7 @@ def upload_document(file: UploadFile = File(...), category: str = Form(""), user
     try:
         return core.ingest_document(user["id"], file.filename or "upload", data, category)
     except pipeline.DocumentError as e:
-        raise HTTPException(400 if str(e) == "Unknown document category." else 422, str(e))
+        raise HTTPException(400 if str(e) == "Unknown document category." else getattr(e, "status", 422), str(e))
 
 
 @router.get("/documents")

@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import re
 
-from .. import db, storage
+from .. import db, malware, storage
 from . import notify
 from ..config import UPLOAD_DIR
 from ..documents import pipeline
@@ -20,13 +20,16 @@ DOC_CATEGORIES = ("", "laboratory_report", "prescription", "consultation_note", 
 
 def check_and_store_image(owner_id: str, region: str, data: bytes, request_id: str = "") -> dict:
     t = db.now()
+    storage.check_quota(owner_id, len(data))
+    scan = malware.check(data)                              # before any parser touches the bytes
     rep = suitability.assess(data, region)
     iid, path = db.uid(), ""
     if rep.verdict != "rejected":   # data minimisation: rejected photos are not kept
         path = store_private(owner_id, data, "jpg")
     try:
         with db.tx() as tx:                                   # the row and its audit event commit together or not at all
-            tx.x("INSERT INTO images(id,owner_id,region,stored_path,verdict,report,created_at,deleted) VALUES(?,?,?,?,?,?,?,0)", (iid, owner_id, region, path, rep.verdict, db.jdump(rep.to_dict()), db.now()))
+            tx.x("INSERT INTO images(id,owner_id,region,stored_path,verdict,report,created_at,deleted,scan_status,size_bytes) VALUES(?,?,?,?,?,?,?,0,?,?)",
+                 (iid, owner_id, region, path, rep.verdict, db.jdump(rep.to_dict()), db.now(), scan, len(data) if path else 0))
             db.audit(owner_id, "image.upload", iid, {"region": region, "verdict": rep.verdict, "reason": rep.reason, "request_id": request_id}, t=tx)
     except Exception:
         storage.delete(path)                                  # never leave a private file behind without its database record
@@ -45,6 +48,8 @@ def ingest_document(owner_id: str, filename: str, data: bytes, category: str = "
     if category not in DOC_CATEGORIES:
         raise pipeline.DocumentError("Unknown document category.")
     did = db.uid()
+    storage.check_quota(owner_id, len(data))
+    scan = malware.check(data)                              # before any parser touches the bytes
     try:
         res = pipeline.process(data, filename or "upload")
     except pipeline.DocumentError as e:
@@ -55,9 +60,9 @@ def ingest_document(owner_id: str, filename: str, data: bytes, category: str = "
     try:
         with db.tx() as t:                                    # document, pages, fields and audit event: one atomic operation
             t.x("INSERT INTO documents(id,owner_id,filename,stored_path,mime,sha256,doc_type,doc_date,page_count,status,processing_version,"
-                "review_status,language,error,created_at,deleted,size_bytes,user_category) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
+                "review_status,language,error,created_at,deleted,size_bytes,user_category,scan_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?)",
                 (did, owner_id, re.sub(r"[^\w .()-]", "_", filename or "upload")[:120], path, pipeline.ALLOWED[ext], hashlib.sha256(data).hexdigest(), res.doc_type,
-                 res.doc_date, len(res.pages), "processed", res.version, "pending_clinician_review", "en", "; ".join(res.warnings), db.now(), len(data), category))
+                 res.doc_date, len(res.pages), "processed", res.version, "pending_clinician_review", "en", "; ".join(res.warnings), db.now(), len(data), category, scan))
             for p in res.pages:
                 t.x("INSERT INTO doc_pages VALUES(?,?,?,?,?,?)", (db.uid(), did, p.page_no, p.text, p.method, p.confidence))
             for n, f in enumerate(res.fields):

@@ -64,6 +64,7 @@ def consent_problems(env=os.environ) -> list[str]:
 def enforce(env=os.environ) -> None:
     if env.get("COSMO_MODE") != "production":
         return
-    bad = problems(env) or retrieval_problems(env) or consent_problems(env)
+    from . import malware
+    bad = problems(env) or retrieval_problems(env) or consent_problems(env) or malware.problems(env)
     if bad:
         raise SystemExit("Refusing to start in production:\n  - " + "\n  - ".join(bad))

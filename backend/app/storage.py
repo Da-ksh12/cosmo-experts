@@ -41,11 +41,30 @@ def backend_name() -> str:
 
 # ---------------------------------------------------------------- local
 def _local_put(owner: str, data: bytes, ext: str) -> str:
+    """Opaque random name (the original file name is never part of the key), private permissions, and an atomic publish: the bytes are written to a hidden
+    partial file that is fsynced and renamed, so a crash or a full disk never leaves a truncated file under a real reference."""
     d = UPLOAD_DIR / _safe_owner(owner)
     d.mkdir(parents=True, exist_ok=True)
-    p = d / f"{uuid.uuid4().hex}.{re.sub(r'[^a-z0-9]', '', ext.lower())}"
-    p.write_bytes(data)
-    return str(p)
+    try:
+        os.chmod(d, 0o700)
+    except OSError:
+        pass                                                                                   # not supported on every filesystem (Windows ACLs apply there)
+    name = f"{uuid.uuid4().hex}.{re.sub(r'[^a-z0-9]', '', ext.lower())}"
+    final, part = d / name, d / f".{name}.part"
+    try:
+        fd = os.open(part, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(part, final)
+    except OSError:
+        try:
+            part.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise StorageError("the file could not be stored") from None
+    return str(final)
 
 
 def _local_path(ref: str) -> Path:
@@ -142,3 +161,30 @@ def healthy() -> tuple[bool, str]:
     p = UPLOAD_DIR / ".w"
     p.write_text("x"); p.unlink()
     return True, "private upload directory writable"
+
+
+# ---------------------------------------------------------------- quotas
+def limits() -> tuple[int, int]:
+    """(bytes, files) one account may hold. Technical limits to protect the service; the clinic can change them (COSMO_USER_STORAGE_MB, COSMO_USER_FILE_LIMIT)."""
+    try:
+        mb = int(os.environ.get("COSMO_USER_STORAGE_MB", "200"))
+        files = int(os.environ.get("COSMO_USER_FILE_LIMIT", "500"))
+    except ValueError:
+        raise SystemExit("COSMO_USER_STORAGE_MB and COSMO_USER_FILE_LIMIT must be whole numbers") from None
+    return max(mb, 1) * 1024 * 1024, max(files, 1)
+
+
+def usage(owner_id: str) -> dict:
+    from . import db
+    d = db.q1("SELECT COALESCE(SUM(size_bytes),0) b, COUNT(*) n FROM documents WHERE owner_id=? AND deleted=0 AND stored_path!=''", (owner_id,))
+    i = db.q1("SELECT COALESCE(SUM(size_bytes),0) b, COUNT(*) n FROM images WHERE owner_id=? AND deleted=0 AND stored_path!=''", (owner_id,))
+    return {"bytes": int(d["b"]) + int(i["b"]), "files": int(d["n"]) + int(i["n"])}
+
+
+def check_quota(owner_id: str, incoming: int) -> None:
+    """Raises malware.UploadRefused (413) if storing `incoming` bytes would pass the account's limits."""
+    from .malware import UploadRefused
+    max_bytes, max_files = limits()
+    u = usage(owner_id)
+    if u["files"] + 1 > max_files or u["bytes"] + incoming > max_bytes:
+        raise UploadRefused("You have reached the storage limit for your account. Please delete files you no longer need and try again.", 413)

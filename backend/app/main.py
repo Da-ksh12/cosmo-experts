@@ -7,12 +7,12 @@ from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .dbcore import context
-from . import clinical_content, db, logging_setup, metrics, prod_checks, security
+from . import clinical_content, db, logging_setup, malware, metrics, prod_checks, security
 from .config import CORS_ORIGINS
 from .datasets import registry
 from .gateway import api as gateway_api, jobs as gateway_jobs
 from .middleware import Guard
-from .routers import auth as auth_router, care, patient, staff
+from .routers import auth as auth_router, care, files as files_router, patient, staff
 
 WARM = {"embeddings": "pending"}
 
@@ -53,10 +53,17 @@ def _startup():
 
 app = FastAPI(title="Cosmo Experts AI", version="1.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"], allow_credentials=False)
+@app.exception_handler(malware.UploadRefused)
+async def _upload_refused(request: Request, exc: malware.UploadRefused):
+    from fastapi.responses import JSONResponse
+    return JSONResponse({"detail": str(exc)}, status_code=exc.status)
+
+
 app.include_router(auth_router.router)
 app.include_router(patient.router)
 app.include_router(staff.router)
 app.include_router(care.router)
+app.include_router(files_router.router)
 app.include_router(gateway_api.router)
 app.add_middleware(Guard)
 
