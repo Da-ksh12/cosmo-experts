@@ -1,0 +1,48 @@
+{
+ "split": "validation (not used to design or fit the v1.1 rules)",
+ "n_usable": 231,
+ "suitability_version": "suitability-1.1.0",
+ "thresholds": {
+  "sharpness": 10.5,
+  "contrast": 11.9,
+  "dark": 85.0,
+  "bright": 200.0,
+  "min_direction_ratio": 0.1701
+ },
+ "blockiness_warn": 1.5706,
+ "false_reject_usable": 0.095,
+ "false_reject_by_reason": {
+  "blurry": 0.039,
+  "low_contrast": 0.013,
+  "motion_blur": 0.03,
+  "too_bright": 0.004,
+  "too_dark": 0.009
+ },
+ "detection": {
+  "motion_0_0.01": 0.931,
+  "motion_0_0.02": 0.996,
+  "motion_45_0.02": 0.97,
+  "motion_90_0.02": 1.0,
+  "motion_0_0.04": 1.0,
+  "blur_mild": 0.978,
+  "jpeg8": 0.061,
+  "jpeg15": 0.152,
+  "jpeg30": 0.203,
+  "blur_strong": 1.0,
+  "dark": 1.0,
+  "bright": 0.978,
+  "washed": 0.991
+ },
+ "compression_warning": {
+  "on_usable_photos": 0.03,
+  "jpeg8": 0.688,
+  "jpeg15": 0.688,
+  "jpeg30": 0.658
+ },
+ "limits": [
+  "usable = accepted into a research dataset, not labelled for usability",
+  "degradations are simulated",
+  "lesion close-ups only: faces and hair/scalp are not validated"
+ ],
+ "hair_profile_uses_direction_rule": false
+}

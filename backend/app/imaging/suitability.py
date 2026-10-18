@@ -12,18 +12,27 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-VERSION = "suitability-1.0.0"
+VERSION = "suitability-1.1.0"
 REGIONS = ("face", "hair_scalp", "body", "other")
 MAX_PIXELS = 60_000_000
 
 # Quality thresholds per photo type. "default" = the original untuned values (faces; NOT validated on real faces).
 # "skin_closeup" = fitted on the PAD-UFES-20 training split and reported on its test split (docs/eval/quality_calibration.json): the old
 # values falsely rejected 49 % of usable skin close-ups, these reject 8.4 % while still catching blur/dark/over-exposed/washed-out simulations (98-100 %).
+#
+# v1.1 additions (docs/eval/quality_features.json, eval/quality_features.py; thresholds fit on the TRAIN split, final gate checked on the untouched VALIDATION
+# split by eval/quality_gate_eval.py):
+# * `min_direction_ratio`: weakest/strongest directional detail energy. Linear camera motion removes detail along one direction; the old sharpness rule caught only
+#   53-84 % of simulated motion blur, this rule lifts that to 95-100 % at +1.7 points of false rejection. NOT applied to hair/scalp (hair is naturally oriented, its
+#   false-reject rate is unmeasured) or to faces (the face profile was never validated on real faces).
+# * JPEG blockiness is reported as a WARNING only: it detects ~70 % of heavily re-encoded images but also flags ~8 % of usable photos, so it must not reject.
+BLOCKINESS_WARN = 1.5706
 QUALITY_PROFILES = {
-    "default": {"sharpness": 40.0, "contrast": 18.0, "dark": 55.0, "bright": 215.0},
-    "skin_closeup": {"sharpness": 10.5, "contrast": 11.9, "dark": 85.0, "bright": 200.0},
+    "default": {"sharpness": 40.0, "contrast": 18.0, "dark": 55.0, "bright": 215.0, "min_direction_ratio": None},
+    "skin_closeup": {"sharpness": 10.5, "contrast": 11.9, "dark": 85.0, "bright": 200.0, "min_direction_ratio": 0.1701},
+    "hair_closeup": {"sharpness": 10.5, "contrast": 11.9, "dark": 85.0, "bright": 200.0, "min_direction_ratio": None},
 }
-PROFILE_BY_REGION = {"face": "default", "hair_scalp": "skin_closeup", "body": "skin_closeup", "other": "skin_closeup", "lesion": "skin_closeup"}
+PROFILE_BY_REGION = {"face": "default", "hair_scalp": "hair_closeup", "body": "skin_closeup", "other": "skin_closeup", "lesion": "skin_closeup"}
 
 
 def quality_issues(m: dict, profile: str = "default") -> list[str]:
@@ -39,6 +48,8 @@ def quality_issues(m: dict, profile: str = "default") -> list[str]:
         out.append("too_bright")
     if m["sharpness"] < t["sharpness"]:
         out.append("blurry")
+    elif t.get("min_direction_ratio") is not None and m.get("direction_ratio") is not None and m["direction_ratio"] <= t["min_direction_ratio"]:
+        out.append("motion_blur")                                   # sharp overall but smeared along one direction
     if m["contrast"] < t["contrast"]:
         out.append("low_contrast")
     return out
@@ -51,6 +62,7 @@ MESSAGES = {
     "face_too_small": "The face is too small in this photo. Please move closer and retake it.",
     "multiple_faces": "We found more than one face. Please upload a photo with only the patient's face.",
     "blurry": "The photo is blurry. Please retake it while holding the camera steady.",
+    "motion_blur": "The photo looks smeared, as if the camera or the area moved. Please retake it while holding the camera steady.",
     "too_dark": "The photo is too dark. Please try again in brighter, even light.",
     "too_bright": "The photo is too bright or washed out. Please avoid direct flash or harsh sunlight.",
     "low_contrast": "The photo looks flat or washed out. Please try again in even, natural light.",
@@ -103,9 +115,37 @@ def _resize(img, long_side=800):
     return cv2.resize(img, (int(w * s), int(h * s)), interpolation=cv2.INTER_AREA) if s < 1 else img
 
 
+_DIR_KERNELS = [np.array(k, np.float32) for k in ([[0, 0, 0], [1, -2, 1], [0, 0, 0]], [[0, 1, 0], [0, -2, 0], [0, 1, 0]],
+                                                       [[1, 0, 0], [0, -2, 0], [0, 0, 1]], [[0, 0, 1], [0, -2, 0], [1, 0, 0]])]
+
+
+def direction_ratio(gray: np.ndarray) -> float:
+    """Weakest / strongest second-derivative energy over four directions (1 = detail equal in all directions; near 0 = detail lost along one direction)."""
+    g = gray.astype(np.float32)
+    e = [float(np.mean(cv2.filter2D(g, cv2.CV_32F, k) ** 2)) for k in _DIR_KERNELS]
+    return min(e) / (max(e) + 1e-6)
+
+
+def blockiness(img, size: int = 1024) -> float:
+    """JPEG 8x8 grid artefact at NATIVE resolution (resizing destroys the grid): mean step across block boundaries / mean step inside blocks (about 1 = none)."""
+    g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    h, w = g.shape
+    top, left = max(0, (h - size) // 2), max(0, (w - size) // 2)
+    g = g[top:top + size, left:left + size]
+    h, w = (g.shape[0] // 8) * 8, (g.shape[1] // 8) * 8
+    if h < 32 or w < 32:
+        return 1.0
+    g = g[:h, :w]
+    dx, dy = np.abs(np.diff(g, axis=1)), np.abs(np.diff(g, axis=0))
+    bx = dx[:, 7::8].mean() / (np.delete(dx, np.s_[7::8], axis=1).mean() + 1e-6)
+    by = dy[7::8, :].mean() / (np.delete(dy, np.s_[7::8], axis=0).mean() + 1e-6)
+    return float((bx + by) / 2)
+
+
 def quality_metrics(img) -> dict:
     gray = cv2.cvtColor(_resize(img), cv2.COLOR_BGR2GRAY)
     return {
+        "direction_ratio": round(direction_ratio(gray), 4), "blockiness": round(blockiness(img), 3),
         "width": int(img.shape[1]), "height": int(img.shape[0]),
         "sharpness": round(float(cv2.Laplacian(gray, cv2.CV_64F).var()), 1),
         "brightness": round(float(gray.mean()), 1),
@@ -157,8 +197,8 @@ def _checklist(m, region, faces, big_face, verdict, reason, decoded=True):
                 skip("quality", "Image quality"), skip("lighting", "Lighting"), skip("subject", "Subject visibility"),
                 skip("framing", "Framing"), _check("overall", "Overall suitability", "failed", MESSAGES[reason])]
     iss = quality_issues(m, PROFILE_BY_REGION[region])
-    small, blurry = "too_small" in iss, "blurry" in iss
-    q = ("failed", "Too small to check reliably." if small else "Not in focus.") if (small or blurry) else ("passed", "Resolution and focus are acceptable.")
+    small, blurry, moved = "too_small" in iss, "blurry" in iss, "motion_blur" in iss
+    q = ("failed", "Too small to check reliably." if small else "Not in focus." if blurry else "Smeared along one direction (movement).") if (small or blurry or moved) else ("passed", "Resolution and focus are acceptable.")
     dark, bright, flat = "too_dark" in iss, "too_bright" in iss, "low_contrast" in iss
     lt = ("failed", "Too dark." if dark else "Too bright or washed out." if bright else "Flat lighting, low contrast.") if (dark or bright or flat)         else ("passed", "Lighting is even enough.")
     if region == "face":
@@ -199,6 +239,8 @@ def assess(data: bytes, region: str) -> Report:
     m.update({"faces_found": len(faces), "largest_face_fraction": round(big_face, 3), "skin_fraction": round(skin_frac, 3),
               "hair_like_fraction": round(hair, 3)})
     rep = _decide(m, region, faces, big_face, skin_frac, hair)
+    if m["blockiness"] >= BLOCKINESS_WARN:
+        rep.warnings.append("This photo looks heavily compressed (for example re-saved or sent through a messaging app). The clinic may ask for the original photo.")
     rep.checks = _checklist(m, region, faces, big_face, rep.verdict, rep.reason)
     return rep
 
