@@ -102,7 +102,17 @@ def _gauges() -> list[tuple[str, str, float, dict]]:
         lim = ratelimit.get()
         g.append(("cosmo_ratelimit_store_errors_total", "Rate-limit store failures (fell back to in-process limiting)", lim.errors, {"store": lim.store.name}))
 
-    for fn in (database, store, jobs, backup, disk, content, limiter):
+    def ai_engine():
+        from .ai.resources import resource_manager
+        snap = resource_manager().snapshot()
+        g.append(("cosmo_ai_pending", "AI runs executing or waiting", snap["pending"], {}))
+        for key, n in snap["runs"].items():
+            cap, status = key.split("|", 1)
+            g.append(("cosmo_ai_runs_total", "AI capability runs by capability and status", n, {"capability": cap, "status": status}))
+        for cap, v in snap["seconds"].items():
+            g.append(("cosmo_ai_run_seconds_sum", "Total seconds spent in AI capability runs", v["sum"], {"capability": cap}))
+
+    for fn in (database, store, jobs, backup, disk, content, limiter, ai_engine):
         safe(fn)
     g.append(("cosmo_process_uptime_seconds", "Seconds since the process started", time.time() - START, {}))
     return g
