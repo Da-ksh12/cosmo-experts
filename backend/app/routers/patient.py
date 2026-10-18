@@ -58,6 +58,17 @@ def consent_accept(body: ConsentBody, user=Depends(require("patient"))):
     return consent.status_for(user)
 
 
+@router.post("/consent/withdraw")
+def consent_withdraw(user=Depends(require("patient"))):
+    consent.withdraw(user)
+    return consent.status_for(user)
+
+
+@router.get("/consent/history")
+def consent_history(user=Depends(require("patient"))):
+    return {"events": consent.history(user["id"])}
+
+
 @router.get("/me")
 def me(user=Depends(current_user)):
     return user

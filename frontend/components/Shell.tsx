@@ -2,11 +2,11 @@
 
 import ConsentGate, { ConsentStatus } from "@/components/ConsentGate";
 import NotificationBell from "@/components/NotificationBell";
-import { ClipboardList, Camera, History, Home, LogOut, MessageCircle, FileText, ChevronLeft } from "lucide-react";
+import { ClipboardList, Camera, History, Home, LogOut, MessageCircle, FileText, ChevronLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { api, getRawSession, setSession, subscribeSession, User } from "@/lib/api";
+import { api, getRawSession, signOutEverywhere, subscribeSession, User } from "@/lib/api";
 import { PhotoFlowProvider } from "@/lib/photoFlow";
 import { BrandLogo, Dialog, ToastProvider } from "@/components/ui";
 
@@ -25,6 +25,7 @@ const STAFF_NAV: Record<string, { href: string; label: string }[]> = {
   admin: [{ href: "/clinic", label: "Clinic workspace" }, { href: "/admin", label: "Admin & AI lab" }],
 };
 
+const PUBLIC = ["/login", "/register", "/forgot-password", "/reset-password"];
 const isActive = (path: string, href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(href + "/"));
 
 /** Back + brand + optional right slot, used at the top of every sub-screen on mobile. */
@@ -54,7 +55,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    if (!user && path !== "/login") router.replace("/login");
+    if (!user && !PUBLIC.includes(path)) router.replace("/login");
     if (user && user.role !== "patient" && !path.startsWith("/clinic") && !path.startsWith("/admin") && path !== "/login") router.replace("/clinic");
     if (user && user.role === "patient" && (path.startsWith("/clinic") || path.startsWith("/admin"))) router.replace("/");     // staff pages are never shown to patients (the API refuses them too)
   }, [ready, user, path, router]);
@@ -66,10 +67,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   }, [uid, urole]);
   const consent = urole === "patient" && consentFor && consentFor.uid === uid ? consentFor.status : null;       // never reuse another user's answer
 
-  const signOut = () => { setMenu(false); setSession(null); router.replace("/login"); };
+  const signOut = () => { setMenu(false); void signOutEverywhere(); router.replace("/login"); };
 
   if (!ready) return null;
-  const blocked = !user ? path !== "/login" : user.role === "patient" ? path.startsWith("/clinic") || path.startsWith("/admin") : !path.startsWith("/clinic") && !path.startsWith("/admin") && path !== "/login";
+  const blocked = !user ? !PUBLIC.includes(path) : user.role === "patient" ? path.startsWith("/clinic") || path.startsWith("/admin") : !path.startsWith("/clinic") && !path.startsWith("/admin") && path !== "/login";
   const patient = user?.role === "patient";
   const initials = (user?.name ?? "").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -107,6 +108,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <Dialog title="Your account" onClose={() => setMenu(false)}>
               <p className="mb-1 font-semibold">{user.name}</p>
               <p className="mb-5 text-sm capitalize text-muted">{user.role}</p>
+              {patient && <Link href="/privacy" className="btn mb-3 w-full" onClick={() => setMenu(false)}><ShieldCheck className="h-5 w-5" aria-hidden /> Privacy and consent</Link>}
               {patient && <Link href="/care" className="btn mb-3 w-full" onClick={() => setMenu(false)}><ClipboardList className="h-5 w-5" aria-hidden /> Doctor review &amp; care plan</Link>}
               <button className="btn btn-primary w-full" onClick={signOut}><LogOut className="h-5 w-5" aria-hidden /> Sign out</button>
             </Dialog>

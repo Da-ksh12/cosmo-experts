@@ -56,7 +56,34 @@ function messageFrom(detail: unknown, fallback: string): string {
   return fallback;
 }
 
-async function request(path: string, init: RequestInit = {}): Promise<Response> {
+const CSRF = { "X-Requested-With": "cosmo-web" };
+let refreshing: Promise<boolean> | null = null;
+
+/** Exchange the httpOnly refresh cookie for a new access token (Supabase mode). One call at a time: concurrent 401s share it. Never exposes the refresh token to script. */
+export function refreshSession(): Promise<boolean> {
+  refreshing ??= (async () => {
+    try {
+      const res = await fetch("/api/auth/refresh", { method: "POST", headers: CSRF, credentials: "same-origin" });
+      if (!res.ok) return false;
+      const r = (await res.json()) as Session;
+      setSession({ token: r.token, user: r.user });
+      return true;
+    } catch {
+      return false;
+    }
+  })().finally(() => { refreshing = null; });
+  return refreshing;
+}
+
+export async function signOutEverywhere(): Promise<void> {
+  const s = getSession();
+  setSession(null);
+  try {
+    await fetch("/api/auth/logout", { method: "POST", headers: { ...CSRF, ...(s ? { Authorization: `Bearer ${s.token}` } : {}) }, credentials: "same-origin" });
+  } catch { /* offline: the local session is already gone */ }
+}
+
+async function request(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
   const s = getSession();
   const headers = new Headers(init.headers);
   if (s) headers.set("Authorization", `Bearer ${s.token}`);
@@ -68,6 +95,7 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
     throw new ApiError(0, "We can't reach the server right now. Please check your connection and try again.");
   }
   if (res.status === 401 && s) {
+    if (!retried && !path.startsWith("/api/auth/") && (await refreshSession())) return request(path, init, true);
     setSession(null); // Shell observes the session store and redirects to /login
   }
   if (!res.ok) {

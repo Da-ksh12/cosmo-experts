@@ -53,24 +53,66 @@ def usable() -> bool:
     return n["status"] == "approved" or (n["status"] == "draft" and os.environ.get("COSMO_MODE") != "production")
 
 
+def _latest(user_id: str) -> dict | None:
+    return db.q1("SELECT notice_sha256, notice_status, action, at FROM consent_events WHERE user_id=? ORDER BY at DESC, id DESC LIMIT 1", (user_id,))
+
+
 def accepted(user_id: str) -> bool:
+    """True only if the person's LATEST decision is an acceptance of the notice that is current now. A withdrawal, or a changed notice, makes it false.
+    Acceptances recorded before the history existed (table `consents`) count only for a user with no history at all."""
     n = notice()
-    return bool(n["sha256"]) and bool(db.q1("SELECT 1 x FROM consents WHERE user_id=? AND notice_sha256=?", (user_id, n["sha256"])))
+    if not n["sha256"]:
+        return False
+    last = _latest(user_id)
+    if last:
+        return last["action"] == "accepted" and last["notice_sha256"] == n["sha256"]
+    return bool(db.q1("SELECT 1 x FROM consents WHERE user_id=? AND notice_sha256=?", (user_id, n["sha256"])))
+
+
+def _record(user: dict, n: dict, action: str, source: str = "web") -> None:
+    with db.tx() as t:
+        t.x("INSERT INTO consent_events(id,user_id,notice_sha256,notice_status,action,at,source) VALUES(?,?,?,?,?,?,?)",
+            (db.uid(), user["id"], n["sha256"], "approved" if n["status"] == "approved" else "draft", action, db.now(), source))
+        db.audit(user["id"], f"consent.{'accept' if action == 'accepted' else 'withdraw'}", user["id"], {"notice_sha256": n["sha256"], "status": n["status"]}, t=t)
 
 
 def status_for(user: dict) -> dict:
     n = notice()
     need = enforced() and user["role"] == "patient"
-    return {"enforced": enforced(), "required": need and not accepted(user["id"]), "accepted": accepted(user["id"]), "available": usable(),
-            "notice": {"text": n["text"], "sha256": n["sha256"], "status": n["status"], "approved_by": n["approved_by"]} if need else None}
+    ok = accepted(user["id"])
+    last = _latest(user["id"]) if user["role"] == "patient" else None
+    return {"enforced": enforced(), "required": need and not ok, "accepted": ok, "available": usable(),
+            "withdrawn": bool(last and last["action"] == "withdrawn"),
+            "notice": {"text": n["text"], "sha256": n["sha256"], "status": n["status"], "approved_by": n["approved_by"]} if need else None,
+            # what consent does NOT cover, stated so that screens can show it: consent here is never a permission to train models
+            "not_covered": ["model_training"]}
 
 
 def accept(user: dict, notice_sha256: str) -> None:
     n = notice()
     if not usable() or n["sha256"] != notice_sha256:
         raise HTTPException(409, "The privacy notice changed or is unavailable. Please reload and read the current notice.")
+    if accepted(user["id"]):
+        return                                                                       # idempotent: no duplicate history entries
+    _record(user, n, "accepted")
     db.insert_ignore("consents", {"user_id": user["id"], "notice_sha256": n["sha256"], "accepted_at": db.now()})
-    db.audit(user["id"], "consent.accept", user["id"], {"notice_sha256": n["sha256"], "status": n["status"]})
+
+
+def withdraw(user: dict) -> None:
+    """Withdrawal takes effect at once: the gate closes for new uploads, recordings and messages. It does not delete what was already stored; that is the deletion
+    request process (docs/PRIVACY_AND_CONSENT.md), which keeps records the law requires."""
+    last = _latest(user["id"])
+    if last and last["action"] == "withdrawn":
+        return
+    n = notice()
+    if not last and not accepted(user["id"]):
+        return                                                                       # nothing to withdraw
+    _record(user, {"sha256": (last or {}).get("notice_sha256") or n["sha256"], "status": (last or {}).get("notice_status") or n["status"]}, "withdrawn")
+
+
+def history(user_id: str) -> list[dict]:
+    """The person's own consent decisions, newest first. The notice text is not repeated; its hash and approval status identify it."""
+    return db.q("SELECT notice_sha256, notice_status, action, at FROM consent_events WHERE user_id=? ORDER BY at DESC, id DESC LIMIT 200", (user_id,))
 
 
 def required(user=Depends(current_user)):

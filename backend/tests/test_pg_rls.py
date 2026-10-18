@@ -14,7 +14,7 @@ from tests.test_pg_backend import CTX_SECRET, pg_server  # noqa: F401  (fixtures
 
 T = "2026-10-18T10:00:00Z"
 TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
-          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "notifications", "jobs"]
+          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "notifications", "jobs"]
 
 
 def C(uid, role, admin="none"):
@@ -43,6 +43,7 @@ def rls(pg_server):
         x("insert into messages(id,conversation_id,role,content,created_at) values(?,?,'patient',?,now())", (f"msg-{p}", f"conv-{p}", f"private question of {p}"))
         x("insert into quotes(id,patient_id,status,lines,total,created_at) values(?,?,'draft','[]',1,now())", (f"q-{p}", p))
         x("insert into consents(user_id,notice_sha256,accepted_at) values(?,?,now())", (p, "sha"))
+        x("insert into consent_events(id,user_id,notice_sha256,notice_status,action,at) values(?,?,'sha','approved','accepted',now())", (f"ce-{p}", p))
         x("insert into notifications(id,user_id,kind,title,dedupe_key,created_at) values(?,?,'k','t',?,now())", (f"n-{p}", p, f"k-{p}"))
         x("insert into jobs(id,owner_id,task,status,created_at) values(?,?,'t','done',now())", (f"j-{p}", p))
     x("insert into care_plans(id,patient_id,doctor_id,status,assessment,updated_at) values('cp-draft','p1','d1','draft','secret draft',now()),('cp-ok','p1','d1','approved','approved plan',now())")
@@ -100,7 +101,7 @@ def test_a_patient_sees_only_their_own_records_everywhere(rls):
     for t in ("documents", "images", "conversations", "quotes", "notifications", "jobs"):
         assert len(ids(be, P1, t)) == 1 and ids(be, P1, t)[0].endswith("p1"), t
     assert ids(be, P1, "doc_pages") == ["pg-p1"] and ids(be, P1, "doc_fields") == ["f-p1"] and ids(be, P1, "messages") == ["msg-p1"]
-    assert ids(be, P1, "consents", "user_id") == ["p1"] and ids(be, P1, "users") == ["p1"]
+    assert ids(be, P1, "consents", "user_id") == ["p1"] and ids(be, P1, "consent_events") == ["ce-p1"] and ids(be, P1, "users") == ["p1"]
     assert ids(be, P2, "documents") == ["doc-p2"] and ids(be, P2, "messages") == ["msg-p2"] and ids(be, P2, "care_plans") == []
     for t in ("audit", "datasets", "dataset_versions", "model_versions", "field_corrections"):
         assert be.q(f"select count(*) c from {t}", (), P1)[0]["c"] == 0, t
@@ -164,7 +165,7 @@ def test_clinicians_read_clinical_records_but_not_private_conversations_or_other
     be, _ = rls
     assert ids(be, DOC, "documents") == ["doc-p1", "doc-p2"] and ids(be, DOC, "images") == ["img-p1", "img-p2"] and ids(be, DOC, "doc_fields") == ["f-p1", "f-p2"]
     assert ids(be, DOC, "care_plans") == ["cp-draft", "cp-ok"] and len(ids(be, DOC, "users")) == 4 and {"q-p1", "q-p2"} <= set(ids(be, DOC, "quotes"))
-    for t in ("conversations", "messages", "consents", "notifications", "datasets", "dataset_versions", "model_versions", "audit"):
+    for t in ("conversations", "messages", "consents", "consent_events", "notifications", "datasets", "dataset_versions", "model_versions", "audit"):
         assert be.q(f"select count(*) c from {t}", (), DOC)[0]["c"] == 0, t
     assert writes(be, DOC, "update documents set review_status='reviewed_by_clinician' where id='doc-p2'") == 1
     assert writes(be, DOC, "update quotes set status='approved' where id='q-p1'") == 1
@@ -176,7 +177,7 @@ def test_administrators_manage_accounts_and_the_ml_domain_but_do_not_read_clinic
     be, _ = rls
     assert len(ids(be, ADM, "users")) == 4 and be.q("select count(*) c from audit", (), ADM)[0]["c"] >= 1
     assert ids(be, ADM, "datasets") == ["ds1"] and ids(be, ADM, "model_versions") == ["mv1"] and len(ids(be, ADM, "jobs")) == 2
-    for t in ("documents", "images", "doc_pages", "doc_fields", "care_plans", "conversations", "messages", "consents", "notifications"):
+    for t in ("documents", "images", "doc_pages", "doc_fields", "care_plans", "conversations", "messages", "consents", "consent_events", "notifications"):
         assert be.q(f"select count(*) c from {t}", (), ADM)[0]["c"] == 0, t
     assert writes(be, ADM, "update users set disabled=1 where id='p2'") == 1                            # administrative function: allowed
     assert writes(be, ADM, "update users set disabled=0 where id='p2'") == 1
@@ -259,3 +260,14 @@ def test_the_sql_hmac_matches_the_standard_implementation_for_all_key_lengths(rl
         for msg in (b"", b"a", "u1\x1fpatient\x1fnone".encode(), b"\x00\xff" * 70):
             sql = be.q("select encode(app_private.hmac_sha256(%s::bytea, %s::bytea), 'hex') h".replace("%s", "?"), (key, msg), SYS)[0]["h"]
             assert sql == pyhmac.new(key, msg, hashlib.sha256).hexdigest(), (key[:3], msg[:3])
+
+
+def test_consent_history_is_append_only_for_the_application_role_and_cannot_be_written_for_someone_else(rls):
+    be, _ = rls
+    assert writes(be, P1, "insert into consent_events(id,user_id,notice_sha256,notice_status,action,at) values('ce-new','p1','sha','approved','withdrawn',now())") == 1
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, P1, "insert into consent_events(id,user_id,notice_sha256,notice_status,action,at) values('ce-forged','p2','sha','approved','withdrawn',now())")
+    with pytest.raises(Exception):
+        writes(be, P1, "update consent_events set action='accepted' where id='ce-new'")
+    with pytest.raises(Exception):
+        writes(be, P1, "delete from consent_events where id='ce-new'")

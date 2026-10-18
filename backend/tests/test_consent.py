@@ -139,3 +139,70 @@ def test_notice_packaging_tool_refuses_drafts_and_unconfirmed_runs(tmp_path):
     assert mk.main(base + ["--confirm-reviewer-approved"]) == 0
     doc = json.loads(out.read_text())
     assert doc["approval"]["content_sha256"] == consent._sha(TEXT) and doc["text"] == TEXT
+
+
+# ---------------------------------------------------------------- history, withdrawal, visible state
+def _accept(client, h):
+    st = client.get("/api/consent", headers=h).json()
+    return client.post("/api/consent/accept", json={"notice_sha256": st["notice"]["sha256"]}, headers=h)
+
+
+def test_every_decision_is_kept_as_an_immutable_event_bound_to_the_notice_hash_and_its_approval_status(client, content_dir, monkeypatch):
+    monkeypatch.setenv("COSMO_REQUIRE_CONSENT", "1")
+    approved(content_dir)
+    h, uid = H(client, "patient1"), "patient1"
+    assert _accept(client, h).json()["accepted"] is True
+    assert _accept(client, h).status_code == 200                                              # idempotent: no duplicate event
+    ev = client.get("/api/consent/history", headers=h).json()["events"]
+    assert [e["action"] for e in ev][:1] == ["accepted"] and ev[0]["notice_sha256"] == consent.notice()["sha256"] and ev[0]["notice_status"] == "approved"
+    assert sum(1 for e in ev if e["action"] == "accepted" and e["notice_sha256"] == consent.notice()["sha256"]) == 1
+    assert "text" not in ev[0]
+    with pytest.raises(Exception):
+        db.x("UPDATE consent_events SET action='accepted' WHERE user_id=?", (uid,))            # history cannot be rewritten
+    assert client.get("/api/consent/history", headers=H(client, "doctor1")).status_code == 403    # only the patient reads their own history
+    assert client.get("/api/consent/history").status_code == 401
+
+
+def test_withdrawal_closes_the_gate_immediately_is_recorded_and_can_be_followed_by_a_fresh_acceptance(client, content_dir, monkeypatch):
+    monkeypatch.setenv("COSMO_REQUIRE_CONSENT", "1")
+    approved(content_dir, text=TEXT + "\n\nwithdrawal fixture")
+    h = H(client, "patient2")
+    _accept(client, h)
+    assert client.post("/api/conversations", headers=h).status_code == 200
+    w = client.post("/api/consent/withdraw", headers=h)
+    assert w.status_code == 200 and w.json()["accepted"] is False and w.json()["required"] is True and w.json()["withdrawn"] is True
+    assert client.post("/api/conversations", headers=h).status_code == 403                       # new data collection stops at once
+    assert client.get("/api/documents", headers=h).status_code == 200 and client.get("/api/me", headers=h).status_code == 200    # the person can still see and export what exists
+    assert client.post("/api/consent/withdraw", headers=h).status_code == 200                    # idempotent
+    acts = [e["action"] for e in client.get("/api/consent/history", headers=h).json()["events"]]
+    assert acts[:2] == ["withdrawn", "accepted"] and acts.count("withdrawn") == 1
+    assert db.q1("SELECT 1 x FROM audit WHERE action='consent.withdraw' AND actor='patient2'")
+    assert _accept(client, h).json()["accepted"] is True and client.post("/api/conversations", headers=h).status_code == 200
+    assert client.post("/api/consent/withdraw", headers=H(client, "doctor1")).status_code == 403    # staff cannot withdraw for a patient
+
+
+def test_a_patient_cannot_withdraw_or_accept_on_anothers_behalf_and_the_state_is_per_person(client, content_dir, monkeypatch):
+    monkeypatch.setenv("COSMO_REQUIRE_CONSENT", "1")
+    approved(content_dir, text=TEXT + "\n\nper-person fixture")
+    a, b = H(client, "patient1"), H(client, "patient2")
+    _accept(client, a); _accept(client, b)
+    client.post("/api/consent/withdraw", headers=a)
+    assert client.get("/api/consent", headers=b).json()["accepted"] is True
+
+
+def test_an_unapproved_draft_is_recorded_as_a_draft_and_never_as_approved(client, content_dir, monkeypatch):
+    monkeypatch.setenv("COSMO_REQUIRE_CONSENT", "1")
+    (content_dir / "consent_notice.draft.md").write_text("# DRAFT\n\nunapproved fixture text")
+    h = H(client, "patient1")
+    r = client.post("/api/consent/accept", json={"notice_sha256": consent.notice()["sha256"], "notice_status": "approved"}, headers=h)    # a client-supplied status is ignored
+    assert r.status_code == 200
+    last = db.q1("SELECT notice_status FROM consent_events WHERE user_id='patient1' ORDER BY at DESC LIMIT 1")
+    assert last["notice_status"] == "draft"
+    with pytest.raises(Exception):
+        db.x("INSERT INTO consent_events(id,user_id,notice_sha256,notice_status,action,at) VALUES('x','patient1','h','definitive','accepted',1)")   # no other status is representable
+
+
+def test_consent_never_covers_model_training(client, content_dir, monkeypatch):
+    monkeypatch.setenv("COSMO_REQUIRE_CONSENT", "1")
+    approved(content_dir)
+    assert client.get("/api/consent", headers=H(client, "patient1")).json()["not_covered"] == ["model_training"]
