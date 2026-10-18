@@ -34,9 +34,20 @@ def problems(env=os.environ) -> list[str]:
     return out
 
 
+def retrieval_problems(env=os.environ) -> list[str]:
+    """The evaluated retrieval configuration is dense (BGE-small) with a calibrated abstention threshold. Without the model the assistant would silently fall back to
+    lexical scoring, whose thresholds were never validated for this deployment, so production refuses to start unless that fallback is explicitly accepted."""
+    if env.get("COSMO_ALLOW_LEXICAL") == "1":
+        return []
+    from .assistant import retrieval
+    if env.get("COSMO_RETRIEVAL") == "tfidf" or not retrieval.SentenceTransformerEmbedder().available:
+        return ["the dense embedding model is not available (python -m scripts.fetch_models) and the unvalidated lexical fallback is not accepted: set COSMO_ALLOW_LEXICAL=1 to accept it"]
+    return []
+
+
 def enforce(env=os.environ) -> None:
     if env.get("COSMO_MODE") != "production":
         return
-    bad = problems(env)
+    bad = problems(env) or retrieval_problems(env)
     if bad:
         raise SystemExit("Refusing to start in production:\n  - " + "\n  - ".join(bad))

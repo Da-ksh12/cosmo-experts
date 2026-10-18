@@ -1,0 +1,77 @@
+== project oikoaukmacpoellmvoly: migration state = HARDENED (0002 applied)
+PASS patient A sees exactly their own documents
+PASS patient B cannot read patient A's document by id
+PASS patient A cannot read patient B's fields
+PASS patient A cannot read patient B's photos
+PASS patient A cannot read patient B's conversation or messages
+PASS patient A reads their own messages
+PASS patient cannot read audit, datasets or model registry
+PASS anonymous caller (no user JWT) reads nothing
+PASS doctor reads a patient's documents and photos
+PASS doctor and admin cannot read patient conversations (chat privacy)
+PASS admin reads the audit trail
+PASS patient sees only approved KB articles
+PASS patient reads the approved price list
+PASS patient cannot change their own role
+PASS patient cannot grant themselves the doctor/admin role via a new profile row
+PASS RLS helper functions are not exposed as API endpoints
+PASS patient A downloads their own file from private storage
+PASS patient A cannot download patient B's file
+PASS the bucket is private: public URL does not serve the file
+PASS anonymous download is refused
+PASS doctor can download a patient's file
+PASS patient B cannot list patient A's folder
+PASS BLOCKED: patient marks their own document 'reviewed by a clinician'
+PASS BLOCKED: patient forges an 'assistant' message in their conversation
+PASS BLOCKED: patient inserts a quotation with a total of their choosing
+PASS BLOCKED: patient uploads an arbitrary (HTML) file straight into private storage
+PASS BLOCKED: audit records can be deleted
+PASS BLOCKED: sign-up with role=admin in user metadata yields an admin
+PASS patient sees their APPROVED care plan but not the draft
+PASS patient B sees no care plans
+PASS doctor sees drafts and approved plans
+PASS doctor can author a care plan
+PASS doctor cannot author a plan in another doctor's name
+PASS doctor can approve a plan
+PASS ADMIN cannot author a care plan
+PASS ADMIN cannot approve or edit a care plan
+PASS patient cannot edit their own care plan
+PASS doctor can mark a document reviewed
+PASS doctor cannot rewrite other document columns (column privileges)
+PASS doctor can correct an extracted value
+PASS admin cannot correct an extracted value
+PASS doctor can mark a photo reviewed (only as themselves)
+PASS doctor cannot attribute a photo review to someone else
+PASS doctor cannot approve a quote as another user
+PASS doctor can approve a quote as themselves
+PASS patient cannot approve their own quote
+PASS KB: doctor can add a DRAFT article but not insert an approved one
+PASS KB: approval without the attestation record is refused
+PASS KB: approval must be attributed to the approving doctor
+PASS KB: a complete, self-attributed approval is accepted
+PASS KB: editing approved text returns it to draft and clears the approval record (database trigger)
+PASS KB: a doctor cannot re-approve in the same statement as a content change
+PASS KB: admin cannot approve clinical content
+PASS notifications: each user sees only their own
+PASS notifications: staff and admin cannot read patients' notifications
+PASS notifications: a user can mark their own read
+PASS notifications: nobody can edit another user's notification
+PASS notifications: only read_at is editable (title, owner)
+PASS notifications: users cannot create or delete them
+PASS notifications: the same event cannot be stored twice for one user (dedupe key)
+PASS jobs: each patient sees only their own
+PASS jobs: admin sees all, patients cannot create jobs
+PASS settings: any user reads quote_config but not other keys
+PASS settings: patients cannot change quote_config
+PASS corrections: doctor can record one (as themselves, not training-eligible)
+PASS corrections: patients cannot read them
+PASS corrections: only an admin can set governance fields, and only with a reference + de-identification
+PASS audit: UPDATE and TRUNCATE are rejected by the trigger
+PASS sign-up with role=admin in metadata produced a PATIENT
+PASS patient cannot read other users' profiles; staff can
+PASS patient can update only their own full_name
+PASS bucket enforces allowed mime types even for the service role
+PASS patients cannot write to storage directly (uploads go through the validated API)
+PASS patients cannot delete their stored files directly
+
+74 passed, 0 failed  (state: hardened)

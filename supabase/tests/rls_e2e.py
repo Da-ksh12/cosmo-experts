@@ -128,7 +128,9 @@ try:
     insert into messages (conversation_id, role, content) values ('{convA}','patient','secret A'), ('{convB}','patient','secret B');
     insert into quotes (id, patient_id, status, lines, total, currency) values ('{quoteA}','{A}','draft','[]',100,'INR');
     insert into price_items (id, name, unit_price, currency, active, approved_by) values ('{pi}','Consult',500,'INR',true,'{DOC}');
-    insert into kb_articles (id, title, body, review_status) values ('{kbd}','Draft','d','draft'), ('{kba}','Approved','a','approved');
+    insert into kb_articles (id, title, body, review_status) values ('{kbd}','Draft','d','draft');
+    insert into kb_articles (id, title, body, review_status, reviewed_by, reviewed_at, content_sha256, source_note, attestation)
+      values ('{kba}','Approved','a','approved','{DOC}', now(), '{"b" * 64}', 'seed: leaflet page 1 (test)', '{{"statement":"seed"}}'::jsonb);
     insert into audit (actor, action, target) values ('seed','test.seed','x');
     """)
     if hardened:
@@ -228,9 +230,31 @@ try:
         check("patient cannot approve their own quote", blocked(rest("PATCH", f"quotes?id=eq.{quoteA}", jwt["patient_a"], {"status": "approved", "approved_by": A})))
         check("KB: doctor can add a DRAFT article but not insert an approved one", ok_rows(rest("POST", "kb_articles", jwt["doctor"], {"title": "t", "body": "b", "review_status": "draft"})) and
               blocked(rest("POST", "kb_articles", jwt["doctor"], {"title": "t2", "body": "b", "review_status": "approved", "reviewed_by": DOC})))
-        check("KB: approval must be attributed to the approving doctor", blocked(rest("PATCH", f"kb_articles?id=eq.{kbd}", jwt["doctor"], {"review_status": "approved", "reviewed_by": ADM})) and
-              ok_rows(rest("PATCH", f"kb_articles?id=eq.{kbd}", jwt["doctor"], {"review_status": "approved", "reviewed_by": DOC})))
+        full = {"review_status": "approved", "reviewed_by": DOC, "reviewed_at": "2026-10-18T00:00:00Z", "content_sha256": "a" * 64, "source_note": "Clinic leaflet p3 (test)", "attestation": {"statement": "reviewed (test)"}}
+        check("KB: approval without the attestation record is refused", blocked(rest("PATCH", f"kb_articles?id=eq.{kbd}", jwt["doctor"], {"review_status": "approved", "reviewed_by": DOC})))
+        check("KB: approval must be attributed to the approving doctor", blocked(rest("PATCH", f"kb_articles?id=eq.{kbd}", jwt["doctor"], {**full, "reviewed_by": ADM})))
+        check("KB: a complete, self-attributed approval is accepted", ok_rows(rest("PATCH", f"kb_articles?id=eq.{kbd}", jwt["doctor"], full)))
+        ok_rows(rest("PATCH", f"kb_articles?id=eq.{kbd}", jwt["doctor"], {"body": "edited after approval"}))
+        row = sql(f"select review_status, reviewed_by, content_sha256, source_note, version from kb_articles where id='{kbd}'")[0]
+        check("KB: editing approved text returns it to draft and clears the approval record (database trigger)",
+              row["review_status"] == "draft" and row["reviewed_by"] is None and row["content_sha256"] == "" and row["source_note"] == "" and row["version"] >= 2, row)
+        check("KB: a doctor cannot re-approve in the same statement as a content change", ok_rows(rest("PATCH", f"kb_articles?id=eq.{kbd}", jwt["doctor"], {**full, "body": "sneaky"})) and
+              sql(f"select review_status from kb_articles where id='{kbd}'")[0]["review_status"] == "draft")
         check("KB: admin cannot approve clinical content", blocked(rest("PATCH", f"kb_articles?id=eq.{kba}", jwt["admin"], {"review_status": "draft"})))
+        nA, nB = str(uuid.uuid4()), str(uuid.uuid4())
+        sql(f"insert into notifications (id, user_id, kind, title, dedupe_key) values ('{nA}','{A}','t','for A','k1'), ('{nB}','{B}','t','for B','k1');")
+        check("notifications: each user sees only their own", {x["id"] for x in rest("GET", "notifications?select=id", jwt["patient_a"])[1]} == {nA})
+        check("notifications: staff and admin cannot read patients' notifications", rest("GET", "notifications?select=id", jwt["doctor"])[1] == [] and rest("GET", "notifications?select=id", jwt["admin"])[1] == [])
+        check("notifications: a user can mark their own read", ok_rows(rest("PATCH", f"notifications?id=eq.{nA}", jwt["patient_a"], {"read_at": "2026-10-18T00:00:00Z"})))
+        check("notifications: nobody can edit another user's notification", not ok_rows(rest("PATCH", f"notifications?id=eq.{nB}", jwt["patient_a"], {"read_at": "2026-10-18T00:00:00Z"})))
+        check("notifications: only read_at is editable (title, owner)", blocked(rest("PATCH", f"notifications?id=eq.{nA}", jwt["patient_a"], {"title": "forged"})) and blocked(rest("PATCH", f"notifications?id=eq.{nA}", jwt["patient_a"], {"user_id": B})))
+        check("notifications: users cannot create or delete them", blocked(rest("POST", "notifications", jwt["patient_a"], {"user_id": A, "kind": "x", "title": "self-made"})) and not ok_rows(rest("DELETE", f"notifications?id=eq.{nA}", jwt["patient_a"])))
+        try:
+            sql(f"insert into notifications (user_id, kind, title, dedupe_key) values ('{A}','t','dup','k1')")
+            dup_refused = False
+        except RuntimeError:
+            dup_refused = True
+        check("notifications: the same event cannot be stored twice for one user (dedupe key)", dup_refused)
         check("jobs: each patient sees only their own", {x["owner_id"] for x in rest("GET", "jobs?select=owner_id", jwt["patient_a"])[1]} == {A})
         check("jobs: admin sees all, patients cannot create jobs", len(rest("GET", "jobs?select=id", jwt["admin"])[1]) >= 2 and blocked(rest("POST", "jobs", jwt["patient_a"], {"owner_id": A, "task": "x", "status": "queued"})))
         check("settings: any user reads quote_config but not other keys", [x["key"] for x in rest("GET", "settings?select=key", jwt["patient_a"])[1]] == ["quote_config"])

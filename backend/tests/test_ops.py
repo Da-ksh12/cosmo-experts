@@ -159,3 +159,21 @@ def test_a_failing_collector_does_not_break_the_scrape(monkeypatch):
     monkeypatch.setattr(storage, "healthy", boom)
     t = metrics.render()
     assert "cosmo_database_up 1" in t and 'cosmo_collector_errors{collector="store"} 1' in t
+
+
+def test_production_refuses_the_silent_lexical_retrieval_fallback(monkeypatch):
+    from app.assistant import retrieval
+    monkeypatch.setattr(retrieval.SentenceTransformerEmbedder, "available", property(lambda self: False))
+    assert any("dense embedding model" in p for p in prod_checks.retrieval_problems({}))
+    with pytest.raises(SystemExit, match="Refusing to start"):
+        prod_checks.enforce(GOOD)
+    assert prod_checks.retrieval_problems({"COSMO_ALLOW_LEXICAL": "1"}) == []               # explicit, visible acceptance
+    assert any("dense" in p for p in prod_checks.retrieval_problems({"COSMO_RETRIEVAL": "tfidf"}))
+
+
+def test_production_starts_when_the_dense_model_is_present():
+    from app.assistant import retrieval
+    if not retrieval.SentenceTransformerEmbedder().available:
+        pytest.skip("embedding model not downloaded")
+    assert prod_checks.retrieval_problems({}) == []
+    prod_checks.enforce(GOOD)
