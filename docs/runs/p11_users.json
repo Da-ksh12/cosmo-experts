@@ -1,0 +1,69 @@
+{
+  "suite": "users",
+  "when": "2026-10-18T05:22:19.372Z",
+  "passed": 15,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "add user: Create is disabled while the form is empty"
+    },
+    {
+      "pass": true,
+      "check": "add user: a password under 12 characters is not accepted"
+    },
+    {
+      "pass": true,
+      "check": "add-user dialog: no WCAG A/AA violations"
+    },
+    {
+      "pass": true,
+      "check": "the new clinician is listed as not verified"
+    },
+    {
+      "pass": true,
+      "check": "the server holds the new account"
+    },
+    {
+      "pass": true,
+      "check": "the new account signs in with its temporary password"
+    },
+    {
+      "pass": true,
+      "check": "after the role change the existing session has no clinical access"
+    },
+    {
+      "pass": true,
+      "check": "the list shows the account as disabled"
+    },
+    {
+      "pass": true,
+      "check": "a disabled account's token stops working"
+    },
+    {
+      "pass": true,
+      "check": "a disabled account cannot sign in"
+    },
+    {
+      "pass": true,
+      "check": "enabling restores access"
+    },
+    {
+      "pass": true,
+      "check": "the old password stops working and the new one works"
+    },
+    {
+      "pass": true,
+      "check": "an administrator cannot change or disable their own account in the UI"
+    },
+    {
+      "pass": true,
+      "check": "admin page with the user table: no WCAG A/AA violations"
+    },
+    {
+      "pass": true,
+      "check": "no uncaught errors",
+      "detail": []
+    }
+  ]
+}

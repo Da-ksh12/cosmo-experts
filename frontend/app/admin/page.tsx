@@ -6,6 +6,7 @@ import { Details, Note, Pill, StatusBadge } from "@/components/ui";
 import ModelCard, { Model } from "@/components/ModelCard";
 import TrainingPanel from "@/components/TrainingPanel";
 import ResearchTry from "@/components/ResearchTry";
+import UserAdmin from "@/components/UserAdmin";
 
 type Gate = { allowed: boolean; reasons: string[] };
 type DS = { id: string; name: string; url: string; maintainer: string; description: string; intended_task: string; modality: string; annotations: string[];
@@ -61,6 +62,8 @@ export default function Admin() {
         {ready && ready.optional.map((c) => <tr key={c.name}><th>{c.name.replaceAll("_", " ")}</th><td>{c.ready ? <Pill tone="good">ready</Pill> : <Pill tone="warn">unavailable</Pill>} <span className="text-sm text-muted">{c.detail}</span></td></tr>)}
         {met && <tr><th>Job queue</th><td>{met.queued_now} queued · {met.processing_now} processing · {met.workers} workers (limit {met.queue_limit})</td></tr>}
         {met && Object.entries(met.tasks).map(([k, v]) => <tr key={k}><th>{k.replaceAll("_", " ")} (24 h)</th><td>{v.count} jobs · p50 {v.processing_ms_p50 ?? "—"} ms · p95 {v.processing_ms_p95 ?? "—"} ms · failure rate {(v.failure_rate * 100).toFixed(1)}%</td></tr>)}</tbody></table></section>}
+
+      <UserAdmin />
 
       <section className="space-y-3"><h2>Dataset Discovery &amp; Import Center</h2>
         <p className="text-sm text-muted">Every dataset starts blocked. Retrieve the official terms, record the licence you verified, then approve. Licence text below is a pre-filled <em>claim</em>, not a verification.</p>

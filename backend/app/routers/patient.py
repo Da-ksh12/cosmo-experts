@@ -32,9 +32,12 @@ def login(body: Login):
     if supabase_auth.configured():
         raise HTTPException(410, "Sign in with your account provider; this endpoint is disabled.")
     u = db.q1("SELECT * FROM users WHERE id=?", (body.user_id,))
-    if not u or u["password_hash"] != security.hash_pw(body.password):
+    if not u or not security.verify_pw(body.password, u["password_hash"]):
         db.audit(body.user_id, "auth.failed")
         raise HTTPException(401, "Incorrect user or password.")
+    if u["disabled"]:
+        db.audit(u["id"], "auth.refused_disabled")
+        raise HTTPException(403, "This account has been disabled. Please contact the clinic.")
     db.audit(u["id"], "auth.login")
     return {"token": security.make_token(u["id"]), "user": {"id": u["id"], "name": u["name"], "role": u["role"]}}
 

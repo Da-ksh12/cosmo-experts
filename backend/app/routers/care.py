@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .. import db
+from .. import db, security
 from .. import storage
 from ..services import notify
 from ..security import current_user, can_access_patient_data, require
@@ -239,6 +239,105 @@ def verify_clinician(uid: str, body: Verify, user=Depends(require("admin"))):
     db.x("UPDATE users SET credentials=?, verified=? WHERE id=?", (body.credentials, 1 if body.verified else 0, uid))
     db.audit(user["id"], "clinician.verify", uid, body.model_dump())
     return {"ok": True}
+
+
+# ---------- user management (administrator; local accounts) ----------
+# With COSMO_AUTH=supabase accounts and roles live in Supabase Auth / public.profiles and are managed there; these endpoints then refuse changes.
+
+import re as _re
+
+_ID = _re.compile(r"^[a-z0-9][a-z0-9._-]{2,39}$")
+
+
+def _local_only():
+    from .. import supabase_auth
+    if supabase_auth.configured():
+        raise HTTPException(409, "Accounts are managed in Supabase Auth for this deployment.")
+
+
+def _active_admins(excluding: str = "") -> int:
+    return db.q1("SELECT COUNT(*) c FROM users WHERE role='admin' AND disabled=0 AND id!=?", (excluding,))["c"]
+
+
+class NewUser(BaseModel):
+    id: str
+    name: str = Field(min_length=1, max_length=80)
+    role: str
+    password: str = Field(min_length=12, max_length=128)
+
+
+class RoleChange(BaseModel):
+    role: str
+
+
+class DisableChange(BaseModel):
+    disabled: bool
+
+
+class PasswordReset(BaseModel):
+    password: str = Field(min_length=12, max_length=128)
+
+
+@router.get("/admin/users")
+def list_users(user=Depends(require("admin"))):
+    return db.q("SELECT id,name,role,verified,credentials,disabled FROM users ORDER BY role,id")      # never includes password hashes
+
+
+@router.post("/admin/users")
+def create_user(body: NewUser, user=Depends(require("admin"))):
+    _local_only()
+    if body.role not in security.ROLES:
+        raise HTTPException(422, "Unknown role.")
+    if not _ID.match(body.id):
+        raise HTTPException(422, "User id must be 3-40 characters: lowercase letters, digits, dot, dash or underscore.")
+    if db.q1("SELECT 1 x FROM users WHERE id=?", (body.id,)):
+        raise HTTPException(409, "That user id is already taken.")
+    db.x("INSERT INTO users(id,name,role,password_hash,credentials,verified,disabled) VALUES(?,?,?,?, '', 0, 0)", (body.id, body.name.strip(), body.role, security.new_hash(body.password)))
+    db.audit(user["id"], "user.create", body.id, {"role": body.role})
+    return {"id": body.id, "role": body.role, "verified": 0}
+
+
+@router.post("/admin/users/{uid}/role")
+def change_role(uid: str, body: RoleChange, user=Depends(require("admin"))):
+    _local_only()
+    target = db.q1("SELECT id,role FROM users WHERE id=?", (uid,))
+    if not target:
+        raise HTTPException(404, "User not found.")
+    if body.role not in security.ROLES:
+        raise HTTPException(422, "Unknown role.")
+    if uid == user["id"]:
+        raise HTTPException(409, "You cannot change your own role.")
+    if target["role"] == "admin" and body.role != "admin" and _active_admins(uid) == 0:
+        raise HTTPException(409, "At least one active administrator must remain.")
+    # a changed role never inherits clinical verification: it must be recorded again by an administrator
+    db.x("UPDATE users SET role=?, verified=0, credentials='' WHERE id=?", (body.role, uid))
+    db.audit(user["id"], "user.role", uid, {"from": target["role"], "to": body.role})
+    return {"id": uid, "role": body.role}
+
+
+@router.post("/admin/users/{uid}/disabled")
+def set_disabled(uid: str, body: DisableChange, user=Depends(require("admin"))):
+    _local_only()
+    target = db.q1("SELECT id,role,disabled FROM users WHERE id=?", (uid,))
+    if not target:
+        raise HTTPException(404, "User not found.")
+    if uid == user["id"]:
+        raise HTTPException(409, "You cannot disable your own account.")
+    if body.disabled and target["role"] == "admin" and _active_admins(uid) == 0:
+        raise HTTPException(409, "At least one active administrator must remain.")
+    db.x("UPDATE users SET disabled=? WHERE id=?", (1 if body.disabled else 0, uid))
+    db.audit(user["id"], "user.disable" if body.disabled else "user.enable", uid)
+    return {"id": uid, "disabled": body.disabled}
+
+
+@router.post("/admin/users/{uid}/reset-password")
+def reset_password(uid: str, body: PasswordReset, user=Depends(require("admin"))):
+    _local_only()
+    if not db.q1("SELECT 1 x FROM users WHERE id=?", (uid,)):
+        raise HTTPException(404, "User not found.")
+    db.x("UPDATE users SET password_hash=? WHERE id=?", (security.new_hash(body.password), uid))
+    db.audit(user["id"], "user.password_reset", uid)                                                    # the password itself is never logged
+    return {"id": uid}
 
 
 # ---------- unified history ----------

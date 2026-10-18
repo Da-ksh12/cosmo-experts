@@ -48,6 +48,7 @@ COLUMNS = [
     ("price_items", "duration_min", "INTEGER DEFAULT 0"), ("price_items", "compare_at_price", "REAL"),
     ("kb_articles", "reviewed_at", "REAL"), ("kb_articles", "content_sha256", "TEXT DEFAULT ''"), ("kb_articles", "attestation", "TEXT DEFAULT ''"),
     ("kb_articles", "source_note", "TEXT DEFAULT ''"), ("kb_articles", "content_origin", "TEXT DEFAULT 'clinic'"), ("kb_articles", "claims_to_verify", "TEXT DEFAULT '[]'"),
+    ("users", "disabled", "INTEGER DEFAULT 0"),
     ("quotes", "subtotal", "REAL DEFAULT 0"), ("quotes", "tax_percent", "REAL DEFAULT 0"), ("quotes", "tax_amount", "REAL DEFAULT 0"),
 ]
 
