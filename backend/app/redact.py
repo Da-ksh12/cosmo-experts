@@ -17,6 +17,7 @@ _PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"(?i)\bBearer\s+[0-9A-Za-z._~+/\-]+=*"), "Bearer " + _R),
     (re.compile(r"(?i)\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|token|authorization|cookie)\b([\"']?\s*[=:]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;&]+)"), r"\1\2" + _R),
     (re.compile(r"(?i)\b(cosmo_rt|sb-[a-z0-9]+-auth-token)=[^;\s]+"), r"\1=" + _R),                               # session cookies
+    (re.compile(r"(/api/files/)[A-Za-z0-9_.\-]{16,}"), r"\1" + _R),   # signed file links carry a credential in the path
     (re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?(-----END [A-Z ]*PRIVATE KEY-----|$)", re.S), "[REDACTED-PRIVATE-KEY]"),
     (re.compile(r"\b([A-Za-z0-9._%+\-]{1,2})[A-Za-z0-9._%+\-]*@([A-Za-z0-9.\-]+\.[A-Za-z]{2,})\b"), r"\1***@\2"),  # e-mail addresses: keep two characters and the domain
 ]

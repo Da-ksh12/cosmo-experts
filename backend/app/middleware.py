@@ -61,6 +61,11 @@ class Guard(BaseHTTPMiddleware):
         resp.headers.setdefault("X-Content-Type-Options", "nosniff")
         resp.headers.setdefault("Referrer-Policy", "no-referrer")
         resp.headers.setdefault("X-Frame-Options", "DENY")
+        resp.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")            # an API response is never a page
+        resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+        resp.headers.setdefault("Cross-Origin-Resource-Policy", "same-site")
+        if os.environ.get("COSMO_MODE") == "production" or request.url.scheme == "https":
+            resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         if request.url.path.startswith("/api/") and "cache-control" not in resp.headers:
             resp.headers["Cache-Control"] = "no-store"
         return resp

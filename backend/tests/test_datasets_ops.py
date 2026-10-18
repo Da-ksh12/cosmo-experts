@@ -250,7 +250,9 @@ def mendeley_json(name="CC BY 4.0", files=None):
 def test_official_manifest_and_fetch_terms(monkeypatch):
     rec = dict(id="ops-ds", name="Ops", url="https://data.mendeley.com/datasets/abc123", approval_status="unreviewed", annotations=[], terms_verified=False)
     registry.save(dict(rec))
-    monkeypatch.setattr(registry.urllib.request, "urlopen", lambda req, timeout=0: FakeResp(mendeley_json()))
+    import types
+    monkeypatch.setattr(registry.netguard, "assert_public", lambda *a, **k: None)                          # the SSRF guard has its own tests (test_ops_security.py)
+    monkeypatch.setattr(registry.netguard, "opener", lambda: types.SimpleNamespace(open=lambda req, timeout=0: FakeResp(mendeley_json())))
     d = registry.fetch_terms("ops-ds", "admin1")
     assert d["official_license_name"] == "CC BY 4.0" and d["official_manifest"]["files"][0]["sha256"] == SHA and len(d["terms_snapshot_hash"]) == 64
     assert registry.official_manifest({"url": "https://example.com/nothing"}) is None                       # no adapter: manual review required

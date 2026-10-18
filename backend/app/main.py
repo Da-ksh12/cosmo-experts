@@ -3,11 +3,12 @@ import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import PlainTextResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .dbcore import context
-from . import clinical_content, db, logging_setup, malware, metrics, prod_checks, security
+from . import clinical_content, db, limits, logging_setup, malware, metrics, prod_checks, security
 from .config import CORS_ORIGINS
 from .datasets import registry
 from .gateway import api as gateway_api, jobs as gateway_jobs
@@ -52,7 +53,11 @@ def _startup():
 
 
 app = FastAPI(title="Cosmo Experts AI", version="1.0.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"], allow_credentials=False)
+# CORS is explicit: listed origins only (never "*", which prod_checks refuses), the methods and headers the web client uses, no credentials. The web client calls the API
+# same-origin through its proxy, so the refresh cookie is not a cross-origin credential.
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+                   allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-Requested-With", "X-Request-ID"], expose_headers=["X-Request-ID", "Retry-After", "Location"],
+                   allow_credentials=False, max_age=600)
 @app.exception_handler(malware.UploadRefused)
 async def _upload_refused(request: Request, exc: malware.UploadRefused):
     from fastapi.responses import JSONResponse
@@ -66,6 +71,30 @@ app.include_router(care.router)
 app.include_router(files_router.router)
 app.include_router(gateway_api.router)
 app.add_middleware(Guard)
+app.add_middleware(limits.RequestLimits)                     # outermost: size, concurrency and time limits apply before anything else runs
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_error(request: Request, exc: RequestValidationError):
+    """Field names and messages only: FastAPI's default echoes the submitted INPUT values, which would put passwords and patient text into responses and logs."""
+    errs = [{"loc": [str(x) for x in e.get("loc", ())], "msg": str(e.get("msg", ""))[:200]} for e in exc.errors()][:20]
+    return JSONResponse({"detail": errs, "request_id": getattr(request.state, "request_id", "")}, status_code=422)
+
+
+@app.exception_handler(Exception)
+async def _unhandled(request: Request, exc: Exception):
+    """No stack trace, path, SQL or exception text reaches the client; the request id lets support find the redacted log entry."""
+    import logging
+    from .redact import safe_exc
+    rid = getattr(request.state, "request_id", "")
+    logging.getLogger("cosmo.error").error("unhandled %s on %s (request %s)", safe_exc(exc), _route_of(request), rid)
+    return JSONResponse({"detail": "Something went wrong on our side. Please try again.", "request_id": rid}, status_code=500, headers={"X-Request-ID": rid})
+
+
+def _route_of(request: Request) -> str:
+    r = request.scope.get("route")
+    return f"{request.method} {getattr(r, 'path', None) or 'unmatched'}"          # the route template, never the raw path (which may carry a signed-link token)
+
 
 
 @app.get("/metrics", include_in_schema=False)

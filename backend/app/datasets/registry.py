@@ -10,7 +10,7 @@ import hashlib
 import json
 import urllib.request
 
-from .. import db
+from .. import db, netguard
 
 COMMERCIAL_OK = {"CC0-1.0", "CC-BY-4.0", "CC-BY-3.0", "CC-BY-2.0", "MIT", "Apache-2.0", "BSD-3-Clause"}
 NONCOMMERCIAL = ("NC", "non-commercial", "noncommercial", "research use only", "research only")
@@ -103,8 +103,9 @@ def official_manifest(d: dict, timeout=20) -> dict | None:
     if not m:
         return None
     api = f"https://data.mendeley.com/public-api/datasets/{m.group(1)}"
+    netguard.assert_public(api)
     req = urllib.request.Request(api, headers={"User-Agent": "CosmoExperts-DatasetRegistry/1.0 (terms check)"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - fixed official API host
+    with netguard.opener().open(req, timeout=timeout) as resp:  # fixed official API host; redirects are re-checked
         body = resp.read(5_000_000)
     j = json.loads(body)
     lic = j.get("data_licence") or {}
@@ -127,8 +128,9 @@ def fetch_terms(dataset_id: str, actor: str, timeout=15) -> dict:
         d["terms_snapshot_excerpt"] = f'{manifest["license_name"]} ({manifest["license_url"]}): {manifest["license_text"][:800]}'
         status = 200
     else:
+        netguard.assert_public(d["url"])
         req = urllib.request.Request(d["url"], headers={"User-Agent": "CosmoExperts-DatasetRegistry/1.0 (terms check)"})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - admin-triggered, registry URL only
+        with netguard.opener().open(req, timeout=timeout) as resp:  # admin-triggered, registry URL only; redirects are re-checked
             body = resp.read(2_000_000)
             status = resp.status
         d["terms_snapshot_hash"] = hashlib.sha256(body).hexdigest()

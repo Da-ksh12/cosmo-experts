@@ -11,7 +11,7 @@ from app.settings import ConfigError, Settings
 JWT = ".".join(["eyJ" + "a" * 20, "eyJ" + "b" * 20, "c" * 24])
 SBP = "sbp_" + "0123456789abcdef" * 3
 PROD = {"COSMO_MODE": "production", "COSMO_DB": "postgres", "COSMO_DATABASE_URL": "postgresql://cosmo_app:pw@db.example.org:5432/cosmo?sslmode=require",
-        "COSMO_COOKIE_SECURE": "1", "COSMO_AUTH": "supabase", "SUPABASE_URL": "https://x.supabase.co", "SUPABASE_ANON_KEY": "anon", "COSMO_ADMIN_CLINICAL_ACCESS": "none"}
+        "COSMO_COOKIE_SECURE": "1", "COSMO_AUTH": "supabase", "SUPABASE_URL": "https://x.supabase.co", "SUPABASE_ANON_KEY": "anon", "COSMO_ADMIN_CLINICAL_ACCESS": "none", "COSMO_DB_CONTEXT_SECRET": "c" * 40}
 
 
 # ---------------------------------------------------------------- redaction

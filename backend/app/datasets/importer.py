@@ -16,7 +16,7 @@ from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 
-from .. import db
+from .. import db, netguard
 from ..config import DATASET_DIR
 
 MIN_FREE_BYTES = 2 * 1024 ** 3
@@ -73,6 +73,10 @@ class _HttpsOnlyRedirects(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if not newurl.lower().startswith("https://") and not _local_http_allowed(newurl):
             raise ImportError_("Refusing a redirect to a non-https URL.")
+        try:
+            netguard.assert_public(newurl)                      # a redirect must not lead to an internal address either
+        except netguard.Blocked as e:
+            raise ImportError_(str(e)) from None
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
@@ -80,6 +84,10 @@ def download(url: str, dest: Path, expected_sha256: str | None, dataset_id: str,
     """Resumable download of an admin-supplied permitted URL. Verifies the checksum if provided; a mismatch discards the file."""
     if not url.lower().startswith("https://") and not _local_http_allowed(url):
         raise ImportError_("Only https URLs are allowed.")
+    try:
+        netguard.assert_public(url)
+    except netguard.Blocked as e:
+        raise ImportError_(str(e)) from None
     ev = _cancel.setdefault(dataset_id, threading.Event())
     ev.clear()
     part = dest.with_suffix(dest.suffix + ".part")

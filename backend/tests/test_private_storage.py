@@ -174,7 +174,7 @@ def test_quota_stops_uploads_beyond_the_file_and_byte_limits_and_counts_only_liv
     monkeypatch.setenv("COSMO_USER_FILE_LIMIT", "500")
     monkeypatch.setattr(storage, "limits", lambda: (len(PDF) * 2 + 10, 500))
     assert upload(client, h).status_code == 413
-    db.x("DELETE FROM documents WHERE owner_id='patient1'")                                             # (earlier tests in this file left some)
+    db.x("DELETE FROM documents WHERE owner_id='patient1'"); db.x("DELETE FROM images WHERE owner_id='patient1'")      # (earlier tests left some)
     assert upload(client, H(client, "patient1")).status_code == 200
 
 
