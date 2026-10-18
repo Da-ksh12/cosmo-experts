@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS audit(id TEXT PRIMARY KEY, ts REAL, actor TEXT, actio
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS field_corrections(id TEXT PRIMARY KEY, field_id TEXT, document_id TEXT, before TEXT, after TEXT, status TEXT, reviewer TEXT,
   ts REAL, processing_version TEXT, training_eligible INTEGER DEFAULT 0, governance_ref TEXT DEFAULT '', deidentified INTEGER DEFAULT 0);
+CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, user_id TEXT NOT NULL, kind TEXT, title TEXT, body TEXT, link TEXT, dedupe_key TEXT DEFAULT '', created_at REAL, read_at REAL);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_notifications_dedupe ON notifications(user_id, dedupe_key) WHERE dedupe_key != '';
+CREATE INDEX IF NOT EXISTS ix_notifications_user ON notifications(user_id, created_at DESC);
 CREATE TABLE IF NOT EXISTS care_plans(id TEXT PRIMARY KEY, patient_id TEXT, doctor_id TEXT, status TEXT, assessment TEXT, findings TEXT,
   stages TEXT, notes TEXT, recommended_item_ids TEXT, reviewed_at REAL, updated_at REAL);
 """

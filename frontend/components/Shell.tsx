@@ -1,5 +1,6 @@
 "use client";
 
+import NotificationBell from "@/components/NotificationBell";
 import { ClipboardList, Camera, History, Home, LogOut, MessageCircle, FileText, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -78,6 +79,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                   ))}
                 </nav>
                 <span className="flex-1 md:hidden" />
+                <NotificationBell />
                 <button className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-teal text-sm font-bold text-white" onClick={() => setMenu(true)} aria-label={`Account menu for ${user.name}`}>{initials}</button>
               </div>
             </header>

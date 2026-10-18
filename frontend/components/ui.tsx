@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { AlertTriangle, CheckCircle2, Info, Loader2, X, XCircle } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { blob, STATUS_LABEL } from "@/lib/api";
@@ -134,14 +135,16 @@ export function Dialog({ title, onClose, children, wide = false }: { title: stri
     document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; prev?.focus(); };
   }, [onClose]);
-  return (
+  // Portal to <body>: an ancestor with backdrop-filter/transform (the sticky header) would otherwise become the containing block of this fixed overlay.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className={`pop max-h-[92dvh] w-full overflow-auto rounded-t-[28px] bg-ivory p-5 sm:rounded-[28px] ${wide ? "sm:max-w-3xl" : "sm:max-w-md"}`}>
         <div className="mb-3 flex items-center justify-between gap-3"><h2>{title}</h2>
           <button className="btn btn-icon" onClick={onClose} aria-label="Close"><X className="h-5 w-5" /></button></div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

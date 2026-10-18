@@ -14,7 +14,7 @@ from ..documents import explain, pipeline
 from ..imaging import suitability
 from ..quotes import service as quotes
 from .. import storage
-from ..services import core
+from ..services import core, notify
 from ..security import current_user, require, can_access_patient_data
 from ..speech import adapters as speech
 
@@ -275,6 +275,7 @@ def request_quote(body: QuoteReq, user=Depends(require("patient"))):
          (qid, user["id"], "draft", json.dumps(t["lines"]), t["total"], t["currency"], body.notes[:500], user["id"], "", db.now(), db.now(),
           t["subtotal"], t["tax_percent"], t["tax_amount"]))
     db.audit(user["id"], "quote.request", qid)
+    notify.to_role("doctor", "quote_requested", "New quotation request", "A patient asked for a quotation.", "/clinic", f"quote-request:{qid}")
     return {"id": qid, "status": "draft", **{k: t[k] for k in ("subtotal", "tax_amount", "total", "currency")},
             "message": "Your request was sent. The clinic team will review and approve a quotation."}
 

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from .. import db
 from .. import storage
+from ..services import notify
 from ..security import current_user, can_access_patient_data, require
 
 router = APIRouter(prefix="/api")
@@ -203,6 +204,7 @@ def clinic_approve(plan_id: str, user=Depends(require("doctor"))):
     db.x("UPDATE care_plans SET status='superseded' WHERE patient_id=? AND status='approved'", (r["patient_id"],))
     db.x("UPDATE care_plans SET status='approved', doctor_id=?, reviewed_at=?, updated_at=? WHERE id=?", (user["id"], db.now(), db.now(), plan_id))
     db.audit(user["id"], "careplan.approve", plan_id, {"patient": r["patient_id"]})
+    notify.send(r["patient_id"], "plan_approved", "Your care plan is ready", "Your clinician approved a care plan for you.", "/care", f"plan-approved:{plan_id}")
     return _plan_out(db.q1("SELECT * FROM care_plans WHERE id=?", (plan_id,)))
 
 
@@ -302,8 +304,32 @@ def delete_my_data(user=Depends(require("patient"))):
         db.x("DELETE FROM messages WHERE conversation_id=?", (c["id"],))
     db.x("DELETE FROM conversations WHERE owner_id=?", (uid,))
     db.x("DELETE FROM jobs WHERE owner_id=?", (uid,))
+    db.x("DELETE FROM notifications WHERE user_id=?", (uid,))
     retained = {"care_plans": db.q1("SELECT COUNT(*) c FROM care_plans WHERE patient_id=?", (uid,))["c"],
                 "quotations": db.q1("SELECT COUNT(*) c FROM quotes WHERE patient_id=?", (uid,))["c"]}
     db.audit(uid, "patient.data_deleted", uid, {"documents": len(docs), "photos": len(imgs), "conversations": len(convs), "retained": retained})
     return {"deleted": {"documents": len(docs), "photos": len(imgs), "conversations": len(convs)}, "retained_by_policy": retained,
             "note": "Care plans, quotations and the audit log are kept for clinical and financial record-keeping. Ask the clinic about their retention period."}
+
+
+# ---------------- notifications (own only) ----------------
+
+@router.get("/notifications")
+def my_notifications(unread: bool = False, user=Depends(current_user)):
+    rows = db.q("SELECT id,kind,title,body,link,created_at,read_at FROM notifications WHERE user_id=?" + (" AND read_at IS NULL" if unread else "")
+                + " ORDER BY created_at DESC LIMIT 50", (user["id"],))
+    return {"unread": db.q1("SELECT COUNT(*) c FROM notifications WHERE user_id=? AND read_at IS NULL", (user["id"],))["c"], "items": rows}
+
+
+@router.post("/notifications/read-all")
+def read_all(user=Depends(current_user)):
+    db.x("UPDATE notifications SET read_at=? WHERE user_id=? AND read_at IS NULL", (db.now(), user["id"]))
+    return {"unread": 0}
+
+
+@router.post("/notifications/{nid}/read")
+def read_one(nid: str, user=Depends(current_user)):
+    if not db.q1("SELECT 1 x FROM notifications WHERE id=? AND user_id=?", (nid, user["id"])):          # someone else's id is indistinguishable from a missing one
+        raise HTTPException(404, "Notification not found.")
+    db.x("UPDATE notifications SET read_at=COALESCE(read_at, ?) WHERE id=? AND user_id=?", (db.now(), nid, user["id"]))
+    return {"unread": db.q1("SELECT COUNT(*) c FROM notifications WHERE user_id=? AND read_at IS NULL", (user["id"],))["c"]}

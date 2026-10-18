@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from .. import clinical_content, db
+from ..services import notify
 from ..config import CONVERSATION_RETENTION_DAYS, DATASET_DIR
 from ..datasets import importer, registry
 from ..quotes import service as quotes
@@ -38,6 +39,8 @@ def review_image(iid: str, user=Depends(require("doctor"))):
         raise HTTPException(404, "Photo not found.")
     db.x("UPDATE images SET clinician_review='reviewed', reviewed_by=?, reviewed_at=? WHERE id=?", (user["id"], db.now(), iid))
     db.audit(user["id"], "image.reviewed", iid)
+    own = db.q1("SELECT owner_id FROM images WHERE id=?", (iid,))
+    notify.send(own["owner_id"], "photo_reviewed", "A clinician reviewed your photo", "Open your history to see the review.", "/history", f"photo-reviewed:{iid}")
     return {"clinician_review": "reviewed"}
 
 
@@ -86,6 +89,8 @@ def review_document(doc_id: str, user=Depends(doctor)):
         raise HTTPException(404, "Document not found.")
     db.x("UPDATE documents SET review_status='reviewed_by_clinician' WHERE id=?", (doc_id,))
     db.audit(user["id"], "document.reviewed", doc_id)
+    own = db.q1("SELECT owner_id FROM documents WHERE id=?", (doc_id,))
+    notify.send(own["owner_id"], "report_reviewed", "A clinician reviewed your report", "Open the report to see what was checked.", f"/reports/{doc_id}", f"report-reviewed:{doc_id}")
     return {"review_status": "reviewed_by_clinician"}
 
 
@@ -152,6 +157,8 @@ def approve_quote(qid: str, user=Depends(require("doctor"))):
         raise HTTPException(404, "Quotation not found.")
     db.x("UPDATE quotes SET status='approved', approved_by=?, updated_at=? WHERE id=?", (user["id"], db.now(), qid))
     db.audit(user["id"], "quote.approve", qid)
+    q = db.q1("SELECT patient_id FROM quotes WHERE id=?", (qid,))
+    notify.send(q["patient_id"], "quote_approved", "Your quotation is approved", "You can now view and download it.", "/quote", f"quote-approved:{qid}")
     return {"status": "approved"}
 
 

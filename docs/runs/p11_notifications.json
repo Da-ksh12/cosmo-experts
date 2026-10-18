@@ -1,0 +1,43 @@
+{
+  "suite": "notifications",
+  "when": "2026-10-18T05:16:27.163Z",
+  "passed": 8,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "bell: no unread notifications to start"
+    },
+    {
+      "pass": true,
+      "check": "bell: shows the new notification count",
+      "detail": "Notifications, 1 unread"
+    },
+    {
+      "pass": true,
+      "check": "dialog: lists the notification with a generic title"
+    },
+    {
+      "pass": true,
+      "check": "dialog: no WCAG A/AA violations",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "following the notification opens the quotation page"
+    },
+    {
+      "pass": true,
+      "check": "the notification is marked read after it is opened"
+    },
+    {
+      "pass": true,
+      "check": "bell: count returns to zero"
+    },
+    {
+      "pass": true,
+      "check": "no uncaught errors",
+      "detail": []
+    }
+  ]
+}
