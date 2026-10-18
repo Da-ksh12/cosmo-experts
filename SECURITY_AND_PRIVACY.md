@@ -17,7 +17,7 @@ document, not legal advice; HIPAA/GDPR/India DPDP (or other) obligations need qu
 | Tenant isolation | Tests: documents, thumbnails, files, images, conversations, jobs, care plans, history, quotes, PDF. |
 | Upload validation | Extension + magic bytes, size cap (15 MB), page cap (40), decode checks, encrypted-PDF rejection, image pixel cap; filenames sanitised; stored under generated names. |
 | Archive safety | `safe_unzip` rejects path traversal and non-image/csv members. |
-| Rate limiting | In-memory: login 8/min/IP, submissions 40/min/token, general 600/min/IP (tested). **Per process** — use a shared store/proxy limiter for multiple instances. |
+| Rate limiting | In-memory: login 8/min/IP, account flows 20/min/IP, submissions 40/min/token, general 600/min/IP, plus per-account sign-in lockout (tested). **Per process** — use a shared store/proxy limiter for multiple instances. |
 | Gateway back-pressure | Queue and per-user limits with `429 + Retry-After` (tested). |
 | Headers | `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Cache-Control: no-store` on API; frontend adds `Permissions-Policy`. |
 | Request tracing | `X-Request-ID` on every response; stored on jobs and audit events. |
@@ -25,15 +25,20 @@ document, not legal advice; HIPAA/GDPR/India DPDP (or other) obligations need qu
 | Secrets | `COSMO_SECRET` env var; no secrets in frontend code; the same-origin proxy hides the backend URL. |
 | LLM prompt-injection | Retrieved text is untrusted: outputs pass the deterministic verifier; 0/3 injected "take 500 mg of iron" instructions reached the patient in the real-model test. Not a guarantee. |
 | Research model route | `POST /api/v1/research/predict` is admin-only (tested: patient 403), audited as `research.predict`, verifies artifact + backbone checksums before loading, and never returns output to patients. |
-| Backup / recovery | `backend/scripts/backup.py`: consistent SQLite snapshot + uploads archive + sha256 manifest; restore verifies integrity and refuses to overwrite (tested, including tamper detection). Encryption of backups is **not** implemented — encrypt at rest externally. |
-| Retention / deletion | Conversation retention purge (`/admin/retention/purge`, default 30 days); document and photo deletion; **patient erasure workflow** `POST /api/me/delete-my-data` removes uploads, extracted text, photos, conversations and jobs, and reports what is retained (care plans, quotations, audit) pending legal retention rules (tested). |
+| Backup / recovery | Phase 2: `scripts/pg_backup.py` takes encrypted (AES-256-GCM), snapshot-consistent PostgreSQL backups and restores only into a new empty database with row-count and content-digest verification; SQLite backups remain for development. Owner-chosen RPO/RTO. Not yet run against the real database. See `docs/BACKUP_AND_RECOVERY.md`. |
+| Retention / deletion | Phase 2: operator-chosen periods per category (none built in), dry run by default, legal holds, bounded batches, file/row coordination, audit purge through a system-only function; patient erasure `POST /api/me/delete-my-data` honours holds. See `docs/DATA_RETENTION_AND_DELETION.md`. The legal retention schedule is still open. |
+| Account lifecycle | Supabase sign-in with httpOnly rotating refresh cookie, lockout, generic failures, registration closed by default, reset with global sign-out, disabled accounts refused per request (`docs/SUPABASE_AUTH_AND_RLS.md`). |
+| Row-level security | Forced RLS with a signed per-transaction identity on every application table, plus independent backend checks; cross-user tests at both layers. |
+| Consent | Append-only history bound to the notice hash and approval status; withdrawal; never a consent to train (`docs/PRIVACY_AND_CONSENT.md`). |
+| Private files | Opaque keys, atomic private writes, quotas, scanner interface that never says "clean" without a scanner, short-lived signed links (`docs/PRIVATE_FILE_STORAGE.md`). |
+| API hardening | Request-size limits, concurrency bound, timeouts, explicit CORS, API security headers, safe error bodies, validation errors without echoed input, SSRF guard for data-derived URLs (`docs/PRODUCTION_CONFIGURATION.md`). |
 
 ## Gaps that block real-patient deployment
-1. TLS termination, HSTS, secure cookie/session design, MFA, account lockout beyond rate limiting.
-2. Supabase (or equivalent) Auth/RLS/Storage actually applied; SQLite has no encryption at rest — use full-disk encryption or move to managed Postgres.
-3. Encryption of backups; tested disaster-recovery drill; log shipping with PHI scrubbing.
-4. Malware scanning and sandboxing of document parsers (PDF/DOCX/image decoders are an attack surface; PyMuPDF is AGPL — licence review).
-5. Consent capture, privacy notice, data-processing agreements, retention schedule, breach procedure, DPIA.
+1. Real TLS deployment and HSTS verification, multi-factor authentication (not implemented).
+2. The Phase 2 PostgreSQL schema and RLS applied to the real database (dry run succeeded; not applied: needs the owner connection string); until then data lives in SQLite, which has no encryption at rest.
+3. A restore drill on the real database and off-machine backup storage; log shipping with PHI scrubbing.
+4. A running malware scanner (interface done, no engine deployed) and sandboxing of document parsers (PDF/DOCX/image decoders are an attack surface; PyMuPDF is AGPL — licence review).
+5. The approved privacy notice text, data-processing agreements, retention schedule, breach procedure, DPIA (legal; consent mechanism and retention tooling are built).
 6. Penetration test; dependency vulnerability scanning in CI; secrets rotation.
 7. Distributed rate limiting; abuse monitoring.
 8. Formal access reviews for admin/clinician accounts and clinician credential verification workflow beyond the admin flag.

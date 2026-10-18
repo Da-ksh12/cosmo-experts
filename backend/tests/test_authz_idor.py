@@ -49,6 +49,9 @@ def world(client):
     db.x("INSERT INTO jobs(id,owner_id,task,status,created_at) VALUES(?,?,'document_process','done',?)", (jid, "patient1", db.now()))
     yield dict(did=did, fid=fid, iid=iid, cid=cid, qid=qid, nid=nid, jid=jid)
     storage.delete(ref)
+    for table, col, val in (("quotes", "id", qid), ("jobs", "id", jid), ("notifications", "id", nid), ("images", "id", iid)):      # leave nothing that changes other suites' expectations
+        db.x(f"DELETE FROM {table} WHERE {col}=?", (val,))
+    db.x("DELETE FROM messages WHERE conversation_id=?", (cid,)); db.x("DELETE FROM conversations WHERE id=?", (cid,))
 
 
 # (method, path template, json body, what the owner gets)  -- every endpoint that takes an id of a patient-owned resource

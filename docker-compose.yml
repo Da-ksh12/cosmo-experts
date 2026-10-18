@@ -41,16 +41,36 @@ services:
       COSMO_STORAGE: supabase
       SUPABASE_URL: ${SUPABASE_URL:?set SUPABASE_URL}
       COSMO_CORS: https://${COSMO_DOMAIN}
+      COSMO_DB: postgres                                          # production refuses SQLite; the database is Supabase's PostgreSQL (or your own)
+      COSMO_MIGRATION_MODE: check                                 # the app only CHECKS; apply migrations with the migrate service below
+      COSMO_COOKIE_SECURE: "1"
+      COSMO_ADMIN_CLINICAL_ACCESS: ${COSMO_ADMIN_CLINICAL_ACCESS:?choose none or read (docs/PRODUCTION_CONFIGURATION.md)}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:?set the public anon/publishable key}
+      COSMO_SCANNER: ${COSMO_SCANNER:-none}
+      COSMO_ALLOW_UNSCANNED_UPLOADS: ${COSMO_ALLOW_UNSCANNED_UPLOADS:-0}   # production refuses to start with no scanner unless this is 1 (docs/PRIVATE_FILE_STORAGE.md)
+      COSMO_DATABASE_URL_FILE: /run/secrets/database_url
+      COSMO_DB_CONTEXT_SECRET_FILE: /run/secrets/db_context_secret
       COSMO_REDIS_URL_FILE: /run/secrets/redis_url
       COSMO_SECRET_FILE: /run/secrets/cosmo_secret
       SUPABASE_SERVICE_ROLE_KEY_FILE: /run/secrets/supabase_service_role_key
       COSMO_BACKUP_KEY_FILE: /run/secrets/backup_key
       COSMO_METRICS_TOKEN_FILE: /run/secrets/metrics_token
       FORWARDED_ALLOW_IPS: 172.16.0.0/12
-    secrets: [redis_url, cosmo_secret, supabase_service_role_key, backup_key, metrics_token]
+    secrets: [redis_url, cosmo_secret, supabase_service_role_key, backup_key, metrics_token, database_url, db_context_secret]
     volumes:
       - cosmo_data:/data
     depends_on: [redis]
+    networks: [cosmo]
+
+  migrate:
+    # One-shot: `docker compose run --rm migrate status|apply|verify`. Uses the OWNER credential, which the running backend never sees.
+    build: { context: ./backend }
+    profiles: [ops]
+    entrypoint: ["python", "-m", "scripts.migrate"]
+    environment:
+      COSMO_MIGRATION_DATABASE_URL_FILE: /run/secrets/migration_database_url
+      COSMO_DB_CONTEXT_SECRET_FILE: /run/secrets/db_context_secret
+    secrets: [migration_database_url, db_context_secret]
     networks: [cosmo]
 
   redis:
@@ -64,11 +84,13 @@ services:
     build: { context: ./backend }
     restart: unless-stopped
     entrypoint: ["sh", "-c"]
-    command: ["while true; do python -m scripts.backup backup-encrypted /backups || echo backup failed; sleep 86400; done"]
+    command: ["while true; do python -m scripts.pg_backup backup /backups || echo backup failed; sleep 86400; done"]      # restore is verified into an empty database: docs/BACKUP_AND_RECOVERY.md
     environment:
       COSMO_DATA_DIR: /data
+      COSMO_STORAGE: supabase
       COSMO_BACKUP_KEY_FILE: /run/secrets/backup_key
-    secrets: [backup_key]
+      COSMO_BACKUP_DATABASE_URL_FILE: /run/secrets/backup_database_url
+    secrets: [backup_key, backup_database_url]
     volumes:
       - cosmo_data:/data
       - backups:/backups
@@ -100,6 +122,10 @@ secrets:
   supabase_service_role_key: { file: ./secrets/supabase_service_role_key }
   backup_key: { file: ./secrets/backup_key }                     # python -m scripts.backup genkey
   metrics_token: { file: ./secrets/metrics_token }
+  database_url: { file: ./secrets/database_url }                 # application connection: role cosmo_app (no BYPASSRLS), sslmode=require
+  migration_database_url: { file: ./secrets/migration_database_url }   # owner role, used only by the migrate service
+  backup_database_url: { file: ./secrets/backup_database_url }   # a role that can read every row (owner/BYPASSRLS), used only by the backup service
+  db_context_secret: { file: ./secrets/db_context_secret }       # >= 32 random characters
   alert_webhook_url: { file: ./secrets/alert_webhook_url }       # chat webhook for alerts
 
 volumes:

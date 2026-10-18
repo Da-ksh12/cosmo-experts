@@ -27,7 +27,10 @@ repository; the independent audit with per-item classification is **`PROJECT_GAP
 | **Ops foundation** | encrypted backups + restore drill (`docs/runs/restore_drill_dev_data.json`), TLS via Caddy verified live locally, Prometheus rules tested with promtool, linted Dockerfiles/CI. **No image built, no CI run, no real Redis** (`docs/RUNBOOK.md`) |
 | **Serving ≡ evaluation** (`python -m eval.serving_consistency <model_id>`) | The saved DINOv2 model served from raw PNG files reproduces the model card **exactly** (accuracy 0.615, macro-F1 0.558, balanced accuracy 0.576) (`docs/eval/serving_consistency.json`) |
 
-## Implemented this phase
+## Phase 2 (2026-10-18): production data architecture, security and privacy
+Backend suite on SQLite: **622 passed, 4 skipped** (16 min 34 s); PostgreSQL-mode run of the 21 data-touching files: 449 passed, 2 skipped, 2 failed from test-order pollution (details and the fix in `docs/STATUS_REPORT.md` section 0). Delivered: validated configuration, PostgreSQL layer with migrations 0001-0005 and forced row-level security, Supabase account lifecycle, authorization/IDOR tests, consent history, private storage with a scanner interface, retention framework, encrypted PostgreSQL backups with verified restore, request limits and SSRF guard. The migrations were dry-run (rolled back) on the real Supabase project and not applied. See `docs/PHASE_2_IMPLEMENTATION.md`.
+
+## Implemented this phase (earlier phase)
 Inference gateway `/api/v1` (jobs, SSE, idempotency, back-pressure, health/ready, metrics, rate limits); licence-gated dataset acquisition with official checksums;
 label-conflict-aware import; patient-level stratified training with baselines, calibration, bootstrap CIs, subgroup/robustness/OOD evaluation, release gates;
 model registry with provenance; **research-only model serving** (`POST /api/v1/research/predict`, admin-only, checksum-verified, input-quality-gated, calibrated, abstaining);
