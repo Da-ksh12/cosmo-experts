@@ -14,11 +14,11 @@ type Case = { patient: { id: string; name: string }; photos: Photo[]; documents:
 type Field = { id: string; name: string; value: string; unit: string; ref_range: string; source_page: number; source_text: string; confidence: number; review_status: string; patient_flag: string };
 type Detail = { document: { id: string; filename: string; review_status: string }; pages: { page_no: number; text: string }[]; fields: Field[] };
 type Price = { id: string; name: string; unit_price: number; currency: string; category: string; sessions: number; duration_min: number; compare_at_price: number | null };
-type Quote = { id: string; patient_id: string; status: string; total: number; currency: string; notes: string; lines: { item_id: string; name: string; qty: number }[] };
-type KB = { id: string; title: string; body: string; review_status: string; content_origin: string; claims_to_verify: string[]; usable_by_assistant: boolean; reviewed_by: string; source_note: string; version: number };
+type Quote = { id: string; patient_id: string; status: string; effective_status?: string; total: number; currency: string; notes: string; lines: { item_id: string; name: string; qty: number }[] };
+type KB = { id: string; title: string; body: string; review_status: string; content_origin: string; claims_to_verify: string[]; usable_by_assistant: boolean; review_overdue?: boolean; reviewed_by: string; source_note: string; version: number };
 type Stage = { title: string; detail: string; status: "planned" | "in_progress" | "done" };
 type Plan = { id: string; patient_id: string; status: string; assessment: string; findings: string[]; stages: Stage[]; notes: string; recommended_item_ids: string[]; reviewed_at: number | null };
-type Cfg = { tax_percent: number; payment_options: string[]; inclusions: string[]; terms: string };
+type Cfg = { tax_percent: number; validity_days: number; payment_options: string[]; inclusions: string[]; terms: string };
 type Metrics = Record<string, number>;
 
 const EMPTY_PLAN = { assessment: "", findings: "", stages: [] as Stage[], notes: "", recommended_item_ids: [] as string[] };
@@ -34,7 +34,7 @@ export default function Clinic() {
   const [kb, setKb] = useState<KB[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({});
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
-  const [cfg, setCfg] = useState<Cfg>({ tax_percent: 0, payment_options: [], inclusions: [], terms: "" });
+  const [cfg, setCfg] = useState<Cfg>({ validity_days: 30, tax_percent: 0, payment_options: [], inclusions: [], terms: "" });
   const [np, setNp] = useState({ name: "", unit_price: 0, category: "General", sessions: 1, duration_min: 0, compare_at_price: "" });
   const [nk, setNk] = useState({ title: "", body: "" });
   const [rev, setRev] = useState<(KB & { ok: boolean; src: string }) | null>(null);
@@ -164,8 +164,8 @@ export default function Clinic() {
 
       <section className="space-y-3"><h2>Quotations</h2>
         {quotes.map((q) => <div key={q.id} className="card flex flex-wrap items-center justify-between gap-3"><span><strong>{q.id.slice(0, 8)}</strong> · {q.patient_id} · {q.lines.map((l) => `${l.name}×${l.qty}`).join(", ")}{q.notes && <span className="block text-sm text-muted">{q.notes}</span>}</span>
-          <span className="flex flex-wrap items-center gap-3"><span>{q.total.toFixed(2)} {q.currency}</span>{q.status === "approved" ? <Pill tone="good">approved</Pill> : <Pill tone="warn">awaiting approval</Pill>}
-            {isDoctor && q.status !== "approved" && <button className="btn btn-primary btn-sm" onClick={() => act(() => post(`/api/clinic/quotes/${q.id}/approve`), "Quotation approved.")}>Approve</button>}
+          <span className="flex flex-wrap items-center gap-3"><span>{q.total.toFixed(2)} {q.currency}</span>{q.effective_status === "expired" ? <Pill tone="bad">expired</Pill> : q.status === "approved" ? <Pill tone="good">approved</Pill> : <Pill tone="warn">awaiting approval</Pill>}
+            {isDoctor && q.effective_status !== "approved" && <button className="btn btn-primary btn-sm" onClick={() => act(() => post(`/api/clinic/quotes/${q.id}/approve`), "Quotation approved.")}>Approve</button>}
             <button className="btn btn-sm" onClick={() => { const n = prompt("New quantity for the first item (0 removes it):", String(q.lines[0]?.qty ?? 1)); if (n !== null) void act(() => put(`/api/clinic/quotes/${q.id}`, { items: q.lines.map((l, i) => ({ item_id: l.item_id, qty: i === 0 ? Number(n) : l.qty })).filter((l) => l.qty > 0), notes: q.notes }), "Quotation updated and returned to draft."); }}>Edit</button></span></div>)}
         {!quotes.length && <p className="text-muted">No quotation requests.</p>}
 
@@ -184,6 +184,7 @@ export default function Clinic() {
         <div className="card space-y-3"><h3>Quotation settings</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="block text-sm">Tax %<input className="input" type="number" min={0} max={100} value={cfg.tax_percent} onChange={(e) => setCfg({ ...cfg, tax_percent: Number(e.target.value) })} /></label>
+            <label className="block text-sm">Quotation valid for (days, 0 = never expires)<input className="input" type="number" min={0} max={730} value={cfg.validity_days} onChange={(e) => setCfg({ ...cfg, validity_days: Number(e.target.value) })} /></label>
             <label className="block text-sm">Payment options (one per line)<textarea className="input" rows={3} value={cfg.payment_options.join("\n")} onChange={(e) => setCfg({ ...cfg, payment_options: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} /></label>
             <label className="block text-sm">What&apos;s included (one per line)<textarea className="input" rows={3} value={cfg.inclusions.join("\n")} onChange={(e) => setCfg({ ...cfg, inclusions: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} /></label>
             <label className="block text-sm">Terms<textarea className="input" rows={3} value={cfg.terms} onChange={(e) => setCfg({ ...cfg, terms: e.target.value })} /></label></div>
@@ -193,7 +194,7 @@ export default function Clinic() {
       <section className="space-y-3"><h2>Clinically reviewed knowledge base</h2>
         <p className="text-sm text-muted">The assistant only uses articles a doctor has approved.</p>
         {kb.map((a) => <div key={a.id} className="card flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><strong>{a.title}</strong>{a.content_origin === "ai_draft" && a.review_status !== "approved" && <span className="ml-2 text-xs text-muted">software-drafted, not yet reviewed</span>}<p className="text-sm">{a.body}</p></div>
-          <div className="flex items-center gap-2"><StatusBadge status={a.usable_by_assistant ? "approved_for_defined_use" : "research_only"} label={a.usable_by_assistant ? "Approved" : a.review_status === "approved" ? "Approval out of date" : "Draft"} />{isDoctor && <button className="btn btn-sm" onClick={() => setRev({ ...a, ok: false, src: "" })} aria-label={`Review article ${a.title}`}>{a.usable_by_assistant ? "View" : "Review"}</button>}</div></div>)}
+          <div className="flex items-center gap-2"><StatusBadge status={a.usable_by_assistant ? "approved_for_defined_use" : "research_only"} label={a.usable_by_assistant ? "Approved" : a.review_overdue ? "Review overdue" : a.review_status === "approved" ? "Approval out of date" : "Draft"} />{isDoctor && <button className="btn btn-sm" onClick={() => setRev({ ...a, ok: false, src: "" })} aria-label={`Review article ${a.title}`}>{a.usable_by_assistant ? "View" : "Review"}</button>}</div></div>)}
         <div className="card space-y-2"><input className="input" placeholder="Title" value={nk.title} onChange={(e) => setNk({ ...nk, title: e.target.value })} aria-label="Article title" />
           <textarea className="input" rows={3} placeholder="Plain-language text" value={nk.body} onChange={(e) => setNk({ ...nk, body: e.target.value })} aria-label="Article text" />
           <button className="btn" disabled={!nk.title || !nk.body} onClick={() => act(async () => { await post("/api/clinic/kb", nk); setNk({ title: "", body: "" }); }, "Saved as draft.")}>Save as draft</button></div>

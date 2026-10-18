@@ -3,6 +3,7 @@ a quote line must reference an active, doctor-approved price item. Quotes are dr
 from __future__ import annotations
 
 import io
+import time
 import json
 
 from reportlab.lib import colors
@@ -18,13 +19,26 @@ class QuoteError(Exception):
     pass
 
 
-DEFAULT_CONFIG = {"tax_percent": 0.0, "payment_options": [], "inclusions": [], "terms": ""}
+DEFAULT_CONFIG = {"tax_percent": 0.0, "payment_options": [], "inclusions": [], "terms": "", "validity_days": 30}      # validity_days 0 = quotations never expire
 
 
 def get_config() -> dict:
     """Clinic-configured quotation settings. Empty by default: nothing is shown that the clinic did not configure."""
     row = db.q1("SELECT value FROM settings WHERE key='quote_config'")
     return {**DEFAULT_CONFIG, **(json.loads(row["value"]) if row else {})}
+
+
+def valid_until_for_approval(now: float) -> float | None:
+    days = int(get_config().get("validity_days") or 0)
+    return now + days * 86400 if days > 0 else None
+
+
+def effective_status(q: dict, now: float | None = None) -> str:
+    """'expired' for an approved quotation whose validity has passed; otherwise the stored status. Draft quotations never expire (they are not offers)."""
+    import time
+    if q["status"] == "approved" and q.get("valid_until") and q["valid_until"] < (now or time.time()):
+        return "expired"
+    return q["status"]
 
 
 def set_config(cfg: dict):
@@ -61,11 +75,13 @@ def pdf(quote: dict, patient_name: str) -> bytes:
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=18 * mm, bottomMargin=18 * mm,
                             title=f"Cosmo Experts quotation {quote['id'][:8]}")
     st = getSampleStyleSheet()
+    expired = effective_status(quote) == "expired"
     approved = quote["status"] == "approved"
     story = [Paragraph("Cosmo Experts", st["Title"]),
              Paragraph(f"Estimated quotation {quote['id'][:8]}", st["Heading2"]),
              Paragraph(f"Prepared for: {patient_name}", st["Normal"]),
-             Paragraph("Status: <b>%s</b>" % ("Approved by the clinic" if approved else "DRAFT - not yet approved by a doctor"), st["Normal"]),
+             Paragraph("Status: <b>%s</b>" % ("EXPIRED - ask the clinic to confirm the price again" if expired else "Approved by the clinic" if approved else "DRAFT - not yet approved by a doctor"), st["Normal"]),
+             *([Paragraph("Valid until: <b>%s</b>" % time.strftime("%d %b %Y", time.localtime(quote["valid_until"])), st["Normal"])] if approved and quote.get("valid_until") else []),
              Spacer(1, 8)]
     rows = [["Item", "Qty", "Unit price", "Amount"]]
     for l in json.loads(quote["lines"]) if isinstance(quote["lines"], str) else quote["lines"]:

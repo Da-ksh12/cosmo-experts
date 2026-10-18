@@ -235,3 +235,25 @@ def test_packaging_tool_refuses_without_confirmation_and_produces_a_loadable_fil
     src.write_text(json.dumps({"message": "m", "patterns": ["(a+)+$"]}), encoding="utf-8")
     with pytest.raises(ValueError):
         mk.main(args + ["--confirm-reviewer-approved"])
+
+
+def test_approval_lapses_when_the_scheduled_review_date_passes(client, monkeypatch):
+    doc = tok(client, "doctor1")
+    title = "Do I need to prepare for a test?"
+    a = article(client, doc, title)
+    monkeypatch.setenv("COSMO_KB_REVIEW_DAYS", "30")
+    assert client.post(f"/api/clinic/kb/{a['id']}/approve", json=ATTEST, headers=doc).status_code == 200
+    row = db.q1("SELECT review_due, reviewed_at FROM kb_articles WHERE id=?", (a["id"],))
+    assert abs(row["review_due"] - (row["reviewed_at"] + 30 * 86400)) < 5
+    assert any(x["id"] == a["id"] for x in cc.approved_articles())
+    db.x("UPDATE kb_articles SET review_due=? WHERE id=?", (row["reviewed_at"] - 1, a["id"]))       # the due date has passed
+    assert not any(x["id"] == a["id"] for x in cc.approved_articles())
+    listed = article(client, doc, title)
+    assert listed["review_overdue"] is True and listed["usable_by_assistant"] is False and listed["review_status"] == "approved"
+    # re-approval renews it
+    assert client.post(f"/api/clinic/kb/{a['id']}/approve", json=ATTEST, headers=doc).status_code == 200
+    assert any(x["id"] == a["id"] for x in cc.approved_articles()) and article(client, doc, title)["review_overdue"] is False
+    monkeypatch.setenv("COSMO_KB_REVIEW_DAYS", "0")
+    assert cc.review_period_days() == 0
+    monkeypatch.setenv("COSMO_KB_REVIEW_DAYS", "garbage")
+    assert cc.review_period_days() == 365

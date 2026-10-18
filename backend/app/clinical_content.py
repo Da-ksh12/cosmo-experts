@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -60,10 +61,21 @@ def seed_kb() -> int:
 def approved_articles() -> list[dict]:
     """Approved AND unmodified since approval. A row whose text no longer matches its approval hash (tampering, direct DB edit, legacy approval without a record) is excluded."""
     out = []
-    for a in db.q("SELECT id,title,body,language,version,content_sha256 FROM kb_articles WHERE review_status='approved'"):
+    now = time.time()
+    for a in db.q("SELECT id,title,body,language,version,content_sha256,review_due FROM kb_articles WHERE review_status='approved'"):
+        if a["review_due"] and a["review_due"] < now:                  # an approval lapses when its scheduled re-review date passes: fail closed
+            continue
         if a["content_sha256"] and a["content_sha256"] == article_hash(a["title"], a["body"], a["language"] or "en"):
             out.append(a)
     return out
+
+
+def review_period_days() -> int:
+    """How long an approval stays valid before the clinic must re-review the article (COSMO_KB_REVIEW_DAYS, default 365; 0 = no scheduled re-review)."""
+    try:
+        return max(0, int(os.environ.get("COSMO_KB_REVIEW_DAYS", "365")))
+    except ValueError:
+        return 365
 
 
 def approver_ok(user: dict) -> tuple[bool, str]:

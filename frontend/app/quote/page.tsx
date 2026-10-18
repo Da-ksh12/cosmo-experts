@@ -3,12 +3,12 @@
 import { CalendarDays, Check, Clock, Download, Info, Minus, Plus, Send, Share2, Sparkles, Stethoscope, Tag } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ScreenBar } from "@/components/Shell";
-import { EmptyState, ErrorState, LoadingState, Note, PageHeading, Pill, money, useToast } from "@/components/ui";
+import { EmptyState, ErrorState, LoadingState, Note, PageHeading, Pill, fmtDate, money, useToast } from "@/components/ui";
 import { api, blob, post } from "@/lib/api";
 
 type Price = { id: string; name: string; description: string; unit_price: number; currency: string; category: string; sessions: number; duration_min: number; compare_at_price: number | null };
 type Cfg = { tax_percent: number; payment_options: string[]; inclusions: string[]; terms: string };
-type Quote = { id: string; status: string; total: number; subtotal: number; tax_amount: number; currency: string; lines: { name: string; qty: number }[]; created_at: number };
+type Quote = { id: string; status: string; effective_status?: string; valid_until?: number | null; total: number; subtotal: number; tax_amount: number; currency: string; lines: { name: string; qty: number }[]; created_at: number };
 type Care = { plan: { recommended_item_ids: string[]; notes: string } | null; doctor: { name: string } | null };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -136,7 +136,8 @@ export default function QuotePage() {
         {quotes.length === 0 ? <p className="text-muted">You haven&apos;t requested a quotation yet.</p> : quotes.map((q) => (
           <article key={q.id} className="card flex flex-wrap items-center justify-between gap-3">
             <div><p className="font-semibold">Quotation {q.id.slice(0, 8)}</p><p className="text-sm text-muted">{q.lines.map((l) => `${l.name} × ${l.qty}`).join(", ")}</p></div>
-            <div className="flex flex-wrap items-center gap-3">{q.status === "approved" ? <><Pill tone="good">Approved by the clinic</Pill><span className="text-lg font-semibold">{money(q.total, q.currency)}</span>
+            <div className="flex flex-wrap items-center gap-3">{q.effective_status === "expired" ? <><Pill tone="bad">Expired</Pill><span className="text-sm text-muted">This price is no longer valid. Ask the clinic to confirm it again.</span></>
+              : q.status === "approved" ? <><Pill tone="good">Approved by the clinic</Pill>{q.valid_until ? <span className="text-sm text-muted">Valid until {fmtDate(q.valid_until)}</span> : null}<span className="text-lg font-semibold">{money(q.total, q.currency)}</span>
               <button className="btn btn-sm" onClick={() => pdf(q, false)}><Download className="h-4 w-4" aria-hidden /> PDF</button>
               {canShare && <button className="btn btn-sm" onClick={() => pdf(q, true)}><Share2 className="h-4 w-4" aria-hidden /> Share</button>}</>
               : <><Pill tone="warn">Awaiting clinic approval</Pill><span className="text-sm text-muted">Estimate {money(q.total, q.currency)}</span></>}</div>

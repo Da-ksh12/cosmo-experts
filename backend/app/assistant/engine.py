@@ -13,6 +13,7 @@ from .llm import get_backend
 from .retrieval import get_retriever
 
 from .. import clinical_content, db
+from ..quotes import service as quotes_service
 
 
 REFUSE = re.compile(r"\b(prescribe|prescription for|what (medicine|medication|drug|tablet)|which (medicine|medication|drug|tablet)|"
@@ -44,7 +45,7 @@ def _passages(owner_id: str) -> list[dict]:
 
 
 def _quotes(owner_id: str) -> list[dict]:
-    qs = db.q("SELECT * FROM quotes WHERE patient_id=? AND status='approved' ORDER BY updated_at DESC", (owner_id,))
+    qs = [q for q in db.q("SELECT * FROM quotes WHERE patient_id=? AND status='approved' ORDER BY updated_at DESC", (owner_id,)) if quotes_service.effective_status(q) == "approved"]
     out = []
     for qu in qs:
         lines = json.loads(qu["lines"])

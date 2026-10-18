@@ -302,7 +302,7 @@ def request_quote(body: QuoteReq, user=Depends(consent.patient_consented)):
 def my_quotes(patient_id: str | None = None, user=Depends(current_user)):
     owner = user["id"] if user["role"] == "patient" else patient_id
     rows = db.q("SELECT * FROM quotes" + (" WHERE patient_id=?" if owner else "") + " ORDER BY created_at DESC", (owner,) if owner else ())
-    return [dict(r, lines=json.loads(r["lines"])) for r in rows]
+    return [dict(r, lines=json.loads(r["lines"]), effective_status=quotes.effective_status(r)) for r in rows]
 
 
 @router.get("/quotes/{qid}/pdf")

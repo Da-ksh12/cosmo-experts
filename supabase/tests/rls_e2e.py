@@ -227,6 +227,8 @@ try:
         check("doctor cannot attribute a photo review to someone else", blocked(rest("PATCH", f"images?id=eq.{imgB}", jwt["doctor"], {"clinician_review": "reviewed", "reviewed_by": ADM})))
         check("doctor cannot approve a quote as another user", blocked(rest("PATCH", f"quotes?id=eq.{quoteA}", jwt["doctor"], {"status": "approved", "approved_by": ADM})))
         check("doctor can approve a quote as themselves", ok_rows(rest("PATCH", f"quotes?id=eq.{quoteA}", jwt["doctor"], {"status": "approved", "approved_by": DOC})))
+        check("doctor can stamp a validity date when approving a quote", ok_rows(rest("PATCH", f"quotes?id=eq.{quoteA}", jwt["doctor"], {"status": "approved", "approved_by": DOC, "valid_until": "2027-01-01T00:00:00Z"})))
+        check("patient cannot set a quote's validity date", blocked(rest("PATCH", f"quotes?id=eq.{quoteA}", jwt["patient_a"], {"valid_until": "2099-01-01T00:00:00Z"})))
         check("patient cannot approve their own quote", blocked(rest("PATCH", f"quotes?id=eq.{quoteA}", jwt["patient_a"], {"status": "approved", "approved_by": A})))
         check("KB: doctor can add a DRAFT article but not insert an approved one", ok_rows(rest("POST", "kb_articles", jwt["doctor"], {"title": "t", "body": "b", "review_status": "draft"})) and
               blocked(rest("POST", "kb_articles", jwt["doctor"], {"title": "t2", "body": "b", "review_status": "approved", "reviewed_by": DOC})))

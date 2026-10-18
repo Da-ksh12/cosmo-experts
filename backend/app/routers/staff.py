@@ -139,6 +139,7 @@ def edit_quote(qid: str, body: QuoteEdit, user=Depends(doctor)):
 
 class QuoteConfig(BaseModel):
     tax_percent: float = Field(default=0, ge=0, le=100)
+    validity_days: int = Field(default=30, ge=0, le=730)      # 0 = never expires
     payment_options: list[str] = []
     inclusions: list[str] = []
     terms: str = ""
@@ -155,7 +156,7 @@ def set_quote_config(body: QuoteConfig, user=Depends(doctor)):
 def approve_quote(qid: str, user=Depends(require("doctor"))):
     if not db.q1("SELECT id FROM quotes WHERE id=?", (qid,)):
         raise HTTPException(404, "Quotation not found.")
-    db.x("UPDATE quotes SET status='approved', approved_by=?, updated_at=? WHERE id=?", (user["id"], db.now(), qid))
+    db.x("UPDATE quotes SET status='approved', approved_by=?, updated_at=?, valid_until=? WHERE id=?", (user["id"], db.now(), quotes.valid_until_for_approval(db.now()), qid))
     db.audit(user["id"], "quote.approve", qid)
     q = db.q1("SELECT patient_id FROM quotes WHERE id=?", (qid,))
     notify.send(q["patient_id"], "quote_approved", "Your quotation is approved", "You can now view and download it.", "/quote", f"quote-approved:{qid}")
@@ -185,7 +186,9 @@ def kb_list(user=Depends(doctor)):
     rows = db.q("SELECT * FROM kb_articles ORDER BY title")
     for r in rows:
         r["claims_to_verify"] = json.loads(r.get("claims_to_verify") or "[]")
-        r["usable_by_assistant"] = r["review_status"] == "approved" and r.get("content_sha256") == clinical_content.article_hash(r["title"], r["body"], r["language"] or "en")
+        overdue = bool(r["review_status"] == "approved" and r.get("review_due") and r["review_due"] < db.now())
+        r["review_overdue"] = overdue
+        r["usable_by_assistant"] = r["review_status"] == "approved" and not overdue and r.get("content_sha256") == clinical_content.article_hash(r["title"], r["body"], r["language"] or "en")
     return rows
 
 
@@ -205,7 +208,7 @@ def kb_edit(kid: str, body: KBEdit, user=Depends(doctor)):
         raise HTTPException(404, "Article not found.")
     if not body.title.strip() or not body.body.strip():
         raise HTTPException(422, "Title and text are required.")
-    db.x("UPDATE kb_articles SET title=?, body=?, review_status='draft', reviewed_by='', reviewed_at=NULL, content_sha256='', attestation='', version=version+1 WHERE id=?",
+    db.x("UPDATE kb_articles SET title=?, body=?, review_status='draft', reviewed_by='', reviewed_at=NULL, review_due=NULL, content_sha256='', attestation='', version=version+1 WHERE id=?",
          (body.title.strip(), body.body.strip(), kid))
     db.audit(user["id"], "kb.edit", kid, {"version": r["version"] + 1, "was": r["review_status"]})
     return {"review_status": "draft", "version": r["version"] + 1}
@@ -226,8 +229,9 @@ def kb_approve(kid: str, body: KBApproval | None = None, user=Depends(require("d
     digest = clinical_content.article_hash(r["title"], r["body"], r["language"] or "en")
     attestation = json.dumps({"reviewer": user["id"], "credentials": user.get("credentials", ""), "verified": bool(user.get("verified")),
                               "statement": "I reviewed this exact text and approve it as accurate, appropriate for patients and non-diagnostic.", "content_sha256": digest})
-    db.x("UPDATE kb_articles SET review_status='approved', reviewed_by=?, reviewed_at=?, content_sha256=?, attestation=?, source_note=? WHERE id=?",
-         (user["id"], db.now(), digest, attestation, body.sources_checked.strip(), kid))
+    days = clinical_content.review_period_days()
+    db.x("UPDATE kb_articles SET review_status='approved', reviewed_by=?, reviewed_at=?, content_sha256=?, attestation=?, source_note=?, review_due=? WHERE id=?",
+         (user["id"], db.now(), digest, attestation, body.sources_checked.strip(), db.now() + days * 86400 if days else None, kid))
     db.audit(user["id"], "kb.approve", kid, {"version": r["version"], "content_sha256": digest, "origin": r["content_origin"]})
     return {"review_status": "approved", "content_sha256": digest}
 

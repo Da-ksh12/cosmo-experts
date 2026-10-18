@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from .. import db, security
 from .. import storage
+from ..quotes import service as quotes
 from ..services import notify
 from ..security import current_user, can_access_patient_data, require
 
@@ -105,7 +106,7 @@ def suggestions(user=Depends(require("patient"))):
     out.append("What questions should I ask my doctor?")
     if db.q1("SELECT 1 x FROM kb_articles WHERE review_status='approved' AND title LIKE '%reference range%'"):
         out.append("What is a reference range?")
-    if db.q1("SELECT 1 x FROM quotes WHERE patient_id=? AND status='approved'", (user["id"],)):
+    if any(quotes.effective_status(q) == "approved" for q in db.q("SELECT status,valid_until FROM quotes WHERE patient_id=? AND status='approved'", (user["id"],))):
         out.append("What does my quotation include?")
     return out
 
