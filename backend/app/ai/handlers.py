@@ -61,18 +61,19 @@ def _bytes_ok(b: bytes, what: str) -> None:
 
 # ---------------------------------------------------------------- image.quality
 def validate_image(payload) -> None:
-    from ..imaging import suitability
+    from ..imaging import quality
     p = _typed(ImagePayload, payload)
     _bytes_ok(p.data, "image")
-    if p.category not in suitability.REGIONS:
+    if p.category not in quality.CATEGORIES:
         raise RejectedInput("Unknown photo area.")
 
 
 def h_image_quality(payload, ctx: HandlerContext) -> HandlerResult:
-    from ..imaging import suitability
+    from ..imaging import quality
     p = _typed(ImagePayload, payload)
-    rep = suitability.assess(p.data, p.category)
-    return HandlerResult("ok", rep.to_dict(), rep.message, rep.warnings, processing_version=rep.version)
+    ctx.check()
+    qa = quality.assess(p.data, p.category)
+    return HandlerResult("ok", qa.to_dict(), qa.message, qa.warnings, processing_version=qa.version + "+" + str(qa.legacy.get("version", "")))
 
 
 # ---------------------------------------------------------------- document.extract

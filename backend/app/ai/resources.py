@@ -139,7 +139,7 @@ def available_mb() -> float:
 
 def require_memory(needed_mb: float, what: str = "this model") -> None:
     """Refuse (explicitly) instead of risking an out-of-memory crash. The floor keeps the host usable for everything else."""
-    floor = _env_int("COSMO_AI_MIN_FREE_MB", 300, 0, 100000)
+    floor = _env_int("COSMO_AI_MIN_FREE_MB", 200, 0, 100000)
     have = available_mb()
     if have < needed_mb + floor:
         raise ResourceExhausted(f"There is not enough free memory to load {what} right now. Please try again later.")

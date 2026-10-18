@@ -156,7 +156,7 @@ def _image_defs() -> list[CapabilityDef]:
         research = t["declared_status"] == "research_only"
         out.append(CapabilityDef(
             f"image.{t['id']}", "image", t["name"], t["version"], t["intended_use"], "learned_model",
-            audiences=("admin",) if research else ("clinician", "admin"), limits=Limits(max_seconds=45.0, concurrency=1),
+            audiences=("admin",) if research else ("clinician", "admin"), limits=Limits(max_seconds=120.0 if research else 45.0, concurrency=1),
             model_task=t["id"], patient_if_approved=not research and t["id"] != "other_uncertain",
             limitations=tuple(t["limitations"]), unavailable_reason=f"Required data: {t['required_dataset']}"))
     return out

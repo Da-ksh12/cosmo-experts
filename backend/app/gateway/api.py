@@ -65,13 +65,15 @@ def h_answer(owner, params, data, ctx):
 
 
 def h_research(owner, params, data, ctx):
-    from ..training import serving
-    try:
-        out = serving.predict(params["model_id"], data, ctx["request_id"])
-    except serving.ServingError as e:
-        raise Public(str(e))
-    db.audit(owner, "research.predict", params["model_id"], {"status": out["status"], "request_id": ctx["request_id"]})
-    return ("rejected" if out["status"] == "rejected_input" else "uncertain" if out["status"] == "abstained" else "completed"), out
+    """Administrator-only research inference, run through the unified AI engine (limits, cancellation, safety review, provenance). The route is admin-only; the engine checks again."""
+    from ..ai import get_engine
+    user = {"id": owner, "name": "", "role": "admin"}
+    env = get_engine().run("image.lesion_classification_research", {"data": data, "model_id": params["model_id"]}, user=user, request_id=ctx["request_id"], allow_research=True)
+    if env.status in ("unavailable", "forbidden", "error", "timeout", "cancelled", "resource_exhausted", "unsupported"):
+        raise Public(env.message or "The research model could not be run.")
+    out = env.result or {"status": "rejected_input", "problems": [env.message]}
+    db.audit(owner, "research.predict", params["model_id"], {"status": out.get("status"), "request_id": ctx["request_id"], "engine_status": env.status})
+    return ("rejected" if out.get("status") == "rejected_input" else "uncertain" if out.get("status") == "abstained" else "completed"), out
 
 
 jobs.register("research_predict", h_research)

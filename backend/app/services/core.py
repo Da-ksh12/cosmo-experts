@@ -8,7 +8,7 @@ from .. import db, malware, storage
 from . import notify
 from ..config import UPLOAD_DIR
 from ..documents import pipeline
-from ..imaging import suitability
+from ..imaging import quality, suitability
 
 
 def store_private(owner: str, data: bytes, ext: str) -> str:
@@ -23,6 +23,7 @@ def check_and_store_image(owner_id: str, region: str, data: bytes, request_id: s
     storage.check_quota(owner_id, len(data))
     scan = malware.check(data)                              # before any parser touches the bytes
     rep = suitability.assess(data, region)
+    qa = quality.assess(data, region, legacy=rep)           # additive: warnings, advisory checks and a document-routing hint; patient categories are never rejected by v2
     iid, path = db.uid(), ""
     if rep.verdict != "rejected":   # data minimisation: rejected photos are not kept
         path = store_private(owner_id, data, "jpg")
@@ -38,6 +39,12 @@ def check_and_store_image(owner_id: str, region: str, data: bytes, request_id: s
         notify.to_role("doctor", "submission", "New photo to review", "A patient submitted a photo.", "/clinic", f"photo-submitted:{iid}")
     d = rep.to_dict()
     d.update(request_id=request_id, processing_ms=round((db.now() - t) * 1000), timestamp=db.now(), corrective_action=None if rep.verdict == "accepted" else rep.message)
+    d["quality_v2"] = {"version": qa.version, "verdict": qa.verdict, "warnings": qa.warnings, "document_like": qa.document_like,
+                       "checks": [c for c in qa.checks if c.get("source") is None], "validated_checks": [c["id"] for c in qa.checks if c.get("validated")]}
+    if qa.document_like:
+        d["routing"] = {"route": "document_pipeline", "message": "This looks like a document. Please upload it under Reports so it can be read and checked."}
+        if rep.verdict != "accepted":
+            d["corrective_action"] = d["routing"]["message"]
     return {"id": iid, "report": d,
             "capability_status": {"status": "available", "label": "Available", "note": "Photo check only. No condition is assessed."},
             "next": ("A clinician reviews accepted photos together with your history. No automatic diagnosis is made." if rep.verdict == "accepted" else rep.message)}

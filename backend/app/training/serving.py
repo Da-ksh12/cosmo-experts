@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import io
 import json
-import threading
 import time
 from pathlib import Path
 
@@ -20,8 +19,26 @@ from .. import db
 from ..imaging import suitability
 from . import trainer as T
 
-_cache: dict[str, dict] = {}
-_lock = threading.Lock()
+_PREFIX = "image:"
+
+
+class _CacheView:
+    """The loaded research models, as seen through the shared, memory-guarded model cache (ai/resources.py): single flight, one model resident at a time on small hosts."""
+
+    def clear(self):
+        from ..ai.resources import model_cache
+        for k in [k for k in model_cache().stats()["resident"] if k.startswith(_PREFIX)]:
+            model_cache().unload(k)
+
+    def __iter__(self):
+        from ..ai.resources import model_cache
+        return iter([k[len(_PREFIX):] for k in model_cache().stats()["resident"] if k.startswith(_PREFIX)])
+
+    def __len__(self):
+        return len(list(iter(self)))
+
+
+_cache = _CacheView()
 
 
 class ServingError(Exception):
@@ -47,32 +64,42 @@ def abstain_threshold(card: dict) -> float:
 
 
 def _load(model_id: str) -> dict:
-    with _lock:
-        if model_id in _cache:
-            return _cache[model_id]
-        card, status = _card(model_id)
-        if status not in ("research_only", "approved_for_defined_use"):
-            raise ServingError("This model is not available for inference.")
-        art = Path(card["artifact_path"])
-        if not art.is_file() or T.sha256_file(art) != card["artifact_sha256"]:
-            raise ServingError("The model file is missing or does not match its recorded checksum; refusing to load it.")
-        size, classes, temperature = card["image_size"], card["classes"], float(card["test_metrics"]["temperature"])
-        if art.suffix == ".npz":
-            from . import probe
-            wf = card["pretrained_weights"]
-            if not Path(wf).is_file() or T.sha256_file(wf) != card["pretrained_sha256"]:
-                raise ServingError("The backbone weights do not match the recorded checksum; refusing to load them.")
-            z = np.load(art, allow_pickle=False)
-            bundle = {"kind": "probe", "backbone": probe.load_backbone(wf, size=size), "mean": z["mean"], "scale": z["scale"], "coef": z["coef"], "intercept": z["intercept"]}
-        else:
-            import torch
-            m = T.build_model(card["architecture"], len(classes), None, "head")
-            m.load_state_dict(torch.load(art, map_location="cpu", weights_only=True))
-            bundle = {"kind": "cnn", "model": m.eval()}
-        bundle.update(card=card, classes=classes, size=size, temperature=temperature, threshold=abstain_threshold(card))
-        _cache.clear()          # keep one model resident: RAM is the binding constraint on small hosts
-        _cache[model_id] = bundle
-        return bundle
+    from ..ai.resources import model_cache
+    return model_cache().get(_PREFIX + model_id, lambda: _build(model_id), est_mb=_estimate_mb(model_id))
+
+
+def _estimate_mb(model_id: str) -> float:
+    """Rough resident size: twice the weight files (artifact plus backbone). Used only to refuse a load that would exhaust memory."""
+    try:
+        card, _ = _card(model_id)
+        files = [Path(card["artifact_path"]), Path(card.get("pretrained_weights", ""))]
+        return round(2 * sum(f.stat().st_size for f in files if f.is_file()) / 1e6, 1)
+    except Exception:
+        return 0.0
+
+
+def _build(model_id: str) -> dict:
+    card, status = _card(model_id)
+    if status not in ("research_only", "approved_for_defined_use"):
+        raise ServingError("This model is not available for inference.")
+    art = Path(card["artifact_path"])
+    if not art.is_file() or T.sha256_file(art) != card["artifact_sha256"]:
+        raise ServingError("The model file is missing or does not match its recorded checksum; refusing to load it.")
+    size, classes, temperature = card["image_size"], card["classes"], float(card["test_metrics"]["temperature"])
+    if art.suffix == ".npz":
+        from . import probe
+        wf = card["pretrained_weights"]
+        if not Path(wf).is_file() or T.sha256_file(wf) != card["pretrained_sha256"]:
+            raise ServingError("The backbone weights do not match the recorded checksum; refusing to load them.")
+        z = np.load(art, allow_pickle=False)
+        bundle = {"kind": "probe", "backbone": probe.load_backbone(wf, size=size), "mean": z["mean"], "scale": z["scale"], "coef": z["coef"], "intercept": z["intercept"]}
+    else:
+        import torch
+        m = T.build_model(card["architecture"], len(classes), None, "head")
+        m.load_state_dict(torch.load(art, map_location="cpu", weights_only=True))
+        bundle = {"kind": "cnn", "model": m.eval()}
+    bundle.update(card=card, classes=classes, size=size, temperature=temperature, threshold=abstain_threshold(card))
+    return bundle
 
 
 def predict(model_id: str, data: bytes, request_id: str = "", enforce_quality: bool = True) -> dict:

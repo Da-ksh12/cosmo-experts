@@ -16,7 +16,7 @@ import re
 
 from .config import MAX_UPLOAD_BYTES
 
-UPLOAD_ROUTES = re.compile(r"^POST /api/(v1/)?(images|documents|speech/transcribe|images/check)(/|$)")
+UPLOAD_ROUTES = re.compile(r"^POST /api/(v1/)?(images|documents|speech/transcribe|images/check|ai/images/analyze|ai/documents/extract|ai/speech/transcribe)(/|$)")
 EXEMPT = re.compile(r"^(GET /api/(v1/health/(live|ready)|health)|GET /api/v1/jobs/[^/]+/events|GET /metrics)$")
 NO_TIMEOUT = re.compile(r"^GET /api/v1/jobs/[^/]+/events$")
 
