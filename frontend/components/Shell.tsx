@@ -1,11 +1,12 @@
 "use client";
 
+import ConsentGate, { ConsentStatus } from "@/components/ConsentGate";
 import NotificationBell from "@/components/NotificationBell";
 import { ClipboardList, Camera, History, Home, LogOut, MessageCircle, FileText, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { getRawSession, setSession, subscribeSession, User } from "@/lib/api";
+import { api, getRawSession, setSession, subscribeSession, User } from "@/lib/api";
 import { PhotoFlowProvider } from "@/lib/photoFlow";
 import { BrandLogo, Dialog, ToastProvider } from "@/components/ui";
 
@@ -49,6 +50,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [menu, setMenu] = useState(false);
+  const [consentFor, setConsentFor] = useState<{ uid: string; status: ConsentStatus } | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -56,6 +58,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     if (user && user.role !== "patient" && !path.startsWith("/clinic") && !path.startsWith("/admin") && path !== "/login") router.replace("/clinic");
     if (user && user.role === "patient" && (path.startsWith("/clinic") || path.startsWith("/admin"))) router.replace("/");     // staff pages are never shown to patients (the API refuses them too)
   }, [ready, user, path, router]);
+
+  const uid = user?.id, urole = user?.role;
+  useEffect(() => {
+    if (!uid || urole !== "patient") return;
+    api<ConsentStatus>("/api/consent").then((status) => setConsentFor({ uid, status })).catch(() => {});
+  }, [uid, urole]);
+  const consent = urole === "patient" && consentFor && consentFor.uid === uid ? consentFor.status : null;       // never reuse another user's answer
 
   const signOut = () => { setMenu(false); setSession(null); router.replace("/login"); };
 
@@ -84,7 +93,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               </div>
             </header>
           )}
-          <main id="main" className="page">{blocked ? null : children}</main>
+          <main id="main" className="page">{blocked ? null : consent?.required ? <ConsentGate status={consent} onDone={(status) => uid && setConsentFor({ uid, status })} /> : children}</main>
           {patient && (
             <nav aria-label="Primary" className="bottom-nav grid grid-cols-[repeat(5,minmax(0,1fr))] items-center md:hidden">
               {PATIENT_NAV.map(({ href, label, Icon, fab }) => (

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .. import db, security
+from .. import consent, db, security
 from ..assistant import engine
 from ..config import CONVERSATION_RETENTION_DAYS, MAX_UPLOAD_BYTES, UPLOAD_DIR
 from ..documents import explain, pipeline
@@ -42,6 +42,21 @@ def login(body: Login):
     return {"token": security.make_token(u["id"]), "user": {"id": u["id"], "name": u["name"], "role": u["role"]}}
 
 
+@router.get("/consent")
+def consent_status(user=Depends(current_user)):
+    return consent.status_for(user)
+
+
+class ConsentBody(BaseModel):
+    notice_sha256: str
+
+
+@router.post("/consent/accept")
+def consent_accept(body: ConsentBody, user=Depends(require("patient"))):
+    consent.accept(user, body.notice_sha256)
+    return consent.status_for(user)
+
+
 @router.get("/me")
 def me(user=Depends(current_user)):
     return user
@@ -57,7 +72,7 @@ def _read_upload(f: UploadFile) -> bytes:
 # ---------------- images ----------------
 
 @router.post("/images")
-def upload_image(region: str = Form(...), file: UploadFile = File(...), user=Depends(require("patient"))):
+def upload_image(region: str = Form(...), file: UploadFile = File(...), user=Depends(consent.patient_consented)):
     if region not in suitability.REGIONS:
         raise HTTPException(400, "Please choose face / skin, hair / scalp, or body.")
     return core.check_and_store_image(user["id"], region, _read_upload(file))
@@ -94,7 +109,7 @@ def _doc_or_404(doc_id: str, user) -> dict:
 
 
 @router.post("/documents")
-def upload_document(file: UploadFile = File(...), category: str = Form(""), user=Depends(require("patient"))):
+def upload_document(file: UploadFile = File(...), category: str = Form(""), user=Depends(consent.patient_consented)):
     data = _read_upload(file)
     try:
         return core.ingest_document(user["id"], file.filename or "upload", data, category)
@@ -166,7 +181,7 @@ class Msg(BaseModel):
 
 
 @router.post("/conversations")
-def new_conversation(user=Depends(require("patient"))):
+def new_conversation(user=Depends(consent.patient_consented)):
     cid = db.uid()
     db.x("INSERT INTO conversations VALUES(?,?,?)", (cid, user["id"], db.now()))
     return {"id": cid, "retention_days": CONVERSATION_RETENTION_DAYS}
@@ -180,7 +195,7 @@ def _conv(cid, user):
 
 
 @router.post("/conversations/{cid}/messages")
-def ask(cid: str, body: Msg, user=Depends(require("patient"))):
+def ask(cid: str, body: Msg, user=Depends(consent.patient_consented)):
     _conv(cid, user)
     db.x("INSERT INTO messages VALUES(?,?,?,?,?,?)", (db.uid(), cid, "patient", body.text, "[]", db.now()))
     out = engine.answer(user["id"], cid, body.text)
@@ -236,7 +251,7 @@ def tts(body: TTSReq, user=Depends(current_user)):
 
 
 @router.post("/speech/transcribe")
-def transcribe(language: str | None = Form(None), file: UploadFile = File(...), user=Depends(require("patient"))):
+def transcribe(language: str | None = Form(None), file: UploadFile = File(...), user=Depends(consent.patient_consented)):
     st = speech.stt_status()
     if not st["available"]:
         raise HTTPException(503, "Voice questions are not available. Please type your question.")
@@ -267,7 +282,7 @@ def quote_config(user=Depends(current_user)):
 
 
 @router.post("/quotes")
-def request_quote(body: QuoteReq, user=Depends(require("patient"))):
+def request_quote(body: QuoteReq, user=Depends(consent.patient_consented)):
     try:
         t = quotes.build_lines(body.items)
     except quotes.QuoteError as e:

@@ -45,9 +45,20 @@ def retrieval_problems(env=os.environ) -> list[str]:
     return []
 
 
+def consent_problems(env=os.environ) -> list[str]:
+    """Patients cannot upload or message in production until they accept a notice, and only a legally approved notice may be offered there."""
+    from . import consent
+    if env.get("COSMO_ALLOW_NO_CONSENT") == "1":
+        return []
+    if consent.notice()["status"] != "approved":
+        return ["no legally approved privacy notice is installed (content/consent_notice.approved.json, see docs/clinical_review/APPROVAL_PROCEDURE.md): patients could not accept anything. "
+                "Set COSMO_ALLOW_NO_CONSENT=1 only if consent is collected by another documented process"]
+    return []
+
+
 def enforce(env=os.environ) -> None:
     if env.get("COSMO_MODE") != "production":
         return
-    bad = problems(env) or retrieval_problems(env)
+    bad = problems(env) or retrieval_problems(env) or consent_problems(env)
     if bad:
         raise SystemExit("Refusing to start in production:\n  - " + "\n  - ".join(bad))

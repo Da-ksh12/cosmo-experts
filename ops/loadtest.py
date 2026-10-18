@@ -15,21 +15,36 @@ import urllib.error
 import urllib.request
 
 
+_local = threading.local()
+
+
+def _conn(base, fresh=False):
+    """One persistent (keep-alive) connection per worker thread, like a browser or the reverse proxy. Opening a new TCP connection per request exhausts the
+    client's ephemeral ports at a few hundred requests per second and produces errors that are the load generator's, not the server's."""
+    import http.client
+    from urllib.parse import urlparse
+    if fresh or getattr(_local, "base", None) != base or getattr(_local, "conn", None) is None:
+        u = urlparse(base)
+        _local.conn, _local.base = http.client.HTTPConnection(u.hostname, u.port or 80, timeout=60), base
+    return _local.conn
+
+
 def call(base, method, path, token=None, body=None, timeout=60):
     data = json.dumps(body).encode() if body is not None else None
     h = {"Content-Type": "application/json"} if data else {}
     if token:
         h["Authorization"] = "Bearer " + token
     t = time.perf_counter()
-    try:
-        with urllib.request.urlopen(urllib.request.Request(base + path, data=data, method=method, headers=h), timeout=timeout) as r:
+    for attempt in (0, 1):                          # one transparent reconnect if the server closed an idle keep-alive connection
+        try:
+            c = _conn(base, fresh=attempt == 1)
+            c.request(method, path, body=data, headers=h)
+            r = c.getresponse()
             r.read()
             return r.status, time.perf_counter() - t
-    except urllib.error.HTTPError as e:
-        e.read()
-        return e.code, time.perf_counter() - t
-    except Exception:
-        return 0, time.perf_counter() - t
+        except Exception:
+            _local.conn = None
+    return 0, time.perf_counter() - t
 
 
 def login(base, user="patient1"):

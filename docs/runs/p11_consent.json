@@ -1,0 +1,88 @@
+{
+  "suite": "consent",
+  "when": "2026-10-18T06:05:52.220Z",
+  "passed": 19,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "a patient who has not accepted sees the privacy notice instead of the app"
+    },
+    {
+      "pass": true,
+      "check": "an unapproved draft is clearly labelled (and is never offered in production)"
+    },
+    {
+      "pass": true,
+      "check": "navigation present but content blocked"
+    },
+    {
+      "pass": true,
+      "check": "Accept is disabled until the box is ticked"
+    },
+    {
+      "pass": true,
+      "check": "consent screen: no WCAG A/AA violations",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "while unaccepted, the API refuses data-collecting calls (403 consent_required)"
+    },
+    {
+      "pass": true,
+      "check": "after accepting, the gate disappears"
+    },
+    {
+      "pass": true,
+      "check": "after accepting, the API accepts the call"
+    },
+    {
+      "pass": true,
+      "check": "the assistant page is usable after acceptance"
+    },
+    {
+      "pass": true,
+      "check": "another patient is asked to accept on their own account"
+    },
+    {
+      "pass": true,
+      "check": "a clinician is not shown the patient notice"
+    },
+    {
+      "pass": true,
+      "check": "two lab reports with different dates were uploaded"
+    },
+    {
+      "pass": true,
+      "check": "Results over time lists a test that appears in more than one report"
+    },
+    {
+      "pass": true,
+      "check": "the table shows both printed values in date order",
+      "detail": 2
+    },
+    {
+      "pass": true,
+      "check": "the screen states that nothing is converted or interpreted"
+    },
+    {
+      "pass": true,
+      "check": "no interpretive wording on the comparison"
+    },
+    {
+      "pass": true,
+      "check": "each value links to its source page"
+    },
+    {
+      "pass": true,
+      "check": "reports page with the comparison: no WCAG A/AA violations",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "no uncaught errors",
+      "detail": []
+    }
+  ]
+}

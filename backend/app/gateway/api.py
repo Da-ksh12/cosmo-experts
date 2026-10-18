@@ -7,7 +7,7 @@ import time
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from .. import db
+from .. import db, consent
 from ..config import MAX_UPLOAD_BYTES, UPLOAD_DIR
 from ..documents import pipeline
 from ..imaging import suitability
@@ -104,7 +104,7 @@ def _read(f: UploadFile) -> bytes:
 
 @router.post("/images/check")
 def images_check(request: Request, region: str = Form(...), file: UploadFile = File(...), idempotency_key: str | None = Header(default=None),
-                 user=Depends(require("patient"))):
+                 user=Depends(consent.patient_consented)):
     if region not in suitability.REGIONS:
         raise HTTPException(400, "Please choose face / skin, hair / scalp, or body.")
     return _submit(request, "image_check", user, {"region": region}, _read(file), idempotency_key)
@@ -119,7 +119,7 @@ def research_predict(request: Request, model_id: str = Form(...), file: UploadFi
 
 @router.post("/documents")
 def documents_submit(request: Request, file: UploadFile = File(...), category: str = Form(""), idempotency_key: str | None = Header(default=None),
-                     user=Depends(require("patient"))):
+                     user=Depends(consent.patient_consented)):
     data = _read(file)
     try:
         pipeline.validate(data, file.filename or "upload")      # cheap validation up front: fail fast with a clear message
@@ -130,14 +130,14 @@ def documents_submit(request: Request, file: UploadFile = File(...), category: s
 
 @router.post("/speech/transcribe")
 def speech_submit(request: Request, language: str | None = Form(None), file: UploadFile = File(...), idempotency_key: str | None = Header(default=None),
-                  user=Depends(require("patient"))):
+                  user=Depends(consent.patient_consented)):
     if not speech.stt_status()["available"]:
         raise HTTPException(503, "Voice questions are not available. Please type your question.")
     return _submit(request, "speech_transcribe", user, {"language": language}, _read(file), idempotency_key)
 
 
 @router.post("/assistant/answer")
-def answer_submit(request: Request, body: dict, idempotency_key: str | None = Header(default=None), user=Depends(require("patient"))):
+def answer_submit(request: Request, body: dict, idempotency_key: str | None = Header(default=None), user=Depends(consent.patient_consented)):
     text = str(body.get("text", "")).strip()
     if not text or len(text) > 1000 or not body.get("conversation_id"):
         raise HTTPException(422, "A conversation_id and a question of 1-1000 characters are required.")

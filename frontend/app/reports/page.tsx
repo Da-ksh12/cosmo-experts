@@ -4,6 +4,7 @@ import { ArrowRight, Eye, FileText, FileUp, Loader2, MoreHorizontal, Pill, Plus,
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DocumentPreview from "@/components/DocumentPreview";
+import ResultsOverTime from "@/components/ResultsOverTime";
 import { ScreenBar } from "@/components/Shell";
 import { AuthImage, ConfirmDialog, EmptyState, ErrorState, LoadingState, Note, PageHeading, Pill as Badge, fmtBytes, fmtDate, useToast } from "@/components/ui";
 import { api, CATEGORY_LABEL, del, DOC_TYPE_LABEL } from "@/lib/api";
@@ -120,6 +121,8 @@ export default function Reports() {
               <button className="btn btn-icon" onClick={() => setConfirmDel(d)} aria-label={`Delete ${d.filename}`}><Trash2 className="h-5 w-5" /></button>
             </article>))}
       </section>
+
+      <ResultsOverTime />
 
       <Note tone="info">Files are stored privately on the clinic&apos;s system and are visible only to you and your care team. You can delete a document at any time.</Note>
       {latest && <Link href={`/reports/${latest.id}`} className="btn btn-primary w-full !py-3">Continue to my report summary <ArrowRight className="h-5 w-5" aria-hidden /></Link>}
