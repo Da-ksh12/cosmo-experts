@@ -1,0 +1,27 @@
+{
+  "note": "First-run figures of the intent classifier on sets of hand-written utterances (eval/agent_scenarios.py), recorded when each set was first scored and BEFORE anything was changed in response. After a set was examined and the classifier changed, that set stopped being independent evidence; it is kept here so the report shows how much the figures moved and why.",
+  "runs": [
+    {"classifier": "cue phrases v1 (phrase-shaped patterns)", "set": "DEV", "n": 43, "correct": 38, "independent": false, "why": "the set the patterns were written against; scored once before fixes",
+     "misses": ["do I have any estimates -> ask", "do I have new alerts from the clinic -> ask", "the ferritin value is wrong -> ask", "my TSH number was misread -> ask", "what does my ferritin result say -> explain_document"]},
+    {"classifier": "cue phrases v1 (phrase-shaped patterns)", "set": "HELDOUT", "n": 43, "correct": 34, "independent": true,
+     "misses": ["what are you able to do for me -> ask", "which reports do I have -> ask", "show me what I have uploaded so far -> ask", "which services do you offer -> ask", "anything new from the clinic -> ask",
+                "can the clinic team review my latest document -> ask", "I think the glucose result is incorrect -> ask", "the hemoglobin reading is a mistake -> ask", "what does a high marker mean on a report -> explain_document"]},
+    {"classifier": "cue phrases v2 (patterns fixed against DEV and HELDOUT)", "set": "HELDOUT2", "n": 39, "correct": 23, "independent": true,
+     "misses": ["can you tell me what you can help with -> ask", "I need some help please -> ask", "can you list what documents are in my account -> ask", "do I have any reports uploaded -> ask",
+                "show all my files please -> ask", "what have I uploaded -> ask", "I don't understand my blood test, can you explain it -> ask", "give me a summary of my prescription -> list_documents",
+                "break down my latest lab report for me -> ask", "what medicines does my prescription list -> ask", "what quotes do I have -> ask", "what are your prices -> ask",
+                "estimate for laser hair removal please -> ask", "mark everything as read -> ask", "I'd like the doctor to review my latest report -> ask", "please get my report reviewed by a clinician -> ask"]},
+    {"classifier": "cue words v3 (rules rewritten around cue words)", "set": "HELDOUT3", "n": 39, "correct": 21, "independent": true,
+     "misses": ["could you tell me how you can be of use -> ask", "yo -> ask", "I uploaded a few things last week, can you show me what's there -> ask", "how many reports do I have -> ask",
+                "can you go over my newest report -> ask", "i dont get my lab report, explain pls -> ask", "did the clinic send me a quotation -> request_quote", "what do you charge for microneedling -> ask",
+                "what's the fee for a chemical peel -> ask", "did the clinic message me -> ask", "tell me about my alerts -> ask", "what updates do I have -> ask",
+                "I've seen all my notifications, mark them -> list_notifications", "dismiss my notifications -> list_notifications", "clear all alerts -> ask",
+                "I'd like a clinician's opinion on my last document -> ask", "send my report to the doctor for review -> ask", "the hemoglobin figure on my report is off -> ask"]},
+    {"classifier": "intents-2.0.0 variant A (nearest written example first, rules as fallback, guard on changes)", "set": "HELDOUT3", "n": 39, "correct": 35, "independent": true,
+     "why": "scored with the examples drawn from DEV, HELDOUT and HELDOUT2 only; HELDOUT3 was not among them",
+     "misses": ["help me understand the latest prescription -> list_medications", "what do you charge for microneedling -> ask", "what updates do I have -> list_documents", "how do I add a report -> list_documents"]},
+    {"classifier": "intents-2.0.0 variant B (rules win when they recognise an action; examples where they do not)", "set": "HELDOUT3", "n": 39, "correct": 35, "independent": false,
+     "why": "variant B was chosen after an integration test showed variant A sending 'explain my ferritin_panel report' to a question because the test name 'ferritin' matched an example; HELDOUT3 was then re-scored with B, so it informed that choice only as a no-regression check",
+     "misses": ["what do you charge for microneedling -> ask", "what updates do I have -> list_documents", "I've seen all my notifications, mark them -> list_notifications", "how do I add a report -> list_documents"]}
+  ]
+}

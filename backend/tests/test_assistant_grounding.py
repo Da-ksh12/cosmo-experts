@@ -89,6 +89,8 @@ class Capturing(LLMBackend):
 
 
 def test_a_model_never_sees_the_instruction_and_a_claim_built_on_it_is_dropped(client, monkeypatch):
+    from app.ai import gates
+    monkeypatch.setattr(gates, "llm_answers_status", lambda: (True, []))      # this test is about what reaches a model once one is allowed; the release gate itself is tested in test_ai_gates.py
     monkeypatch.setenv("COSMO_ASSISTANT_MODE", "llm")
     upload(client, "patient1", LAB)
     be = Capturing({"claims": [{"text": "Your ferritin is normal.", "source_ids": [1], "quote": "the ferritin is perfectly normal"}]})

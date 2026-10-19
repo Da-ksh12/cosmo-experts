@@ -14,7 +14,7 @@ from tests.test_pg_backend import CTX_SECRET, pg_server  # noqa: F401  (fixtures
 
 T = "2026-10-18T10:00:00Z"
 TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "doc_facts", "doc_medications", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
-          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "notifications", "jobs"]
+          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "agent_traces", "agent_actions", "notifications", "jobs"]
 
 
 def C(uid, role, admin="none"):
@@ -48,6 +48,9 @@ def rls(pg_server):
         x("insert into consent_events(id,user_id,notice_sha256,notice_status,action,at) values(?,?,'sha','approved','accepted',now())", (f"ce-{p}", p))
         x("insert into notifications(id,user_id,kind,title,dedupe_key,created_at) values(?,?,'k','t',?,now())", (f"n-{p}", p, f"k-{p}"))
         x("insert into jobs(id,owner_id,task,status,created_at) values(?,?,'t','done',now())", (f"j-{p}", p))
+        x("insert into agent_traces(id,user_id,request_id,created_at,intent,provider,outcome) values(?,?,'r',now(),'ask','intents-2.0.0','answered')", (f"at-{p}", p))
+        x("insert into agent_actions(id,user_id,trace_id,tool,args,args_sha256,summary,state,expires_at) values(?,?,?,'request_quote','{}','h','summary','proposed',now() + interval '15 minutes')",
+          (f"aa-{p}", p, f"at-{p}"))
     x("insert into care_plans(id,patient_id,doctor_id,status,assessment,updated_at) values('cp-draft','p1','d1','draft','secret draft',now()),('cp-ok','p1','d1','approved','approved plan',now())")
     x("insert into legal_holds(id,patient_id,reason_code,placed_by,placed_at) values('lh1','p1','other','a1',now())")
     x("insert into training_runs(id,task,dataset_id,version_id,config,config_hash,plan,status,started_at,actor,device) values('tr1','t','d','v','{}','h','{}','done',now(),'a1','cpu')")
@@ -338,3 +341,30 @@ def test_extracted_facts_and_medicines_follow_the_document_they_were_read_from(r
     assert writes(be, SYS, "insert into doc_medications(id,document_id,item_no,raw,entry) values('md-tmp','doc-tmp',0,'Tab X','{}')") == 1
     assert writes(be, SYS, "delete from documents where id='doc-tmp'") == 1
     assert be.q("select count(*) c from doc_facts where id='fa-tmp'", (), SYS)[0]["c"] == 0 and be.q("select count(*) c from doc_medications where id='md-tmp'", (), SYS)[0]["c"] == 0
+
+
+def test_agent_traces_and_actions_belong_to_the_person_they_concern(rls):
+    be, _ = rls
+    assert ids(be, P1, "agent_traces") == ["at-p1"] and ids(be, P1, "agent_actions") == ["aa-p1"] and ids(be, P2, "agent_actions") == ["aa-p2"]
+    assert ids(be, SYS, "agent_traces") == ["at-p1", "at-p2"] and ids(be, SYS, "agent_actions") == ["aa-p1", "aa-p2"]
+    # clinicians see neither; administrators audit traces (they hold no message or record text) but never the proposed actions (their arguments are the person's own words)
+    for t in ("agent_traces", "agent_actions"):
+        assert be.q(f"select count(*) c from {t}", (), DOC)[0]["c"] == 0, t
+    assert ids(be, ADM, "agent_traces") == ["at-p1", "at-p2"] and be.q("select count(*) c from agent_actions", (), ADM)[0]["c"] == 0
+    # a person can record their own trace and propose their own action, never for somebody else
+    assert writes(be, P1, "insert into agent_traces(id,user_id,created_at) values('at-new','p1',now())") == 1
+    assert writes(be, P1, "insert into agent_actions(id,user_id,tool,args,args_sha256,state) values('aa-new','p1','request_quote','{}','h','proposed')") == 1
+    for sql in ("insert into agent_traces(id,user_id,created_at) values('at-forged','p2',now())", "insert into agent_actions(id,user_id,tool,args,args_sha256,state) values('aa-forged','p2','t','{}','h','proposed')"):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            writes(be, P1, sql)
+    for ctx in (DOC, ADM):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            writes(be, ctx, "insert into agent_traces(id,user_id,created_at) values('at-staff','p1',now())")
+    # the state of one's own action can move (within the closed vocabulary); another person's cannot, and nobody edits a trace or deletes through the application role
+    assert writes(be, P1, "update agent_actions set state='cancelled' where id='aa-p1'") == 1
+    assert writes(be, P1, "update agent_actions set state='executed' where id='aa-p2'") == 0
+    with pytest.raises(psycopg.errors.CheckViolation):
+        writes(be, P1, "update agent_actions set state='approved_by_magic' where id='aa-new'")
+    assert writes(be, P1, "update agent_traces set outcome='x' where id='at-p1'") == 0
+    assert writes(be, P1, "delete from agent_traces where id='at-p1'") == 0 and writes(be, P1, "delete from agent_actions where id='aa-p1'") == 0
+    assert writes(be, SYS, "delete from agent_traces where id in ('at-new')") == 1 and writes(be, SYS, "delete from agent_actions where id in ('aa-new')") == 1      # erasure and retention are server actions

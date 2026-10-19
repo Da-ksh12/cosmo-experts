@@ -32,6 +32,14 @@ def reset_llm(monkeypatch):
     monkeypatch.delenv("COSMO_ASSISTANT_MODE", raising=False)
 
 
+@pytest.fixture()
+def gate_open(monkeypatch):
+    """These tests are about what happens to a model's output once a model IS allowed to draft answers. Whether one is allowed is the release gate (ai/gates.py), tested in
+    tests/test_ai_gates.py; here the gate is opened explicitly so each test says so."""
+    from app.ai import gates
+    monkeypatch.setattr(gates, "llm_answers_status", lambda: (True, []))
+
+
 # ---------------------------------------------------------------- adapter: OpenAI-compatible server (a real local HTTP server)
 class Fake(http.server.BaseHTTPRequestHandler):
     mode, hits = "ok", []
@@ -126,7 +134,7 @@ def test_llm_mode_off_by_default_never_calls_the_backend(client, patient, monkey
     assert out["mode"] == "extractive" and b.calls == 0
 
 
-def test_guardrails_run_before_the_model(client, patient, monkeypatch):
+def test_guardrails_run_before_the_model(client, patient, monkeypatch, gate_open):
     h, cid = patient
     monkeypatch.setenv("COSMO_ASSISTANT_MODE", "llm")
     b = Counting({"claims": []}); llm.reset_backend(b)
@@ -136,7 +144,7 @@ def test_guardrails_run_before_the_model(client, patient, monkeypatch):
     assert b.calls == 0                                                       # refusal, emergency and no-evidence cases never reach the model
 
 
-def test_verified_claims_are_shown_with_provenance_labels(client, patient, monkeypatch):
+def test_verified_claims_are_shown_with_provenance_labels(client, patient, monkeypatch, gate_open):
     h, cid = patient
     monkeypatch.setenv("COSMO_ASSISTANT_MODE", "llm")
     b = Counting({"claims": [{"text": "Your report lists ferritin as 8 ng/mL with a printed range of 15 - 150.", "source_ids": [1], "quote": "Ferritin 8 ng/mL 15 - 150"}]})
@@ -154,7 +162,7 @@ def test_verified_claims_are_shown_with_provenance_labels(client, patient, monke
     {"claims": [{"text": "Ferritin is 8.", "source_ids": [9], "quote": "Ferritin 8"}]},                         # invented source
     LLMError("backend down"),
 ])
-def test_unverified_or_failed_model_output_falls_back_to_extractive(client, patient, monkeypatch, script):
+def test_unverified_or_failed_model_output_falls_back_to_extractive(client, patient, monkeypatch, script, gate_open):
     h, cid = patient
     monkeypatch.setenv("COSMO_ASSISTANT_MODE", "llm")
     llm.reset_backend(Counting(script))
@@ -195,7 +203,7 @@ def test_real_model_output_always_passes_through_the_verifier(real):
 
 
 @slow
-def test_real_model_through_the_assistant_api(client, patient, monkeypatch):
+def test_real_model_through_the_assistant_api(client, patient, monkeypatch, gate_open):
     h, cid = patient
     monkeypatch.setenv("COSMO_ASSISTANT_MODE", "llm"); monkeypatch.setenv("COSMO_LLM_ENABLED", "1"); monkeypatch.setenv("COSMO_LLM_GGUF", str(GGUF))
     llm.reset_backend(False)
@@ -223,3 +231,13 @@ def test_no_model_state_survives_from_one_request_to_the_next():
     b.generate("system", "first person's prompt")
     b.generate("system", "second person's prompt")
     assert calls == ["reset", "generate", "reset", "generate"]
+
+
+def test_the_environment_alone_does_not_let_a_model_write_patient_answers(client, patient, monkeypatch):
+    """COSMO_ASSISTANT_MODE=llm asks for model-drafted answers; the release gate (evaluation record + administrator approval) decides. Neither exists for any model today."""
+    h, cid = patient
+    monkeypatch.setenv("COSMO_ASSISTANT_MODE", "llm")
+    b = Counting({"claims": [{"text": "Your report lists ferritin as 8 ng/mL.", "source_ids": [1], "quote": "Ferritin 8 ng/mL"}]})
+    llm.reset_backend(b)
+    out = ask(client, h, cid, "What does my ferritin result say?")
+    assert b.calls == 0 and out["mode"] == "extractive" and out["llm_mode"] == "not_enabled" and "Ferritin" in out["answer"] and not out["abstained"]

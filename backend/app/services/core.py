@@ -79,3 +79,43 @@ def ingest_document(owner_id: str, filename: str, data: bytes, category: str = "
     notify.to_role("doctor", "submission", "New report to review", "A patient uploaded a report.", "/clinic", f"doc-submitted:{did}")
     return {"id": did, "doc_type": res.doc_type, "doc_date": res.doc_date, "user_category": category, "pages": len(res.pages), "fields": len(res.fields),
             "facts": len(res.facts), "medications": len(res.medications), "readable": res.readable, "warnings": res.warnings, "status": "clinician_review_required"}
+
+
+# ---------------------------------------------------------------- patient requests (used by the REST routes and by the assistant's confirmed actions: one implementation, one set of rules)
+def request_quote(user: dict, items: list[dict], notes: str = "") -> dict:
+    """A patient's request for a quotation: priced from the clinic's approved list, stored as a DRAFT that a clinic doctor must approve, and the clinic team is told. Raises quotes.QuoteError."""
+    import json
+    from ..quotes import service as quotes
+    t = quotes.build_lines(items)
+    qid = db.uid()
+    db.x("INSERT INTO quotes(id,patient_id,status,lines,total,currency,notes,created_by,approved_by,created_at,updated_at,subtotal,tax_percent,tax_amount)"
+         " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+         (qid, user["id"], "draft", json.dumps(t["lines"]), t["total"], t["currency"], notes[:500], user["id"], "", db.now(), db.now(), t["subtotal"], t["tax_percent"], t["tax_amount"]))
+    db.audit(user["id"], "quote.request", qid)
+    notify.to_role("doctor", "quote_requested", "New quotation request", "A patient asked for a quotation.", "/clinic", f"quote-request:{qid}")
+    return {"id": qid, "status": "draft", **{k: t[k] for k in ("subtotal", "tax_amount", "total", "currency")},
+            "message": "Your request was sent. The clinic team will review and approve a quotation."}
+
+
+def flag_field(user: dict, doc_id: str, field_id: str, reason: str = "") -> dict:
+    """A patient marks an extracted value as possibly wrong. LookupError when the document or value is not theirs (or does not exist)."""
+    d = db.q1("SELECT owner_id FROM documents WHERE id=? AND deleted=0", (doc_id,))
+    f = db.q1("SELECT id FROM doc_fields WHERE id=? AND document_id=?", (field_id, doc_id))
+    if not d or d["owner_id"] != user["id"] or not f:
+        raise LookupError("Not found.")
+    db.x("UPDATE doc_fields SET patient_flag=? WHERE id=?", (reason or "flagged", field_id))
+    db.audit(user["id"], "field.patient_flag", field_id)
+    return {"flagged": True}
+
+
+def request_review(user: dict, doc_id: str) -> dict:
+    """A patient asks the clinic team to look at one of their documents. The team gets a generic notification (no file name, no values); asking again the same day does not notify twice.
+    LookupError when the document is not theirs (or does not exist)."""
+    import time
+    d = db.q1("SELECT id,owner_id FROM documents WHERE id=? AND deleted=0", (doc_id,))
+    if not d or d["owner_id"] != user["id"]:
+        raise LookupError("Not found.")
+    day = time.strftime("%Y%m%d")
+    n = notify.to_role("doctor", "review_requested", "Document review requested", "A patient asked the clinic team to look at a document.", "/clinic", f"review-request:{doc_id}:{day}")
+    db.audit(user["id"], "document.review_requested", doc_id, {})
+    return {"requested": True, "document_id": doc_id, "clinic_notified": n > 0}

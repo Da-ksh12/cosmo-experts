@@ -55,6 +55,11 @@ class ExplainPayload(BaseModel):
     lang: str = Field(default="en", pattern="^(en|hi|hinglish)$")
 
 
+class AgentPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    message: str = Field(min_length=1, max_length=1000)
+
+
 def _typed(model: type[BaseModel], payload) -> BaseModel:
     if isinstance(payload, model):
         return payload
@@ -185,6 +190,22 @@ def h_document_explain(payload, ctx: HandlerContext) -> HandlerResult:
     return HandlerResult("abstained" if out.get("abstained") else "review_required", out, "", processing_version=out.get("version"), evidence=evid)
 
 
+# ---------------------------------------------------------------- agent.chat
+def validate_agent(payload) -> None:
+    _typed(AgentPayload, payload)
+
+
+def h_agent_chat(payload, ctx: HandlerContext) -> HandlerResult:
+    """One turn of the secure agent for the signed-in patient (app/agent). The person is the authenticated context, never the payload. It can propose a change; it cannot carry one out."""
+    from ..agent import agent as agent_loop
+    p = _typed(AgentPayload, payload)
+    if not ctx.user or ctx.user.get("role") != "patient":
+        raise Forbidden()
+    out = agent_loop.run(ctx.user, p.message, request_id=ctx.request_id, cancel=ctx.cancel)
+    status = {"abstained": "abstained", "refused": "abstained", "urgent": "ok", "error": "ok"}.get(out.status, "review_required" if out.status == "needs_confirmation" else "ok")
+    return HandlerResult(status, out.model_dump(), "", processing_version=out.provider, evidence=[c.get("excerpt", "") for c in out.sources if c.get("excerpt")], labels=["review_required"])
+
+
 # ---------------------------------------------------------------- image.lesion_classification_research
 def validate_research(payload) -> None:
     p = _typed(ResearchImagePayload, payload)
@@ -242,6 +263,7 @@ def register_all(engine: AIEngine) -> None:
     engine.register("document.ocr.hindi", h_hindi_ocr, validate_document)
     engine.register("document.explain", h_document_explain, validate_explain)
     engine.register("knowledge.search", h_knowledge_search, validate_knowledge)
+    engine.register("agent.chat", h_agent_chat, validate_agent)
     engine.register("image.lesion_classification_research", h_research_image, validate_research)
     engine.register("speech.transcribe", h_transcribe, validate_audio)
     engine.register("speech.synthesize", h_synthesize, validate_speech_text)

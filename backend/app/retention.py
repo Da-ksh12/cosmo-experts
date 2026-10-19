@@ -42,6 +42,8 @@ CATEGORIES = (
     Category("conversations", "conversations", "created_at", "owner_id", "Assistant conversations and their messages"),
     Category("notifications", "notifications", "created_at", "user_id", "Notifications"),
     Category("jobs", "jobs", "created_at", "owner_id", "Background-job records and any leftover input files"),
+    Category("agent_traces", "agent_traces", "created_at", "user_id", "Assistant tool-use records (which tools were called and how each ended; no message or record text)"),
+    Category("agent_actions", "agent_actions", "created_at", "user_id", "Changes the assistant proposed, and whether the person confirmed them"),
     Category("documents", "documents", "created_at", "owner_id", "Uploaded documents: files, extracted text and fields", deleted_flag=True),
     Category("images", "images", "created_at", "owner_id", "Uploaded photos", deleted_flag=True),
     Category("quotes", "quotes", "created_at", "patient_id", "Quotations"),
@@ -214,7 +216,7 @@ def _files(table, with_pages):
     return run
 
 
-PROCESSORS = {"conversations": _conversations, "notifications": _simple("notifications"), "jobs": _jobs, "documents": _files("documents", True),
+PROCESSORS = {"conversations": _conversations, "notifications": _simple("notifications"), "jobs": _jobs, "agent_traces": _simple("agent_traces"), "agent_actions": _simple("agent_actions"), "documents": _files("documents", True),
               "images": _files("images", False), "quotes": _simple("quotes"), "care_plans": _simple("care_plans")}
 EXTRA_COLS = {"jobs": ", input_path", "documents": ", stored_path", "images": ", stored_path"}
 
@@ -319,6 +321,8 @@ def erase_patient(uid: str, actor: str | None = None) -> dict:
     db.x("DELETE FROM jobs WHERE owner_id=?", (uid,))
     with db.context.as_system():                              # the patient may read and mark their notifications; removing them is a server action
         db.x("DELETE FROM notifications WHERE user_id=?", (uid,))
+        db.x("DELETE FROM agent_traces WHERE user_id=?", (uid,))
+        db.x("DELETE FROM agent_actions WHERE user_id=?", (uid,))
     retained = {"care_plans": db.q1("SELECT COUNT(*) c FROM care_plans WHERE patient_id=?", (uid,))["c"],
                 "quotations": db.q1("SELECT COUNT(*) c FROM quotes WHERE patient_id=?", (uid,))["c"]}
     db.audit(actor or uid, "patient.data_deleted", uid, {"documents": len(docs), "photos": len(imgs), "conversations": len(convs), "retained": retained})

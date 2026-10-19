@@ -43,6 +43,12 @@ CREATE TABLE IF NOT EXISTS doc_medications(id TEXT PRIMARY KEY, document_id TEXT
 CREATE INDEX IF NOT EXISTS doc_medications_doc_ix ON doc_medications(document_id);
 CREATE TABLE IF NOT EXISTS training_runs(id TEXT PRIMARY KEY, task TEXT, dataset_id TEXT, version_id TEXT, config TEXT, config_hash TEXT, plan TEXT, status TEXT, started_at REAL,
   finished_at REAL, model_id TEXT, error TEXT, actor TEXT, device TEXT);
+CREATE TABLE IF NOT EXISTS agent_traces(id TEXT PRIMARY KEY, user_id TEXT NOT NULL, request_id TEXT, created_at REAL, intent TEXT, provider TEXT, outcome TEXT, steps TEXT DEFAULT '[]',
+  safety TEXT DEFAULT '{}', duration_ms INTEGER, message_sha256 TEXT, message_chars INTEGER);
+CREATE INDEX IF NOT EXISTS agent_traces_user_ix ON agent_traces(user_id, created_at);
+CREATE TABLE IF NOT EXISTS agent_actions(id TEXT PRIMARY KEY, user_id TEXT NOT NULL, trace_id TEXT, tool TEXT NOT NULL, args TEXT NOT NULL, args_sha256 TEXT NOT NULL, summary TEXT,
+  state TEXT NOT NULL CHECK(state IN ('proposed','executing','executed','failed','cancelled','expired')), created_at REAL, expires_at REAL, decided_at REAL, result TEXT);
+CREATE INDEX IF NOT EXISTS agent_actions_user_ix ON agent_actions(user_id, state);
 CREATE TABLE IF NOT EXISTS audit(id TEXT PRIMARY KEY, ts REAL, actor TEXT, action TEXT, target TEXT, detail TEXT);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS field_corrections(id TEXT PRIMARY KEY, field_id TEXT, document_id TEXT, before TEXT, after TEXT, status TEXT, reviewer TEXT,

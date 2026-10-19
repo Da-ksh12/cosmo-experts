@@ -35,7 +35,8 @@ from app.redact import safe_exc  # noqa: E402
 
 # parents before children (foreign-key safe)
 ORDER = ["users", "settings", "price_items", "kb_articles", "datasets", "dataset_versions", "model_versions", "training_runs", "documents", "doc_pages", "doc_fields", "doc_facts",
-         "doc_medications", "images", "conversations", "messages", "quotes", "care_plans", "field_corrections", "consents", "consent_events", "legal_holds", "notifications", "jobs", "audit"]
+         "doc_medications", "images", "conversations", "messages", "quotes", "care_plans", "field_corrections", "consents", "consent_events", "legal_holds", "notifications", "jobs",
+         "agent_traces", "agent_actions", "audit"]
 IGNORED = {"sqlite_sequence"}                         # any OTHER table in the SQLite file that is not listed in ORDER stops the run: data must never be left behind silently
 PK = {"consents": ("user_id", "notice_sha256"), "settings": ("key",)}
 CRITICAL = {"users": ("id", "role", "password_hash", "disabled"), "documents": ("id", "owner_id", "sha256", "status", "deleted"), "images": ("id", "owner_id", "verdict", "deleted"),

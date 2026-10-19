@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 import os
@@ -13,10 +14,12 @@ from .llm import get_backend
 from .retrieval import get_retriever
 
 from .. import clinical_content, db
-from ..ai import injection, knowledge
+from ..ai import gates, injection, knowledge
 from ..ai.citations import document_citation
 from ..quotes import service as quotes_service
 
+
+log = logging.getLogger("cosmo.assistant")
 
 REFUSE = re.compile(r"\b(prescribe|prescription for|what (medicine|medication|drug|tablet)|which (medicine|medication|drug|tablet)|"
                     r"how (much|many) (mg|tablet|dose)|dosage|dose of|should i (take|start|stop|use)|can i (take|stop|start)|"
@@ -29,7 +32,8 @@ ABSTAIN_MSG = ("I couldn't find anything in your documents or the clinic's appro
                "I would rather not guess. You can ask the clinic team to review your question.")
 
 
-def _passages(owner_id: str) -> list[dict]:
+def document_passages(owner_id: str) -> list[dict]:
+    """The person's own processed documents as line-level passages (used by the assistant and by the agent's search tool)."""
     out = []
     for d in db.q("SELECT id,filename,doc_type FROM documents WHERE owner_id=? AND deleted=0 AND status='processed'", (owner_id,)):
         for p in db.q("SELECT page_no,text FROM doc_pages WHERE document_id=? ORDER BY page_no", (d["id"],)):
@@ -41,6 +45,11 @@ def _passages(owner_id: str) -> list[dict]:
             # the test name is the retrieval key; the displayed excerpt is the exact source line
             out.append({"text": f["source_text"], "match": f'{f["name"]} result {f["name"]}', "kind": "document",
                         "document_id": d["id"], "filename": d["filename"], "page": f["source_page"]})
+    return out
+
+
+def _passages(owner_id: str) -> list[dict]:
+    out = document_passages(owner_id)
     for kp in knowledge.load("en").passages:                       # approved, unexpired and unchanged articles, split into cited passages (instruction-like passages already excluded)
         out.append({**kp.pool_entry(), "article_id": kp.article_id, "title": kp.title, "version": kp.version})
     return out
@@ -99,8 +108,13 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
 
     # Optional experimental mode: a local LLM drafts claims that are then verified against the cited text. Off unless explicitly enabled
     # (COSMO_ASSISTANT_MODE=llm + a model); on any failure or when no claim survives verification the extractive answer below is used.
+    llm_note: dict = {}
     if os.environ.get("COSMO_ASSISTANT_MODE") == "llm":
-        be = get_backend()
+        allowed, why = gates.llm_answers_status()          # a model writes patient-facing text only after it passed its evaluation gates AND an administrator approved it
+        if not allowed:
+            llm_note = {"llm_mode": "not_enabled"}
+            log.info("model-drafted answers requested but not enabled: %s", "; ".join(why))
+        be = get_backend() if allowed else None
         if be is not None:
             passages = [p for p, _ in hits]
             g = grounded.generate(be, question, passages)
@@ -130,7 +144,7 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
         sources.append(_source(p, s, "report_fact" if p["kind"] == "document" else "approved_reference"))
     return {"answer": "Here is what I found that relates to your question:\n- " + "\n- ".join(bullets)
             + "\nThis repeats what the sources say; it is not a diagnosis. Your doctor can explain what it means for you.",
-            "sources": sources, "status": "clinician_review_required", "abstained": False, "mode": "extractive", **notice}
+            "sources": sources, "status": "clinician_review_required", "abstained": False, "mode": "extractive", **notice, **llm_note}
 
 
 def _source(p: dict, score: float, provenance: str) -> dict:

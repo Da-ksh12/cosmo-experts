@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from .. import db, retention, security
 from .. import storage
 from ..quotes import service as quotes
-from ..services import notify
+from ..services import core, notify
 from ..security import current_user, can_access_patient_data, require
 
 router = APIRouter(prefix="/api")
@@ -78,13 +78,10 @@ class Flag(BaseModel):
 
 @router.post("/documents/{doc_id}/fields/{fid}/flag")
 def flag_field(doc_id: str, fid: str, body: Flag, user=Depends(require("patient"))):
-    d = db.q1("SELECT owner_id FROM documents WHERE id=? AND deleted=0", (doc_id,))
-    f = db.q1("SELECT id FROM doc_fields WHERE id=? AND document_id=?", (fid, doc_id))
-    if not d or d["owner_id"] != user["id"] or not f:
+    try:
+        return core.flag_field(user, doc_id, fid, body.reason)
+    except LookupError:
         raise HTTPException(404, "Not found.")
-    db.x("UPDATE doc_fields SET patient_flag=? WHERE id=?", (body.reason or "flagged", fid))
-    db.audit(user["id"], "field.patient_flag", fid)
-    return {"flagged": True}
 
 
 # ---------- conversations & suggestions ----------
@@ -462,13 +459,11 @@ def my_notifications(unread: bool = False, user=Depends(current_user)):
 
 @router.post("/notifications/read-all")
 def read_all(user=Depends(current_user)):
-    db.x("UPDATE notifications SET read_at=? WHERE user_id=? AND read_at IS NULL", (db.now(), user["id"]))
-    return {"unread": 0}
+    return notify.mark_all_read(user["id"])
 
 
 @router.post("/notifications/{nid}/read")
 def read_one(nid: str, user=Depends(current_user)):
-    if not db.q1("SELECT 1 x FROM notifications WHERE id=? AND user_id=?", (nid, user["id"])):          # someone else's id is indistinguishable from a missing one
+    if not notify.mark_read(user["id"], nid):                                                           # someone else's id is indistinguishable from a missing one
         raise HTTPException(404, "Notification not found.")
-    db.x("UPDATE notifications SET read_at=COALESCE(read_at, ?) WHERE id=? AND user_id=?", (db.now(), nid, user["id"]))
     return {"unread": db.q1("SELECT COUNT(*) c FROM notifications WHERE user_id=? AND read_at IS NULL", (user["id"],))["c"]}

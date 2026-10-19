@@ -13,7 +13,7 @@ from .config import CORS_ORIGINS
 from .datasets import registry
 from .gateway import api as gateway_api, jobs as gateway_jobs
 from .middleware import Guard
-from .routers import ai as ai_router, auth as auth_router, care, files as files_router, patient, staff
+from .routers import agent as agent_router, ai as ai_router, auth as auth_router, care, files as files_router, patient, staff
 
 WARM = {"embeddings": "pending"}
 
@@ -72,6 +72,7 @@ app.include_router(staff.router)
 app.include_router(care.router)
 app.include_router(files_router.router)
 app.include_router(ai_router.router)
+app.include_router(agent_router.router)
 app.include_router(gateway_api.router)
 app.add_middleware(Guard)
 app.add_middleware(limits.RequestLimits)                     # outermost: size, concurrency and time limits apply before anything else runs

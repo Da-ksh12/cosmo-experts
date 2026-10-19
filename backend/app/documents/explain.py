@@ -229,7 +229,7 @@ def explain_document(document: dict, fields: list[dict], pages: list[dict], lang
                                            span=citations.as_dict(f.get("provenance")).get("line_span"), version=f.get("processing_version"), review_status=f.get("review_status"))
         if not screened(" ".join(lines), "field", f.get("id")):
             continue
-        items.append({"field_id": f["id"], "text": " ".join(l for l in lines if l),
+        items.append({"field_id": f["id"], "name": f["name"], "text": " ".join(l for l in lines if l),
                       "source": {"document_id": document["id"], "page": f["source_page"], "text": f["source_text"],
                                  "processing_version": f["processing_version"]},
                       "citation": cite, "review_status": f["review_status"]})

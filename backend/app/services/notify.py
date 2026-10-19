@@ -29,3 +29,16 @@ def to_role(role: str, kind: str, title: str, body: str = "", link: str = "", de
         for u in db.q("SELECT id FROM users WHERE role=?", (role,)):
             n += send(u["id"], kind, title, body, link, f"{dedupe}:{u['id']}" if dedupe else "")
     return n
+
+
+def mark_read(user_id: str, notification_id: str) -> bool:
+    """Mark one of the person's OWN notifications read. Someone else's id is indistinguishable from a missing one (False)."""
+    if not db.q1("SELECT 1 x FROM notifications WHERE id=? AND user_id=?", (notification_id, user_id)):
+        return False
+    db.x("UPDATE notifications SET read_at=COALESCE(read_at, ?) WHERE id=? AND user_id=?", (db.now(), notification_id, user_id))
+    return True
+
+
+def mark_all_read(user_id: str) -> dict:
+    db.x("UPDATE notifications SET read_at=? WHERE user_id=? AND read_at IS NULL", (db.now(), user_id))
+    return {"unread": 0}

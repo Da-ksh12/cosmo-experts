@@ -173,6 +173,15 @@ def get_explanation(doc_id: str, lang: str = "en", user=Depends(current_user)):
         raise HTTPException(404, "Document not found.")
 
 
+@router.post("/documents/{doc_id}/request-review")
+def request_document_review(doc_id: str, user=Depends(consent.patient_consented)):
+    """Ask the clinic team to look at this document. (The assistant's confirmed action of the same name calls the same function.)"""
+    try:
+        return core.request_review(user, doc_id)
+    except LookupError:
+        raise HTTPException(404, "Document not found.")
+
+
 @router.delete("/documents/{doc_id}")
 def delete_document(doc_id: str, user=Depends(require("patient"))):
     d = _doc_or_404(doc_id, user)
@@ -294,18 +303,9 @@ def quote_config(user=Depends(current_user)):
 @router.post("/quotes")
 def request_quote(body: QuoteReq, user=Depends(consent.patient_consented)):
     try:
-        t = quotes.build_lines(body.items)
+        return core.request_quote(user, body.items, body.notes)
     except quotes.QuoteError as e:
         raise HTTPException(422, str(e))
-    qid = db.uid()
-    db.x("INSERT INTO quotes(id,patient_id,status,lines,total,currency,notes,created_by,approved_by,created_at,updated_at,subtotal,tax_percent,tax_amount)"
-         " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-         (qid, user["id"], "draft", json.dumps(t["lines"]), t["total"], t["currency"], body.notes[:500], user["id"], "", db.now(), db.now(),
-          t["subtotal"], t["tax_percent"], t["tax_amount"]))
-    db.audit(user["id"], "quote.request", qid)
-    notify.to_role("doctor", "quote_requested", "New quotation request", "A patient asked for a quotation.", "/clinic", f"quote-request:{qid}")
-    return {"id": qid, "status": "draft", **{k: t[k] for k in ("subtotal", "tax_amount", "total", "currency")},
-            "message": "Your request was sent. The clinic team will review and approve a quotation."}
 
 
 @router.get("/quotes")
