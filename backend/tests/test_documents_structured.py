@@ -208,3 +208,23 @@ def test_damaged_and_empty_documents_are_reported_clearly():
         pipeline.process(b"%PDF-1.7\nnot really a pdf" * 20, "x.pdf")
     res = pipeline.process(pdf([]), "blank.pdf")
     assert res.readable is False and res.fields == [] and res.facts == [] and res.medications == []
+
+
+# ---------------------------------------------------------------- clinician names: copied as printed, never cut short, never a job title or a word that is not a name
+@pytest.mark.parametrize("line,printed", [
+    ("Referred by: Dr. A Example, MD", "Dr. A Example, MD"),              # an initial without a full stop
+    ("Prescribed by: Dr. R K Sharma", "Dr. R K Sharma"),
+    ("Referred by: Dr. A. Kumar, MD", "Dr. A. Kumar, MD"),
+    ("Reported by: Dr. Meera Nair MD (Pathology)", "Dr. Meera Nair MD"),
+    ("Consultant: Dr Smith", "Dr Smith"),
+    ("Verified by: Meera Nair MBBS", "Meera Nair MBBS"),
+])
+def test_a_clinician_name_is_copied_whole_as_printed(line, printed):
+    facts = structured.extract_facts([P(1, "Laboratory Report\n" + line)], "laboratory_report")
+    assert [f.value for f in facts if f.kind == "clinician_name"] == [printed]
+
+
+@pytest.mark.parametrize("line", ["Referred by: Self", "Verified by: Lab technician", "Consultant Dermatologist", "Referred by: Dr.", "Reported by: MD", "Referred by a friend"])
+def test_something_that_is_not_a_name_is_not_recorded_as_a_clinician(line):
+    facts = structured.extract_facts([P(1, "Laboratory Report\n" + line)], "laboratory_report")
+    assert [f.value for f in facts if f.kind == "clinician_name"] == []

@@ -1,16 +1,16 @@
 {
   "schema": "cosmo-eval-1",
   "name": "medication_parser",
-  "created_at": "2026-10-18T22:18:03+0530",
+  "created_at": "2026-10-19T11:09:25+0530",
   "evidence_class": "synthetic_fixture",
   "real_world_evidence": false,
-  "code_revision": "git-59bd5d5fdb70+dirty",
+  "code_revision": "git-974018dc6a0b+dirty",
   "config": {
-    "parser": "medparse-1.1.0",
+    "parser": "medparse-1.1.1",
     "development_lines": 34,
     "heldout_lines": 26
   },
-  "config_sha256": "af7ca871041d3947b4c2f4ab5e302c4e2f34ddf6d1bcb46ff81278d15d3bdf34",
+  "config_sha256": "21df9ab7d01df7443680c6bf65c97fbf845b087c9b8e222cc36e70a133b9c5e1",
   "dataset": {
     "id": "eval/medication_fixtures.py",
     "kind": "written by the project; not real prescriptions"
@@ -126,7 +126,7 @@
       "entries_detected": 34,
       "entries_missed": 0,
       "of": 34,
-      "non_medication_lines": 8,
+      "non_medication_lines": 12,
       "false_positives": [],
       "false_positive_rate": 0.0
     },

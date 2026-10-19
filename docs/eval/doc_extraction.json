@@ -6,7 +6,7 @@
     "eng",
     "osd"
   ],
-  "pipeline_version": "docpipe-1.0.0",
+  "pipeline_version": "docpipe-2.0.0",
   "conditions": {
     "digital": {
       "n_docs": 16,
@@ -32,7 +32,7 @@
       "flag_accuracy_on_exact": 1.0,
       "doc_type_laboratory_rate": 1.0,
       "crashes": 0,
-      "mean_sec": 107.92
+      "mean_sec": 7.57
     },
     "scan_rot90": {
       "n_docs": 16,
@@ -45,7 +45,7 @@
       "flag_accuracy_on_exact": 1.0,
       "doc_type_laboratory_rate": 1.0,
       "crashes": 0,
-      "mean_sec": 8.67
+      "mean_sec": 7.59
     },
     "scan_rot180": {
       "n_docs": 16,
@@ -58,7 +58,7 @@
       "flag_accuracy_on_exact": 1.0,
       "doc_type_laboratory_rate": 1.0,
       "crashes": 0,
-      "mean_sec": 8.56
+      "mean_sec": 7.52
     },
     "scan_rot270": {
       "n_docs": 16,
@@ -71,7 +71,7 @@
       "flag_accuracy_on_exact": 1.0,
       "doc_type_laboratory_rate": 1.0,
       "crashes": 0,
-      "mean_sec": 8.94
+      "mean_sec": 7.56
     },
     "scan_blur": {
       "n_docs": 16,
@@ -84,7 +84,7 @@
       "flag_accuracy_on_exact": 1.0,
       "doc_type_laboratory_rate": 1.0,
       "crashes": 0,
-      "mean_sec": 8.41
+      "mean_sec": 7.64
     },
     "scan_noise": {
       "n_docs": 16,
@@ -97,7 +97,7 @@
       "flag_accuracy_on_exact": 1.0,
       "doc_type_laboratory_rate": 1.0,
       "crashes": 0,
-      "mean_sec": 9.34
+      "mean_sec": 8.21
     },
     "scan_lowres": {
       "n_docs": 16,
@@ -110,7 +110,7 @@
       "flag_accuracy_on_exact": 1.0,
       "doc_type_laboratory_rate": 1.0,
       "crashes": 0,
-      "mean_sec": 7.58
+      "mean_sec": 6.47
     }
   }
 }

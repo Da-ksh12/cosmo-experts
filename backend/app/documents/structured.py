@@ -21,8 +21,24 @@ COLLECTION_DATE = re.compile(rf"(?i)\b(?:collect(?:ed|ion)(?:\s+(?:date|on))?|sa
 GENERIC_DATE = re.compile(rf"(?i)^\s*date\s*[:\-]\s*(?P<d>{DATE_TOKEN})")
 PROVIDER_WORDS = re.compile(r"(?i)\b(laborator(?:y|ies)|diagnostics?|pathology|path\s*labs?|clinic|hospital|medical\s+cent(?:re|er)|health\s*care|imaging|labs?)\b")
 NOT_PROVIDER = re.compile(r"(?i)^\s*(?:patient|name|age|sex|gender|ref|referred|reg|uhid|sample|specimen|phone|tel|mobile|email|address|date|time|dr\b)")
-CLINICIAN_CUE = re.compile(r"(?i)\b(?P<cue>referred\s*by|ref\.?\s*by|referring\s+(?:doctor|physician)|prescribed\s*by|consultant|reported\s*by|pathologist|verified\s*by)\b\s*[:\-]?\s*(?P<n>(?:dr\.?\s*)?[A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,3}(?:\s*,?\s*(?:MD|MBBS|DNB|DVD|DDVL|MS|PhD|DM)\b[A-Za-z. ,]{0,20})?)")
-CLINICIAN_LINE = re.compile(r"^\s*(?P<n>Dr\.?\s+[A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,3}(?:\s*,?\s*(?:MD|MBBS|DNB|DVD|DDVL|MS|PhD|DM)\b[A-Za-z. ,]{0,20})?)\s*$")
+# A printed name is a run of capitalised words; a single-letter initial counts ("Dr. A Example", "Dr. R K Sharma"). Only the title and the cue words ignore case.
+_NAME = r"[A-Z][A-Za-z.'-]*(?:\s+[A-Z][A-Za-z.'-]*){0,3}"
+_QUALS = r"(?:\s*,?\s*(?:MD|MBBS|DNB|DVD|DDVL|MS|PhD|DM)\b[A-Za-z. ,]{0,20})?"
+CLINICIAN_CUE = re.compile(r"(?i)\b(?P<cue>referred\s*by|ref\.?\s*by|referring\s+(?:doctor|physician)|prescribed\s*by|consultant|reported\s*by|pathologist|verified\s*by)\b\s*[:\-]?\s*"
+                           r"(?P<n>(?:dr\.?\s*)?(?-i:" + _NAME + r")" + _QUALS + r")")
+CLINICIAN_LINE = re.compile(r"^\s*(?P<n>Dr\.?\s+" + _NAME + _QUALS + r")\s*$")
+QUALIFICATION = re.compile(r"\b(?:MD|MBBS|DNB|DVD|DDVL|MS|PhD|DM)\b")
+
+
+def _plausible_name(n: str) -> bool:
+    """A printed clinician name has a title (Dr), or a printed qualification (MD ...), or at least two capitalised words - and at least one word that is not the title or the qualification.
+    "Self", "Lab technician" and "Consultant Dermatologist" are not names; a title or a qualification alone is not a name either."""
+    n = n.strip()
+    core = re.sub(r"(?i)^dr\b\.?\s*", "", n)
+    words = re.findall(r"[A-Z][A-Za-z.'-]*", QUALIFICATION.sub("", core))
+    if not words:
+        return False
+    return core != n or bool(QUALIFICATION.search(n)) or len(words) >= 2
 ALLERGY = re.compile(r"(?i)\b(?:drug\s+allerg(?:y|ies)|allerg(?:y|ies)|allergic\s+to)\b\s*[:\-]?\s*(?P<v>[^\n]{0,120})")
 ALLERGY_NONE = re.compile(r"(?i)^(?:nil|nill|none|nkda|nka|no\s+known(?:\s+drug)?\s+allerg(?:y|ies)|no\s+allerg(?:y|ies)|no)\b")
 NKDA = re.compile(r"\bNKDA\b")
@@ -131,7 +147,7 @@ def extract_facts(pages, doc_type: str = "other_uncertain") -> list[Fact]:
                 out.append(Fact("laboratory", "Laboratory or provider", ln.strip(), p.page_no, (s0, s0 + len(ln.strip())), ln.strip(), _conf(p.method, p.confidence, 0.6),
                                 {"type_keyword": kw}, ["provider_type_from_keyword_only"]))
                 provider_done = True
-            if (m := CLINICIAN_CUE.search(ln)):
+            if (m := CLINICIAN_CUE.search(ln)) and _plausible_name(m.group("n").strip(" ,.")):
                 n = m.group("n").strip(" ,.")
                 out.append(Fact("clinician_name", "Clinician named in the document", n, p.page_no, (off + m.start("n"), off + m.start("n") + len(n)), ln.strip(),
                                 _conf(p.method, p.confidence, 0.75), {"cue": re.sub(r"\s+", " ", m.group("cue").lower())}, ["credentials_not_verified"]))

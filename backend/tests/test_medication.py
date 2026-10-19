@@ -251,3 +251,30 @@ def test_a_scanned_prescription_is_read_with_its_ocr_confidence_and_ambiguity_fl
     names = " ".join((m["entry"]["name"] or {}).get("raw", "") for m in doc["medications"]).lower()
     assert "doxy" in names or "mupir" in names or "cetiri" in names                                          # at least one medicine recognised through OCR
     assert all(m["entry"]["needs_review"] and 0 < m["confidence"] <= 0.9 for m in doc["medications"])
+
+
+# ---------------------------------------------------------------- "Serum ..." is the first word of many laboratory test names AND a skincare form
+LAB_TEXT = "\n".join(["Specimen: Serum", "Serum Iron : 141 ug/dL (60 - 170)", "Serum Creatinine  0.9  mg/dL  0.6 - 1.2", "Serum Sodium 138 mmol/L 135 - 145",
+                      "Serum HS-CRP 1.2 mg/L 0 - 3", "Serum Ferritin 8 ng/mL 15 - 150 L", "Serum Iron 141 (60 - 170)", "Hemoglobin 13.5 g/dL 12.0 - 15.5"])
+
+
+def test_a_laboratory_row_that_starts_with_serum_is_a_result_not_a_medicine():
+    assert parse(LAB_TEXT, "laboratory_report") == []
+    # nor does an unlucky classification turn a result into a medicine. (The row "Serum HS-CRP ... mg/L" is left out of this second check on purpose: in a document classified as a prescription
+    # an UNPREFIXED line with a concentration and the abbreviation "HS" is read as an entry by the general rule, which this fix does not change.)
+    assert parse(LAB_TEXT.replace("Serum HS-CRP 1.2 mg/L 0 - 3\n", ""), "prescription") == []
+
+
+def test_such_rows_stay_in_the_results_when_the_whole_document_is_processed():
+    from app.documents import pipeline
+    res = pipeline.process(("Cosmo Test Laboratory\nReported: 18/03/2025\nReference range printed beside each result\n" + LAB_TEXT).encode(), "serum_rows.txt")
+    assert res.doc_type == "laboratory_report"
+    assert res.medications == []
+    names = {f.name for f in res.fields}
+    assert {"Serum Iron", "Serum Creatinine", "Serum Sodium", "Serum Ferritin", "Hemoglobin"} <= names, names
+
+
+@pytest.mark.parametrize("line", ["Serum Vitamin C 20% apply at night", "Serum Niacinamide 10% apply once daily", "1. Serum Hyaluronic acid apply morning and night"])
+def test_a_skincare_serum_with_directions_is_still_a_medicine_entry(line):
+    meds = parse(line)
+    assert len(meds) == 1 and meds[0].form is not None and meds[0].form.raw.lower() == "serum", [m.to_dict() for m in meds]

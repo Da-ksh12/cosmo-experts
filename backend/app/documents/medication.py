@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 
 from . import languages
 
-VERSION = "medparse-1.1.0"
+VERSION = "medparse-1.1.1"
 
 FORMS = {"tab": "tablet", "tabs": "tablet", "tablet": "tablet", "tablets": "tablet", "cap": "capsule", "caps": "capsule", "capsule": "capsule", "capsules": "capsule",
          "syp": "syrup", "syrup": "syrup", "susp": "suspension", "suspension": "suspension", "inj": "injection", "injection": "injection", "oint": "ointment", "ointment": "ointment",
@@ -151,8 +151,30 @@ def _num(s: str) -> float | None:
         return None
 
 
+# Form words that are ALSO the first word of many laboratory test names ("Serum Iron", "Serum Creatinine", "Serum Sodium"). A line that opens with one of them is a medicine entry only if it
+# says something about USE (a strength, dose, frequency, duration or how to apply it) and prints no laboratory unit: a result row prints a value, a unit such as mg/dL or ng/mL, and a range.
+# (Found by re-running the document-extraction evaluation: before this rule every "Serum ..." result row was taken as a skincare serum and dropped from the results.)
+AMBIGUOUS_FORMS = {"serum"}
+LAB_UNIT = re.compile(r"\d\s*(?:g|mg|ug|µg|μg|mcg|ng|pg|u|iu|miu|uiu|µiu|mmol|umol|µmol|nmol|pmol|meq|mm)\s*/\s*(?:dl|l|ml|ul|µl|μl|hr|h)\b|\d\s*fl\b|\b10\s*[\^*]?\s*\d+\s*/\s*[uµμ]?l\b", re.I)
+
+
+def _medicine_evidence(line: str) -> bool:
+    return bool(STRENGTH.search(line) or CONCENTRATION.search(line) or DOSE.search(line) or ABBR_RE.search(line) or SLOTS.search(line) or DURATION_NUM.search(line)
+                or DURATION_SHORT.search(line) or APPLY.search(line) or EVERY_N_HOURS.search(line) or any(f[0].search(line) for f in FREQ_PHRASES))
+
+
+def _prefix_start(line: str) -> bool:
+    """The line opens with a medicine form word (Tab., Syp., Cream ...). An ambiguous form word needs more than itself (AMBIGUOUS_FORMS)."""
+    m = PREFIX.match(line)
+    if not m:
+        return False
+    if m.group("form").lower() not in AMBIGUOUS_FORMS:
+        return True
+    return not LAB_UNIT.search(line) and _medicine_evidence(line)
+
+
 def _is_item_start(line: str, doc_type: str) -> bool:
-    if PREFIX.match(line):
+    if _prefix_start(line):
         return True
     if doc_type in ("prescription", "consultation_note", "treatment_history"):
         if T_PREFIX.match(line) and (STRENGTH.search(line) or DOSE.search(line)) and (ABBR_RE.search(line) or SLOTS.search(line)):
@@ -404,7 +426,7 @@ def extract_medications(pages, doc_type: str = "other_uncertain") -> list[Medica
             offs.append(pos)
             pos += len(rl)
         lines = [(rl.rstrip("\r\n"), o) for rl, o in zip(raw_lines, offs)]
-        prefixed = any(PREFIX.match(l) for l, _ in lines)
+        prefixed = any(_prefix_start(l) for l, _ in lines)
         if doc_type == "laboratory_report" and not prefixed:
             continue
         i = 0

@@ -66,6 +66,11 @@ NOT_MEDICATION_LINES = [
     "Blood pressure 120/80 mmHg",
     "Total Cholesterol 190 mg/dL < 200",
     "TSH 2.1 mIU/L 0.4 - 4.0",
+    # laboratory test names that open with a medicine form word (added after the document-extraction evaluation showed every such row being taken as a skincare serum)
+    "Serum Iron 141 ug/dL 60 - 170",
+    "Serum Creatinine 0.9 mg/dL 0.6 - 1.2",
+    "Serum Sodium 138 mmol/L 135 - 145",
+    "Serum Ferritin 8 ng/mL 15 - 150 L",
 ]
 
 # Multi-line documents: (document text, doc_type, expected number of medicine entries)
