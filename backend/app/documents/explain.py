@@ -12,9 +12,13 @@ Version 2 (explain-2.0.0) keeps every key and sentence of version 1 and adds:
 from __future__ import annotations
 
 from ..ai import citations, safety
+from ..speech import spoken as speak
 
 VERSION = "explain-2.0.0"
 LANGS = ("en", "hi", "hinglish")
+# shown with every Hindi or Hinglish explanation: those fixed sentences were written without review by a Hindi-speaking clinician (ai/multilingual.py says the same through the API)
+TRANSLATION_NOTICE = ("This wording is a fixed translation that no Hindi-speaking clinician has reviewed yet. Numbers, units, dates and printed text are copied exactly as in the English version. "
+                      "If anything is unclear, check the English version or ask your clinician.")
 
 T = {
     "en": {
@@ -51,6 +55,7 @@ T = {
         "med_directive": "This entry has wording about changing a medicine. It is shown exactly as printed; this summary gives no instruction about any medicine.",
         "med_corrected": "A clinician reviewed and corrected this entry.",
         "med_note": "This summary only repeats what is printed. Your doctor or pharmacist can tell you how each medicine is used.",
+        "not_diagnosis": "This is a plain-language summary of what your document says. It is not a diagnosis.",
         "background_title": "Clinic-approved background",
         "background": "Clinic-approved information, \"{title}\": \"{text}\"",
         "background_en_only": "Clinic-approved background information is available in English only.",
@@ -97,6 +102,7 @@ T = {
         "med_directive": "इस पंक्ति में दवा बदलने से जुड़े शब्द हैं। वे ठीक वैसे ही दिखाए गए हैं जैसे छपे हैं; यह सारांश किसी दवा के बारे में कोई निर्देश नहीं देता।",
         "med_corrected": "एक चिकित्सक ने इस पंक्ति को देखकर सुधारा है।",
         "med_note": "यह सारांश केवल वही दोहराता है जो छपा है। हर दवा कैसे ली जाती है, यह आपके डॉक्टर या फार्मासिस्ट बता सकते हैं।",
+        "not_diagnosis": "यह आपके दस्तावेज़ में लिखी बातों का सरल भाषा में सारांश है। यह कोई निदान नहीं है।",
         "background_title": "क्लिनिक द्वारा स्वीकृत पृष्ठभूमि",
         "background": "क्लिनिक द्वारा स्वीकृत जानकारी, \"{title}\": \"{text}\"",
         "background_en_only": "क्लिनिक द्वारा स्वीकृत पृष्ठभूमि जानकारी केवल अंग्रेज़ी में उपलब्ध है।",
@@ -143,6 +149,7 @@ T = {
         "med_directive": "Is entry me medicine badalne se jude shabd hain. Wo bilkul waise hi dikhaye gaye hain jaise chhapa hai; ye summary kisi medicine ke baare me koi instruction nahi deta.",
         "med_corrected": "Ek clinician ne is entry ko dekhkar sahi kiya hai.",
         "med_note": "Ye summary sirf wahi dohrati hai jo chhapa hai. Har medicine kaise li jaati hai, ye aapke doctor ya pharmacist bata sakte hain.",
+        "not_diagnosis": "Ye aapke document me likhi baaton ka saral bhasha me summary hai. Ye diagnosis nahi hai.",
         "background_title": "Clinic dwara approved background",
         "background": "Clinic dwara approved information, \"{title}\": \"{text}\"",
         "background_en_only": "Clinic dwara approved background information sirf English me available hai.",
@@ -193,7 +200,8 @@ def explain_document(document: dict, fields: list[dict], pages: list[dict], lang
                      background: list[dict] | None = None, contradictions: list[dict] | None = None, quarantined: int = 0, page_texts: dict[int, str] | None = None) -> dict:
     lang = lang if lang in T else "en"
     t = T[lang]
-    sections = []
+    sections = []                 # found, uncertain, questions - in this order, always: the screens read them by position. Sections added in version 2 follow, each with an id.
+    extra = []
     items = []
     dropped: list[dict] = []
     evidence = [f["source_text"] for f in fields] + [fa["source_text"] for fa in facts or []] + [m["raw"] for m in medications or []] + [h["text"] for h in background or [] if h.get("text")]
@@ -233,7 +241,7 @@ def explain_document(document: dict, fields: list[dict], pages: list[dict], lang
                       "source": {"document_id": document["id"], "page": f["source_page"], "text": f["source_text"],
                                  "processing_version": f["processing_version"]},
                       "citation": cite, "review_status": f["review_status"]})
-    sections.append({"title": "What we found", "summary": t["processed"].format(n=len(items)) if items else t["none"], "items": items})
+    sections.append({"id": "found", "title": "What we found", "summary": t["processed"].format(n=len(items)) if items else t["none"], "items": items})
 
     # ---- header facts as printed
     fact_items = []
@@ -258,7 +266,7 @@ def explain_document(document: dict, fields: list[dict], pages: list[dict], lang
                            "citation": citations.document_citation(document["id"], page=fa["source_page"], excerpt=fa["source_text"], item="fact", item_id=fa.get("id"), span=prov.get("span"),
                                                                    version=prov.get("extractor"), review_status=fa.get("review_status"))})
     if fact_items:
-        sections.append({"title": t["facts_title"], "summary": "", "items": fact_items})
+        extra.append({"id": "facts", "title": t["facts_title"], "summary": "", "items": fact_items})
 
     # ---- medicine entries as printed
     med_items = []
@@ -288,20 +296,20 @@ def explain_document(document: dict, fields: list[dict], pages: list[dict], lang
                           "citation": citations.document_citation(document["id"], page=md.get("page"), excerpt=md["raw"], item="medication", item_id=md.get("id"),
                                                                   span=entry.get("span"), version=md.get("parser"), review_status=md.get("review_status"))})
     if med_items:
-        sections.append({"title": t["meds_title"], "summary": t["med_note"], "items": med_items})
+        extra.append({"id": "medicines", "title": t["meds_title"], "summary": t["med_note"], "items": med_items})
 
     # ---- approved background (English articles only)
     bg_items = []
     if background is not None:
         if lang != "en":
-            sections.append({"title": t["background_title"], "summary": t["background_en_only"], "items": []})
+            extra.append({"id": "background", "title": t["background_title"], "summary": t["background_en_only"], "items": []})
         else:
             for h in background:
                 txt = t["background"].format(title=h["title"], text=h["text"])
                 if screened(txt, "background", h.get("passage_id")):
                     bg_items.append({"text": txt, "citation": {k: v for k, v in h.items() if k != "text"}})
             if bg_items:
-                sections.append({"title": t["background_title"], "summary": "", "items": bg_items})
+                extra.append({"id": "background", "title": t["background_title"], "summary": "", "items": bg_items})
 
     uncertain = [t["uncertain"], t["missing"]]
     if any(p["method"] == "ocr" and (p["ocr_confidence"] or 0) < 0.6 for p in pages):
@@ -312,19 +320,22 @@ def explain_document(document: dict, fields: list[dict], pages: list[dict], lang
         uncertain.append(t["quarantine"])
     if dropped:
         uncertain.append(t["dropped"].format(n=len(dropped)))
-    sections.append({"title": "What is still uncertain", "summary": " ".join(uncertain), "items": []})
-    sections.append({"title": t["q_title"], "summary": "", "items": [{"text": q} for q in t["questions"]]})
-    spoken = " ".join([sections[0]["summary"]] + [i["text"] for i in items[:10]] + [t["uncertain"], t["review"]])
+    sections.append({"id": "uncertain", "title": "What is still uncertain", "summary": " ".join(uncertain), "items": []})
+    sections.append({"id": "questions", "title": t["q_title"], "summary": "", "items": [{"text": q} for q in t["questions"]]})
+    sections.extend(extra)
     readable = bool(items or fact_items or med_items)
     out = {
         "document_id": document["id"], "language": lang, "speech_language": SPEAK_LANG[lang], "version": VERSION,
         "status": "clinician_review_required", "clinician_review_message": t["review"],
-        "sections": sections, "spoken_text": spoken,
-        "disclaimer": "This is a plain-language summary of what your document says. It is not a diagnosis.",
+        "sections": sections, "spoken_text": "",
+        "disclaimer": t["not_diagnosis"],
         "translation_reviewed": lang == "en",
+        "translation_notice": None if lang == "en" else TRANSLATION_NOTICE,
         "verification": {"statements_dropped": len(dropped), "dropped": dropped},
         "contradictions": contradictions or [], "quarantined_text": quarantined,
     }
+    sc = speak.script(out)                                  # what is read aloud is what is shown (speech/spoken.py): every statement, the cautions always, omissions announced
+    out["spoken_text"], out["spoken"] = sc.text, {"complete": sc.complete, "omitted": sc.omitted, "sentences": len(sc.sentences)}
     if not readable:
         out["abstained"] = True
         out["abstention"] = {"reason": "insufficient_evidence", "message": t["none"]}

@@ -86,3 +86,19 @@ def document_explanation(doc_id: str, request: Request, lang: str = "en", user=D
     if env.status == "rejected_input" and env.message == "Document not found.":
         raise HTTPException(404, "Document not found.")
     return env
+
+
+# ---------------------------------------------------------------- languages and voice
+@router.get("/speech/languages")
+def speech_languages(user=Depends(current_user)):
+    """For English, Hindi and Hinglish: what has been checked (speech recognition, explanation wording), whether a suitable voice is installed, and the plain statement that no claim of reliability
+    is made for anything unchecked. A voice is never used for a language it cannot speak."""
+    from ..ai import multilingual
+    from ..speech import adapters
+    tts = adapters.get_tts()
+    voices = tts.languages() if tts.status()["available"] else {}
+    stt = bool(adapters.stt_status()["available"])
+    out = {}
+    for lang in ("en", "hi", "hinglish"):
+        out[lang] = {**multilingual.language_status(lang), "voice_installed": bool(voices.get("hi" if lang == "hi" else "en")), "speech_recognition_available": stt}
+    return {"languages": out}

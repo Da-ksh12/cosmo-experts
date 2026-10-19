@@ -159,6 +159,11 @@ def h_knowledge_search(payload, ctx: HandlerContext) -> HandlerResult:
     import hashlib
     p = _typed(KnowledgePayload, payload)
     ctx.check()
+    rc = safety.classify_request(p.query)                  # the same classification every surface uses: an emergency or a request for a diagnosis / medicine advice is not a search
+    if rc.kind == "urgent" or rc.refuse:
+        reason = "urgent" if rc.kind == "urgent" else "clinical_decision"
+        msg = safety.abstention(reason)["message"]
+        return HandlerResult("abstained", {"status": "abstained", "reason": reason, "hits": [], "retrieval": None, "corpus": None}, msg, processing_version=knowledge.VERSION)
     staff = (ctx.user or {}).get("role") in ("doctor", "admin")
     res = knowledge.search(p.query, k=p.k)
     ctx.check()
@@ -228,18 +233,22 @@ def h_research_image(payload, ctx: HandlerContext) -> HandlerResult:
 
 # ---------------------------------------------------------------- speech
 def validate_audio(payload) -> None:
+    from ..speech import adapters
     p = _typed(AudioPayload, payload)
     _bytes_ok(p.audio, "recording")
+    if len(p.audio) > adapters.stt_limits().max_bytes:
+        raise RejectedInput("The recording is too large.")
 
 
 def h_transcribe(payload, ctx: HandlerContext) -> HandlerResult:
     from ..speech import adapters
     p = _typed(AudioPayload, payload)
     try:
-        text = adapters.transcribe(p.audio, p.language)
+        t = adapters.transcribe_detail(p.audio, p.language, cancel=ctx.cancel)
     except adapters.AudioError as e:
         raise RejectedInput(str(e)) from None
-    return HandlerResult("review_required", {"text": text, "needs_confirmation": True})
+    # the transcript is the PERSON'S OWN words, not something the system wrote: it is passed as its own evidence so that the safety review treats it as a quotation
+    return HandlerResult("review_required", t.public(), "", t.warnings, processing_version=t.processing_version, evidence=[t.text])
 
 
 def validate_speech_text(payload) -> None:

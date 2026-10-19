@@ -61,11 +61,13 @@ def explanation(doc: dict, res: dict) -> Answer:
     ex = res["explanation"]
     if ex.get("abstained"):
         return Answer(f'I could not find individual results I can explain in "{doc["filename"]}". ' + ex["abstention"]["message"], status="abstained", reason="insufficient_evidence", data=ex)
-    items = [i for s in ex["sections"][:3] for i in s["items"] if i.get("citation") and "text" in i][:8]
+    shown = [s for s in ex["sections"] if s.get("id") in ("found", "facts", "medicines", "background")]
+    items = [i for s in shown for i in s["items"] if i.get("citation") and "text" in i][:8]
     body = "\n".join(f"- {i['text']}" for i in items)
-    more = max(0, sum(len(s["items"]) for s in ex["sections"][:3]) - len(items))
+    more = max(0, sum(len(s["items"]) for s in shown) - len(items))
+    uncertain = next((s["summary"] for s in ex["sections"] if s.get("id") == "uncertain"), "")
     text = (f'Here is what "{doc["filename"]}" says, with the page each statement comes from:\n{body}' + (f"\n(and {more} more - open the full explanation to see them all)" if more else "")
-            + f"\n{ex['sections'][-2]['summary']}\n{ex['clinician_review_message']}")
+            + f"\n{uncertain}\n{ex['clinician_review_message']}")
     return Answer(text, citations=[i["citation"] for i in items], data=ex, evidence=[i["citation"]["excerpt"] for i in items])
 
 

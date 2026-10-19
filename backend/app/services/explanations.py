@@ -75,7 +75,8 @@ def build(user: dict, doc_id: str, lang: str = "en") -> dict:
         background = _background(fields, corpus) if lang == "en" else []
     out = explain.explain_document(d, fields, [{"method": p["method"], "ocr_confidence": p["ocr_confidence"]} for p in pages], lang, facts=facts, medications=meds, background=background,
                                    contradictions=_contradictions(d["owner_id"], doc_id), quarantined=flagged, page_texts={p["page_no"]: p["text"] or "" for p in pages})
-    review = safety.review_text(out["spoken_text"], kind="extraction")
+    evidence = [i["citation"]["excerpt"] for s in out["sections"] for i in s["items"] if i.get("citation")] + [h["text"] for h in (background or []) if h.get("text")]
+    review = safety.review_text(out["spoken_text"], kind="extraction", evidence=evidence)
     out["safety"] = {"allowed": review.allowed, "labels": review.labels, "disclaimers": review.disclaimers, "violations": review.codes()}
     out["document_review_status"] = d["review_status"]
     out["extraction_warnings"] = [w for w in (d["error"] or "").split("; ") if w]

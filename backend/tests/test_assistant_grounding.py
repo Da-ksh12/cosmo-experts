@@ -112,7 +112,7 @@ def test_knowledge_sources_keep_their_old_shape_and_gain_a_passage_level_citatio
     c = src["citation"]
     assert body[c["span"][0]:c["span"][1]] == c["excerpt"] and c["passage_count"] >= 1 and c["reviewed"] is True and c["provenance"] == "approved_reference"
     assert "reviewed_by" not in c                                                                         # a patient does not receive the reviewer's identity
-    assert f'Clinic-approved information, "Handling sample tubes": {c["excerpt"]}' in out["answer"]
+    assert f'Clinic-approved information, "Handling sample tubes": "{c["excerpt"]}"' in out["answer"]                    # the approved words, quoted: the source speaking
     doc = next(s for s in out["sources"] if s["kind"] == "knowledge_base")
     assert doc["citation"]["article_id"] == doc["article_id"]
 

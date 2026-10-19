@@ -45,10 +45,10 @@ def h_stt(owner, params, data, ctx):
         raise Public("Voice questions are not available. Please type your question.")
     t0 = time.time()
     try:
-        text = speech.transcribe(data, params.get("language"))
+        t = speech.transcribe_detail(data, params.get("language"))
     except speech.AudioError as e:
         raise Public(str(e))
-    return "completed", {"text": text, "needs_confirmation": True, "processing_ms": round((time.time() - t0) * 1000)}
+    return "completed", {**t.public(), "processing_ms": round((time.time() - t0) * 1000)}
 
 
 def h_answer(owner, params, data, ctx):

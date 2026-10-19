@@ -3,7 +3,7 @@ import json
 import re
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
@@ -270,16 +270,18 @@ def tts(body: TTSReq, user=Depends(current_user)):
 
 
 @router.post("/speech/transcribe")
-def transcribe(language: str | None = Form(None), file: UploadFile = File(...), user=Depends(consent.patient_consented)):
+def transcribe(request: Request, language: str | None = Form(None), file: UploadFile = File(...), user=Depends(consent.patient_consented)):
+    """Speech to text for the patient to CONFIRM. Runs through the engine (bounded queue, timeout, cancellation); the audio is deleted as soon as it is decoded and the transcript is not stored."""
+    from ..ai import get_engine
     st = speech.stt_status()
     if not st["available"]:
         raise HTTPException(503, "Voice questions are not available. Please type your question.")
     audio = _read_upload(file)
-    try:
-        text = speech.transcribe(audio, language)   # audio discarded inside; only text returned for patient confirmation
-    except speech.AudioError as e:
-        raise HTTPException(422, str(e))
-    return {"text": text, "needs_confirmation": True}
+    env = get_engine().run("speech.transcribe", {"audio": audio, "language": language}, user=user, request_id=getattr(request.state, "request_id", ""))
+    if env.status == "review_required":
+        return env.result
+    code = {"rejected_input": 422, "unavailable": 503, "resource_exhausted": 503, "timeout": 504, "forbidden": 403, "cancelled": 499}.get(env.status, 500)
+    raise HTTPException(code, "Voice questions are not available. Please type your question." if env.status == "unavailable" else env.message or "Something went wrong while processing this request.")
 
 
 # ---------------- quotations ----------------

@@ -14,7 +14,7 @@ from .llm import get_backend
 from .retrieval import get_retriever
 
 from .. import clinical_content, db
-from ..ai import gates, injection, knowledge
+from ..ai import gates, injection, knowledge, safety
 from ..ai.citations import document_citation
 from ..quotes import service as quotes_service
 
@@ -26,10 +26,8 @@ REFUSE = re.compile(r"\b(prescribe|prescription for|what (medicine|medication|dr
                     r"diagnos(e|is) me|do i have|what (disease|condition) do i)\b", re.I)
 QUOTE_Q = re.compile(r"\b(quote|quotation|price|cost|estimate|charges?|fee|how much)\b", re.I)
 
-REFUSE_MSG = ("I can't recommend or choose medicines, doses or a diagnosis. Those decisions need a qualified doctor who has examined you. "
-              "I can explain what your uploaded reports say, share clinic-approved information, or help you prepare questions for your doctor.")
-ABSTAIN_MSG = ("I couldn't find anything in your documents or the clinic's approved information that answers this. "
-               "I would rather not guess. You can ask the clinic team to review your question.")
+REFUSE_MSG = safety.REFUSE_MSG          # one wording for every surface (ai/safety.py)
+ABSTAIN_MSG = safety.ABSTAIN_MSG
 
 
 def document_passages(owner_id: str) -> list[dict]:
@@ -71,7 +69,7 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
     policy = clinical_content.urgent_policy()
     if policy.regex.search(question):
         return {"answer": policy.message, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "urgent"}
-    if REFUSE.search(question):
+    if REFUSE.search(question) or safety.classify_request(question).refuse:        # this assistant's own pattern, and the shared classification every other surface uses
         return {"answer": REFUSE_MSG, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "clinical_decision"}
 
     # follow-ups: short questions borrow the previous patient question as context
@@ -127,9 +125,9 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
                     if c.source_index not in seen_i:
                         seen_i.add(c.source_index)
                         srcs.append(_source(p, 0.0, c.provenance))
-                return {"answer": "\n- ".join(["Here is what I found that relates to your question (each statement was checked against its source):"] + lines)
-                        + "\nThis is not a diagnosis. Your doctor can explain what it means for you.", "sources": srcs, "status": "clinician_review_required",
-                        "abstained": False, "mode": "llm_verified", "model": g.model, "dropped_unverified_claims": len(g.dropped), **notice}
+                return _screen({"answer": "\n- ".join(["Here is what I found that relates to your question (each statement was checked against its source):"] + lines)
+                                + "\nThis is not a diagnosis. Your doctor can explain what it means for you.", "sources": srcs, "status": "clinician_review_required",
+                                "abstained": False, "mode": "llm_verified", "model": g.model, "dropped_unverified_claims": len(g.dropped), **notice}, [p["text"] for p in passages])
 
     bullets, sources, seen = [], [], set()
     for p, s in hits:
@@ -140,11 +138,23 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
         if p["kind"] == "document":
             bullets.append(f'Your document "{p["filename"]}" (page {p["page"]}) says: "{p["text"][:300]}"')
         else:
-            bullets.append(f'Clinic-approved information, "{p["title"]}": {p["passage"].text[:400]}')
+            bullets.append(f'Clinic-approved information, "{p["title"]}": "{p["passage"].text[:400]}"')
         sources.append(_source(p, s, "report_fact" if p["kind"] == "document" else "approved_reference"))
-    return {"answer": "Here is what I found that relates to your question:\n- " + "\n- ".join(bullets)
-            + "\nThis repeats what the sources say; it is not a diagnosis. Your doctor can explain what it means for you.",
-            "sources": sources, "status": "clinician_review_required", "abstained": False, "mode": "extractive", **notice, **llm_note}
+    return _screen({"answer": "Here is what I found that relates to your question:\n- " + "\n- ".join(bullets)
+                    + "\nThis repeats what the sources say; it is not a diagnosis. Your doctor can explain what it means for you.",
+                    "sources": sources, "status": "clinician_review_required", "abstained": False, "mode": "extractive", **notice, **llm_note},
+                   [p["text"] for p, _ in hits] + [p["passage"].text for p, _ in hits if p["kind"] != "document"])
+
+
+def _screen(out: dict, evidence: list[str]) -> dict:
+    """The shared safety policy over the finished answer. What the sources say is quoted (and so allowed, as the source speaking); anything the assistant itself wrote that reads as a diagnosis,
+    a medicine change, a certainty claim or emergency guidance is withheld and replaced by the standard abstention - never edited into something that still looks approved."""
+    rev = safety.review_text(out["answer"], kind="education", evidence=evidence)
+    if rev.allowed:
+        return out
+    log.warning("assistant answer withheld by the safety policy: %s", ",".join(rev.codes()))
+    kept = {k: out[k] for k in ("notice", "quarantined_text", "llm_mode") if k in out}
+    return {"answer": rev.replacement or safety.UNSUPPORTED_MSG, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "safety_policy", **kept}
 
 
 def _source(p: dict, score: float, provenance: str) -> dict:

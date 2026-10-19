@@ -1,0 +1,127 @@
+{
+  "schema": "cosmo-eval-1",
+  "name": "voice",
+  "created_at": "2026-10-19T11:25:57+0530",
+  "evidence_class": "synthetic_fixture",
+  "real_world_evidence": false,
+  "code_revision": "git-974018dc6a0b+dirty",
+  "config": {
+    "quick": false,
+    "stt_limits": {
+      "max_bytes": 10485760,
+      "max_seconds": 60
+    }
+  },
+  "config_sha256": "26cff85c8b9ec6e41b2fa2898b36540b3e9ca3945ef332330f1ac5877a6905ab",
+  "dataset": {
+    "speech": "offline operating-system voices, English only, optionally degraded",
+    "explanations": "random synthetic lab results"
+  },
+  "environment": {
+    "python": "3.11.9",
+    "platform": "Windows",
+    "numpy": "2.2.6",
+    "torch": "2.14.1+cpu"
+  },
+  "notes": [
+    "Synthetic speech from offline OS voices: not real patients, accents, Hindi or Hinglish.",
+    "Languages without an installed voice are reported as untested, never as passing.",
+    "No claim of reliable Hindi or Hinglish is made anywhere in this system: speech recognition for them was not tested, and the fixed Hindi/Hinglish explanation templates are unreviewed."
+  ],
+  "speech_recognition": {
+    "tested": true,
+    "model": "faster-whisper base int8 (local, CPU)",
+    "voices": [
+      "Microsoft David Desktop - English (United States)",
+      "Microsoft Hazel Desktop - English (Great Britain)",
+      "Microsoft Zira Desktop - English (United States)"
+    ],
+    "sentences": 12,
+    "conditions": {
+      "clean": {
+        "utterances": 36,
+        "WER": 0.044,
+        "key_term_recall": 0.879,
+        "language_id_correct": 1.0,
+        "mean_language_probability": 0.993,
+        "real_time_factor": 1.24
+      },
+      "telephone": {
+        "utterances": 36,
+        "WER": 0.089,
+        "key_term_recall": 0.788,
+        "language_id_correct": 1.0,
+        "mean_language_probability": 0.963,
+        "real_time_factor": 1.22
+      }
+    },
+    "numbers": {
+      "utterances": 24,
+      "values_expected": 39,
+      "values_recovered": 39,
+      "recovery_rate": 1.0,
+      "missed": []
+    },
+    "silence_and_noise_only": {
+      "clips": 10,
+      "no_speech": 10,
+      "invented": [],
+      "no_speech_rate": 1.0
+    }
+  },
+  "text_to_speech": {
+    "tested": true,
+    "voices": [
+      "Microsoft David Desktop - English (United States)",
+      "Microsoft Hazel Desktop - English (Great Britain)",
+      "Microsoft Zira Desktop - English (United States)"
+    ],
+    "language_has_a_suitable_voice": {
+      "en": true,
+      "hi": false
+    },
+    "hindi": "no Hindi voice is installed: Hindi text is shown, never read with an English voice",
+    "hinglish": "Hinglish is read with the English voice and may be mispronounced; not evaluated"
+  },
+  "spoken_explanations": {
+    "explanations": 60,
+    "scripts_checked": 360,
+    "sentences_checked": 5661,
+    "scripts_truncated_and_announced": 87,
+    "fidelity_violations": 0,
+    "violations": [],
+    "translated_statements_checked": 1584,
+    "protected_tokens_lost": 0,
+    "lost": []
+  },
+  "language_status": {
+    "en": {
+      "language": "en",
+      "supported": true,
+      "speech_recognition": "checked on synthetic English speech only (docs/eval/voice.json); not on real patients' voices or accents",
+      "explanations": "fixed English templates, written by the project's author",
+      "voice": "an installed offline English voice, when present",
+      "reviewed_translations": true,
+      "claim": "English only, as described"
+    },
+    "hi": {
+      "language": "hi",
+      "supported": true,
+      "speech_recognition": "not checked",
+      "explanations": "fixed Hindi templates, written without review by a Hindi-speaking clinician: UNREVIEWED",
+      "voice": "only if a Hindi voice is installed; never substituted by another language's voice",
+      "reviewed_translations": false,
+      "claim": "no claim of reliability is made for Hindi or Hinglish"
+    },
+    "hinglish": {
+      "language": "hinglish",
+      "supported": true,
+      "speech_recognition": "not checked",
+      "explanations": "fixed Hinglish templates, written without review: UNREVIEWED",
+      "voice": "read with an English voice, which may pronounce Hindi words poorly",
+      "reviewed_translations": false,
+      "claim": "no claim of reliability is made for Hindi or Hinglish"
+    }
+  },
+  "seconds": 356.9
+}

@@ -293,3 +293,16 @@ def test_two_documents_that_disagree_are_reported_not_resolved(client):
     assert "does not choose between them" in sections(j)["What is still uncertain"]["summary"]
     other = client.get(f"/api/documents/{upload(client, 'patient1')}/explanation", headers=tok(client, "patient1")).json()
     assert other["contradictions"] == []                                                    # another person's documents never mix into this comparison
+
+
+def test_the_first_three_sections_keep_the_order_the_screens_rely_on_and_new_sections_follow_with_ids():
+    """The report screen reads section 0 as 'found' and section 1 as 'still uncertain', and finds the questions list as the first section whose items carry neither a source nor a field id.
+    Sections added in version 2 therefore come AFTER those three, and every section has an id so that no client needs to count."""
+    ms, text = meds("Rx\n1. Tab. Metformin 500 mg BD\n")
+    bg = [{"title": "T", "text": "A reference range is a set of values.", "passage_id": "kb:x:v1:0-30", "article_id": "x", "version": 1, "span": [0, 30], "reviewed": True}]
+    ex = explain.explain_document(DOC, [F()], PAGES, facts=[fact()], medications=ms, page_texts={1: text}, background=bg)
+    assert [s["id"] for s in ex["sections"]] == ["found", "uncertain", "questions", "facts", "medicines", "background"]
+    assert ex["sections"][0]["title"] == "What we found" and ex["sections"][1]["title"] == "What is still uncertain" and ex["sections"][1]["summary"]
+    first_without_source = next(s for s in ex["sections"] if s["items"] and not s["items"][0].get("source") and not s["items"][0].get("field_id"))
+    assert first_without_source["id"] == "questions"
+    assert [s["id"] for s in explain.explain_document(DOC, [F()], PAGES)["sections"]] == ["found", "uncertain", "questions"]
