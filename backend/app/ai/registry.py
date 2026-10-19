@@ -167,7 +167,7 @@ DEFS: list[CapabilityDef] = _image_defs() + [
                   "Reads PDFs, photos of documents, Word and text files; extracts printed lab results, header facts (dates, laboratory, clinician names, explicit allergy and follow-up statements) and medicine entries with source text, page and confidence. Everything extracted is a draft for clinician review.",
                   "deterministic", limits=_DOC_LIMITS, optional=("tesseract",), review_required=True,
                   limitations=("Scanned pages need OCR (Tesseract).", "Values are copied as printed; nothing is converted or interpreted.")),
-    CapabilityDef("document.medications", "document", "Prescription field extraction", "medparse-1.1.0",
+    CapabilityDef("document.medications", "document", "Prescription field extraction", "medparse-1.1.1",
                   "Rule-based extraction of printed medicine entries (name, strength, form, dose, route, frequency, duration, instructions) with the original text and ambiguity flags.",
                   "deterministic", limits=_DOC_LIMITS, optional=("tesseract",), review_required=True,
                   limitations=("Never recommends starting, stopping or changing a medicine.", "No brand/generic substitution.", "Evaluated on synthetic fixtures only.")),
@@ -245,6 +245,7 @@ def resolve(d: CapabilityDef) -> CapabilityState:
             availability = "available"
     else:                                                              # learned_model
         active = lifecycle.active_approved(d.model_task)
+        problem = None if active else lifecycle.active_problem(d.model_task)         # an active model that cannot serve is NOT replaced by another: the reason is shown
         research = [] if active else lifecycle.research_models(d.model_task)
         if active:
             model, approval = active, "approved_for_defined_use"
@@ -255,9 +256,13 @@ def resolve(d: CapabilityDef) -> CapabilityState:
             model, approval = research[0], "research_only"
             availability = "unavailable" if req_missing else "available"
             reasons.append("Registered models are research-only: none has passed its release gates and approval.")
+            if problem:
+                reasons.append(problem[0].upper() + problem[1:] + ".")
         else:
             availability, approval = "unavailable", "none"
             reasons.append("No validated model exists for this task.")
+            if problem:
+                reasons.append(problem[0].upper() + problem[1:] + ".")
             if d.unavailable_reason:
                 reasons.append(d.unavailable_reason)
         reasons += [x.detail for x in req_missing]

@@ -522,6 +522,8 @@ def train(task_id: str, dataset_id: str, version_id: str, actor: str, arch="resn
             "log": log_lines[-60:],
             "limitations": ["Small-sample metrics are unreliable", "Dataset demographics may not represent target patients"]}
     db.x("INSERT INTO model_versions VALUES(?,?,?,?,?)", (mid, task_id, json.dumps(card), "research_only", db.now()))
+    from ..ai import lifecycle
+    lifecycle.registered(mid, task_id, actor, card)
     ckpt.discard()                                  # a finished run needs no checkpoint
     db.audit(actor, "model.train", mid, {"task": task_id, "dataset": dataset_id, "version": mf["version"], "test_macro_f1": test["macro_f1"], "code": card["code_revision"]})
     return card
@@ -589,51 +591,20 @@ def compare(model_a: str, model_b: str):
             "note": "Differences are only meaningful when both models were evaluated on the same held-out set."}
 
 
-def approve(model_id: str, actor: str, intended_use: str, requirements: dict, regulatory_note: str):
-    """Records an approval request. The *effective* status is computed by status.effective_status; evaluation gates must ALSO pass."""
-    from .. import status as st
-    row = db.q1("SELECT * FROM model_versions WHERE id=?", (model_id,))
-    if not row:
-        raise KeyError(model_id)
-    card = json.loads(row["data"])
-    gates = evaluate_gates(card)
-    failed = [g["gate"] for g in gates if not g["passed"]]
-    ap = st.Approval(actor, intended_use, requirements)
-    eff = st.effective_status("approved_for_defined_use", ap) if not failed else "research_only"
-    card["approval"] = {"approved_by": actor, "intended_use": intended_use, "requirements_met": requirements, "regulatory_note": regulatory_note,
-                        "effective_status": eff, "failed_evaluation_gates": failed,
-                        "missing_requirements": [r for r in st.RELEASE_REQUIREMENTS if requirements.get(r) is not True]}
-    db.x("UPDATE model_versions SET data=?, status=? WHERE id=?", (json.dumps(card), eff, model_id))
-    db.audit(actor, "model.approval_request", model_id, card["approval"])
-    return card["approval"]
+def approve(model_id: str, actor: str, intended_use: str, requirements: dict, regulatory_note: str, signoff_by: str | None = None):
+    """Records an approval request through the model lifecycle (ai/lifecycle.py): the evaluation gates are run, the release requirements are checked, and - when clinical sign-off is claimed -
+    a verified clinician must be named. The model becomes `approved` only if all of that holds; otherwise the record says exactly what is missing."""
+    from ..ai import lifecycle
+    return lifecycle.approve(model_id, actor, intended_use, requirements, regulatory_note, signoff_by)
 
 
 def deploy(model_id: str, actor: str):
-    """Only models whose effective status is approved_for_defined_use can be deployed; previous active kept for rollback."""
-    row = db.q1("SELECT * FROM model_versions WHERE id=?", (model_id,))
-    if not row or row["status"] != "approved_for_defined_use":
-        raise PermissionError("Only a model with a complete approval record can be deployed.")
-    task = row["task"]
-    prev = db.q1("SELECT value FROM settings WHERE key=?", (f"active_model:{task}",))
-    hist = db.q1("SELECT value FROM settings WHERE key=?", (f"model_history:{task}",))
-    h = json.loads(hist["value"]) if hist else []
-    if prev:
-        h.append(prev["value"])
-    db.set_setting(f"active_model:{task}", model_id)
-    db.set_setting(f"model_history:{task}", json.dumps(h))
-    db.audit(actor, "model.deploy", model_id, {"task": task, "previous": prev["value"] if prev else None})
-    return {"task": task, "active": model_id}
+    """Only an approved model whose file matches its checksum, with its record complete and no open clinical issue, can be activated; the previous active model is kept as the known-good fallback."""
+    from ..ai import lifecycle
+    return lifecycle.activate(model_id, actor)
 
 
 def rollback(task: str, actor: str):
-    hist = db.q1("SELECT value FROM settings WHERE key=?", (f"model_history:{task}",))
-    h = json.loads(hist["value"]) if hist else []
-    if not h:
-        db.x("DELETE FROM settings WHERE key=?", (f"active_model:{task}",))
-        db.audit(actor, "model.rollback", task, {"to": None})
-        return {"task": task, "active": None}
-    prev = h.pop()
-    db.set_setting(f"active_model:{task}", prev)
-    db.set_setting(f"model_history:{task}", json.dumps(h))
-    db.audit(actor, "model.rollback", task, {"to": prev})
-    return {"task": task, "active": prev}
+    """A technical rollback to the most recent known-good model (or to none). It does not change any result already issued; see ai/lifecycle.py."""
+    from ..ai import lifecycle
+    return lifecycle.rollback(task, actor)

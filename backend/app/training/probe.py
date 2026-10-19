@@ -157,5 +157,7 @@ def train_probe(task_id: str, dataset_id: str, version_id: str, actor: str, weig
             "intended_use": "Research only. Not clinically validated. Not offered to patients.", "approval": None, "log": log_lines[-60:],
             "limitations": ["Small-sample metrics are unreliable", "Dataset demographics may not represent target patients"]}
     db.x("INSERT INTO model_versions VALUES(?,?,?,?,?)", (mid, task_id, json.dumps(card), "research_only", db.now()))
+    from ..ai import lifecycle
+    lifecycle.registered(mid, task_id, actor, card)
     db.audit(actor, "model.train", mid, {"task": task_id, "method": "linear_probe", "test_macro_f1": test["macro_f1"], "code": card["code_revision"]})
     return card

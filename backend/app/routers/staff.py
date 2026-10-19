@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import threading
 from pathlib import Path
@@ -7,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from .. import clinical_content, db, retention
+from ..ai import lifecycle
 from ..services import notify
 from ..config import DATASET_DIR
 from ..datasets import importer, registry
@@ -598,14 +600,17 @@ class ApproveModel(BaseModel):
     intended_use: str
     requirements: dict
     regulatory_note: str = ""
+    clinical_signoff_by: str | None = Field(default=None, max_length=64)       # the verified clinician who signed off; required when the clinical_signoff_recorded requirement is claimed
 
 
 @router.post("/admin/models/{mid}/approval")
 def model_approval(mid: str, body: ApproveModel, user=Depends(admin)):
     try:
-        return trainer.approve(mid, user["id"], body.intended_use, body.requirements, body.regulatory_note)
+        return trainer.approve(mid, user["id"], body.intended_use, body.requirements, body.regulatory_note, body.clinical_signoff_by)
     except KeyError:
         raise HTTPException(404, "Unknown model.")
+    except lifecycle.LifecycleError as e:
+        raise HTTPException(409, str(e))
 
 
 @router.post("/admin/models/{mid}/deploy")
@@ -616,9 +621,92 @@ def model_deploy(mid: str, user=Depends(admin)):
         raise HTTPException(409, str(e))
 
 
+class Reason(BaseModel):
+    reason: str = Field(default="", max_length=300)
+
+
+class ClinicalIssue(BaseModel):
+    description: str = Field(min_length=3, max_length=500)
+
+
+class ImportModel(BaseModel):
+    task: str = Field(min_length=2, max_length=80, pattern=r"^[a-z0-9_]+$")
+    artifact_path: str = Field(min_length=1, max_length=500)
+    architecture: str = Field(min_length=1, max_length=80)
+    source: str = Field(min_length=3, max_length=300)
+    licence: str = Field(default="", max_length=300)
+    notes: str = Field(default="", max_length=500)
+
+
+def _lifecycle(fn):
+    try:
+        return fn()
+    except KeyError:
+        raise HTTPException(404, "Unknown model.") from None
+    except PermissionError as e:
+        raise HTTPException(409, str(e)) from None
+    except lifecycle.LifecycleError as e:
+        raise HTTPException(409 if e.code != "invalid_artifact" else 422, str(e)) from None
+
+
 @router.post("/admin/tasks/{task}/rollback")
-def model_rollback(task: str, user=Depends(admin)):
-    return trainer.rollback(task, user["id"])
+def model_rollback(task: str, body: Reason | None = None, user=Depends(admin)):
+    """A TECHNICAL rollback: changes which model answers from now on, to the most recent known-good one (or to none). It does not change any result already issued."""
+    return _lifecycle(lambda: lifecycle.rollback(task, user["id"], "technical", (body.reason if body else "")))
+
+
+@router.post("/admin/tasks/{task}/deactivate")
+def model_deactivate(task: str, body: Reason | None = None, user=Depends(admin)):
+    """Take the active model out of service without replacing it: the capability becomes unavailable."""
+    return _lifecycle(lambda: lifecycle.deactivate(task, user["id"], body.reason if body else ""))
+
+
+@router.get("/admin/tasks/{task}/monitor")
+def model_monitor(task: str, user=Depends(admin)):
+    """The monitor's current reading for the task's active model (failures of the model itself over enough runs, or its file failing its checksum) and whether automatic rollback is on."""
+    return {**lifecycle.evaluate_signals(task), "automatic_rollback_enabled": os.environ.get("COSMO_MODEL_AUTO_ROLLBACK") == "1"}
+
+
+@router.get("/admin/models/{mid}/lifecycle")
+def model_lifecycle(mid: str, user=Depends(admin)):
+    return _lifecycle(lambda: lifecycle.view(mid))
+
+
+@router.post("/admin/models/{mid}/evaluate")
+def model_evaluate(mid: str, user=Depends(admin)):
+    """Run the evaluation gates on the model's recorded evidence: it becomes review_pending, or evaluation_failed with the failed gates listed."""
+    return _lifecycle(lambda: lifecycle.evaluate(mid, user["id"]))
+
+
+@router.post("/admin/models/{mid}/deprecate")
+def model_deprecate(mid: str, body: Reason | None = None, user=Depends(admin)):
+    return _lifecycle(lambda: lifecycle.deprecate(mid, user["id"], body.reason if body else ""))
+
+
+@router.post("/admin/models/{mid}/clinical-issue")
+def model_clinical_issue(mid: str, body: ClinicalIssue, user=Depends(admin)):
+    """Report that this model's output may have been clinically wrong. Separate from a rollback: it blocks (re-)activation and lists the periods the model was serving, so they can be reviewed."""
+    return _lifecycle(lambda: lifecycle.flag_clinical_issue(mid, user["id"], body.description))
+
+
+@router.post("/admin/models/{mid}/clinical-issue/close")
+def model_clinical_issue_close(mid: str, body: Reason, user=Depends(admin)):
+    return _lifecycle(lambda: lifecycle.close_clinical_issue(mid, user["id"], body.reason))
+
+
+@router.get("/admin/models/{mid}/exposure")
+def model_exposure(mid: str, user=Depends(admin)):
+    return _lifecycle(lambda: {"model_id": mid, "periods": lifecycle.exposure(mid)})
+
+
+@router.post("/admin/model-imports")
+def model_import(body: ImportModel, user=Depends(admin)):
+    """Record a model file brought in from elsewhere. It starts as `imported`: not evaluated, not approvable, never served."""
+    from ..training import tasks as image_tasks
+    if body.task not in {t["id"] for t in image_tasks.TASKS}:
+        raise HTTPException(422, "Unknown task.")
+    card = _lifecycle(lambda: lifecycle.register_import(body.task, body.artifact_path, user["id"], architecture=body.architecture, source=body.source, licence=body.licence, notes=body.notes))
+    return {"model_id": card["model_id"], "state": "imported", "artifact_sha256_prefix": card["artifact_sha256"][:16]}
 
 
 @router.get("/admin/audit")
@@ -718,11 +806,13 @@ def datasets_download(did: str, user=Depends(admin)):
                     _dl[did]["files"][name].update(done=done, total=tot or f["size"])
                 importer.download(f["url"], raw / f["name"], f["sha256"], did, on_progress=prog)
                 _dl[did]["files"][f["name"]].update(done=f["size"], verified=True)
+            db.audit(user["id"], "dataset.download_done", did, {"sha256_verified": True})          # the record is written BEFORE the state changes: whoever sees the final state also finds it
             _dl[did]["state"] = "done"
-            db.audit(user["id"], "dataset.download_done", did, {"sha256_verified": True})
         except Exception as e:
-            _dl[did].update(state="failed", error=str(e))
-            db.audit(user["id"], "dataset.download_failed", did, {"error": str(e)})
+            try:
+                db.audit(user["id"], "dataset.download_failed", did, {"error": str(e)})
+            finally:
+                _dl[did].update(state="failed", error=str(e))
     db.context.spawn(run)
     return {"state": "running"}
 

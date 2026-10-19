@@ -14,7 +14,7 @@ from tests.test_pg_backend import CTX_SECRET, pg_server  # noqa: F401  (fixtures
 
 T = "2026-10-18T10:00:00Z"
 TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "doc_facts", "doc_medications", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
-          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "agent_traces", "agent_actions", "notifications", "jobs"]
+          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "agent_traces", "agent_actions", "model_events", "notifications", "jobs"]
 
 
 def C(uid, role, admin="none"):
@@ -60,6 +60,7 @@ def rls(pg_server):
     x("insert into datasets values('ds1','{}','approved',now())")
     x("insert into dataset_versions values('dv1','ds1','{}',now())")
     x("insert into model_versions values('mv1','t','{}','research_only',now())")
+    x("insert into model_events(id,model_id,task,at,actor,event,to_state) values('me1','mv1','t',now(),'a1','registered','experimental')")
     x("insert into field_corrections(id,field_id,document_id,before,after,status,reviewer,ts) values('fc1','f-p1','doc-p1','8','9','corrected','d1',now())")
     x("insert into audit values('au1',now(),'p1','login','','{}')")
     yield be, pg_server.url(name)
@@ -368,3 +369,17 @@ def test_agent_traces_and_actions_belong_to_the_person_they_concern(rls):
     assert writes(be, P1, "update agent_traces set outcome='x' where id='at-p1'") == 0
     assert writes(be, P1, "delete from agent_traces where id='at-p1'") == 0 and writes(be, P1, "delete from agent_actions where id='aa-p1'") == 0
     assert writes(be, SYS, "delete from agent_traces where id in ('at-new')") == 1 and writes(be, SYS, "delete from agent_actions where id in ('aa-new')") == 1      # erasure and retention are server actions
+
+
+def test_model_history_is_visible_to_administrators_and_the_server_and_can_never_be_rewritten(rls):
+    be, _ = rls
+    assert ids(be, ADM, "model_events") == ["me1"] and ids(be, SYS, "model_events") == ["me1"]
+    for ctx in (P1, DOC):
+        assert be.q("select count(*) c from model_events", (), ctx)[0]["c"] == 0
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            writes(be, ctx, "insert into model_events(id,model_id,task,event) values('me-x','mv1','t','approved')")
+    assert writes(be, ADM, "insert into model_events(id,model_id,task,at,actor,event) values('me2','mv1','t',now(),'a1','evaluation_started')") == 1
+    for ctx in (ADM, SYS):
+        for sql in ("update model_events set event='rewritten' where id='me1'", "delete from model_events where id='me1'"):
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                writes(be, ctx, sql)                                                                  # not even the server can edit or remove history through the application role

@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS doc_medications(id TEXT PRIMARY KEY, document_id TEXT
 CREATE INDEX IF NOT EXISTS doc_medications_doc_ix ON doc_medications(document_id);
 CREATE TABLE IF NOT EXISTS training_runs(id TEXT PRIMARY KEY, task TEXT, dataset_id TEXT, version_id TEXT, config TEXT, config_hash TEXT, plan TEXT, status TEXT, started_at REAL,
   finished_at REAL, model_id TEXT, error TEXT, actor TEXT, device TEXT);
+CREATE TABLE IF NOT EXISTS model_events(id TEXT PRIMARY KEY, model_id TEXT NOT NULL, task TEXT, at REAL, actor TEXT, event TEXT NOT NULL, from_state TEXT, to_state TEXT, detail TEXT DEFAULT '{}');
+CREATE INDEX IF NOT EXISTS model_events_model_ix ON model_events(model_id, at);
+CREATE TRIGGER IF NOT EXISTS model_events_no_update BEFORE UPDATE ON model_events BEGIN SELECT RAISE(ABORT, 'model history is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS model_events_no_delete BEFORE DELETE ON model_events BEGIN SELECT RAISE(ABORT, 'model history is append-only'); END;
 CREATE TABLE IF NOT EXISTS agent_traces(id TEXT PRIMARY KEY, user_id TEXT NOT NULL, request_id TEXT, created_at REAL, intent TEXT, provider TEXT, outcome TEXT, steps TEXT DEFAULT '[]',
   safety TEXT DEFAULT '{}', duration_ms INTEGER, message_sha256 TEXT, message_chars INTEGER);
 CREATE INDEX IF NOT EXISTS agent_traces_user_ix ON agent_traces(user_id, created_at);

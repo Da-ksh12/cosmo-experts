@@ -154,18 +154,35 @@ class AIEngine:
         try:
             hr = self.resources.run(job, capability=capability_id, timeout=limit, cancel=token, concurrency=state.limits.concurrency)
         except AIError as e:
+            if e.status == "timeout":                              # a timeout is the model's failure; a busy service, a refused input or a cancellation is not
+                self._note(d, state, False)
             return env(e.status, e.public_message, state=compact)
         except Exception as e:                                     # never surface exception text; never substitute an output
             log.error("capability %s failed (request %s): %s", capability_id, rid, safe_exc(e))
+            self._note(d, state, False)
             return env("error", AIError.default_message, state=compact)
         if not isinstance(hr, HandlerResult):
             log.error("capability %s returned an invalid result (request %s)", capability_id, rid)
+            self._note(d, state, False)
             return env("error", AIError.default_message, state=compact)
+        self._note(d, state, True)
         run_ms = round((time.monotonic() - marks.get("start", queued_at)) * 1000)
         e = self._finish(env, d, state, hr, ctx, compact)
         e.timings.queued_ms = round((marks.get("start", queued_at) - queued_at) * 1000)
         e.timings.run_ms = run_ms
         return e
+
+    @staticmethod
+    def _note(d, state: CapabilityState, ok: bool) -> None:
+        """Tell the model lifecycle how a run that used the task's ACTIVE approved model ended (failures only count when the model itself errored or timed out)."""
+        if d.model_task and state.model is not None and state.model.lifecycle == "active":
+            from . import lifecycle
+            lifecycle.record_outcome(d.model_task, ok)
+            if not ok:
+                try:
+                    lifecycle.maybe_auto_rollback(d.model_task)
+                except Exception as e:                              # monitoring must never break the request
+                    log.error("model monitor failed: %s", safe_exc(e))
 
     def _finish(self, env, d, state: CapabilityState, hr: HandlerResult, ctx: HandlerContext, compact: dict) -> RunEnvelope:
         """Safety review, labels and provenance. A blocked output is replaced by an abstention, never edited into something that looks approved."""

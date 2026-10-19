@@ -51,7 +51,11 @@ def fixture_dataset(tmp_path_factory):
     yield imp, root
     with db.context.as_system():
         db.x("DELETE FROM dataset_versions WHERE dataset_id='ai-train-fixture'")
-        db.x("DELETE FROM training_runs WHERE dataset_id='ai-train-fixture'")
+        try:
+            db.x("DELETE FROM training_runs WHERE dataset_id='ai-train-fixture'")
+        except Exception as e:                      # PostgreSQL: training history is never deleted by the application (migration 0006 grants no DELETE); this database is thrown away
+            if "permission denied" not in str(e):
+                raise
 
 
 def cfg_for(imp, **kw):

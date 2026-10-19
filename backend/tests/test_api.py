@@ -337,7 +337,13 @@ def test_import_split_train_approval_rollback(client, tmp_path):
     card["test_metrics"].update(n=500, macro_f1=0.9, macro_f1_ci95=[0.85, 0.93], ece=0.05)
     card["baselines"] = {"majority_class": {"macro_f1": 0.1}}
     _db.x("INSERT INTO model_versions VALUES(?,?,?,?,?)", ("gatepass", card["task"], _j.dumps(card), "research_only", _db.now()))
+    # a self-declared "clinical sign-off" is not enough: a verified clinician has to be named
     ap = client.post("/api/admin/models/gatepass/approval", json={"intended_use": "Research demo", "requirements": full}, headers=a).json()
+    assert ap["effective_status"] == "research_only" and "verified clinician" in " ".join(ap["refused_because"])
+    was_verified = _db.q1("SELECT verified FROM users WHERE id='doctor1'")["verified"]
+    _db.x("UPDATE users SET verified=1 WHERE id='doctor1'")
+    ap = client.post("/api/admin/models/gatepass/approval", json={"intended_use": "Research demo", "requirements": full, "clinical_signoff_by": "doctor1"}, headers=a).json()
+    _db.x("UPDATE users SET verified=? WHERE id='doctor1'", (was_verified,))
     assert ap["effective_status"] == "approved_for_defined_use"
     assert client.post("/api/admin/models/gatepass/deploy", headers=a).json()["active"] == "gatepass"
     assert client.post("/api/admin/tasks/gate_test_task_without_critical_classes/rollback", headers=a).json()["active"] is None
