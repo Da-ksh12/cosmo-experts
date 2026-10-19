@@ -8,7 +8,7 @@ import { runUploadJob } from "@/lib/jobs";
 /** Push-to-record voice question. No background listening: the microphone is open only between Start and Stop and the
  *  track is released immediately. Audio goes to the LOCAL server for transcription and is discarded; the patient reviews
  *  and can correct the transcript before anything is sent. `trigger` increments to start recording from outside. */
-export default function VoiceInput({ onText, onState, trigger = 0 }: { onText: (t: string) => void; onState?: (s: "idle" | "listening" | "transcribing" | "error", msg?: string) => void; trigger?: number }) {
+export default function VoiceInput({ onText, onState, trigger = 0 }: { onText: (t: string, note?: string) => void; onState?: (s: "idle" | "listening" | "transcribing" | "error", msg?: string) => void; trigger?: number }) {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [state, setState] = useState<"idle" | "listening" | "transcribing" | "error">("idle");
   const [secs, setSecs] = useState(0);
@@ -34,10 +34,12 @@ export default function VoiceInput({ onText, onState, trigger = 0 }: { onText: (
         try {
           const fd = new FormData();
           fd.append("file", new Blob(chunks.current, { type: r.mimeType }), "question.webm");
-          const job = await runUploadJob<{ text: string }>("/api/v1/speech/transcribe", fd);
+          const job = await runUploadJob<{ text: string; warnings?: string[] }>("/api/v1/speech/transcribe", fd);
           if (job.status !== "completed" || !job.result) throw new Error(job.error ?? "Voice questions aren't available. Please type your question.");
-          onText(job.result.text);
-          set("idle", "Please check the words and correct them if needed before sending.");
+          // what the recogniser itself noticed (for example that the recording sounds like another language than the one chosen) is shown with the standing request to check the words
+          const note = [...(job.result.warnings ?? []), "Please check the words and correct them if needed before sending."].join(" ");
+          onText(job.result.text, note);
+          set("idle");
         } catch (e) { set("error", e instanceof Error ? e.message : "Voice questions aren't available. Please type your question."); }
         finally { chunks.current = []; }
       };

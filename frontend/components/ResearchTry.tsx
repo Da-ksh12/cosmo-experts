@@ -39,7 +39,7 @@ export default function ResearchTry({ models }: { models: Model[] }) {
       <Note tone="warn">Research output for ML engineers. Not a diagnosis, never shown to patients or used for care decisions.</Note>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm font-semibold">Registered model<select className="input mt-1 font-normal" value={id} onChange={(e) => setId(e.target.value)} aria-label="Registered model">
-          <option value="">Choose…</option>{usable.map((m) => <option key={m.model_id} value={m.model_id}>{m.model_id.slice(0, 8)} · {m.architecture.split(" ")[0]} · macro-F1 {m.test_metrics.macro_f1}</option>)}</select></label>
+          <option value="">Choose…</option>{usable.map((m) => <option key={m.model_id} value={m.model_id}>{m.model_id.slice(0, 8)} · {m.architecture.split(" ")[0]} · {m.test_metrics?.macro_f1 !== undefined ? `macro-F1 ${m.test_metrics.macro_f1}` : "not evaluated"}</option>)}</select></label>
         <label className="text-sm font-semibold">Image (JPG/PNG)<input className="input mt-1 font-normal" type="file" accept="image/jpeg,image/png" aria-label="Image to analyse" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
       </div>
       <button className="btn btn-primary" onClick={run} disabled={!id || !file || busy}>{busy ? <><Loader2 className="spin h-4 w-4" aria-hidden /> {phase ? STATUS_TEXT[phase as JobStatus] : "Running"}…</> : "Run on this image"}</button>

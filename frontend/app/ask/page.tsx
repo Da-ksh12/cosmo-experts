@@ -4,6 +4,7 @@ import { Bot, FileText, History, Lightbulb, Mic, Send, Sparkles, Stethoscope, Tr
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import AgentActions from "@/components/AgentActions";
 import AudioPlayer from "@/components/AudioPlayer";
 import { ScreenBar } from "@/components/Shell";
 import VoiceInput from "@/components/VoiceInput";
@@ -11,7 +12,7 @@ import { ConfirmDialog, Dialog, Note, PageHeading, StatusBadge, fmtDateTime, use
 import { api, del, post } from "@/lib/api";
 
 type Source = { kind: string; document_id?: string; page?: number; excerpt?: string; title?: string; quote_id?: string };
-type Msg = { role: "patient" | "assistant"; content: string; sources?: Source[]; status?: string; abstained?: boolean };
+type Msg = { role: "patient" | "assistant"; content: string; sources?: Source[]; status?: string; abstained?: boolean; notice?: string };
 type Conv = { id: string; created_at: number; preview: string };
 
 const MODES = [
@@ -51,8 +52,8 @@ function Chat() {
     setBusy(true); setText("");
     setMsgs((m) => [...m, { role: "patient", content: q }]);
     try {
-      const r = await post<{ answer: string; sources: Source[]; status: string; abstained: boolean }>(`/api/conversations/${id}/messages`, { text: q });
-      setMsgs((m) => [...m, { role: "assistant", content: r.answer, sources: r.sources, status: r.status, abstained: r.abstained }]);
+      const r = await post<{ answer: string; sources: Source[]; status: string; abstained: boolean; notice?: string }>(`/api/conversations/${id}/messages`, { text: q });
+      setMsgs((m) => [...m, { role: "assistant", content: r.answer, sources: r.sources, status: r.status, abstained: r.abstained, notice: r.notice }]);
     } catch (e) { toast(e instanceof Error ? e.message : "Something went wrong. Please try again.", "bad"); }
     finally { setBusy(false); }
   }, [cid, toast]);
@@ -111,6 +112,7 @@ function Chat() {
                   <Link key={j} href={`/reports/${s.document_id}`} className="badge note-info no-underline"><FileText className="h-3.5 w-3.5" aria-hidden /> Your report · page {s.page}</Link>)
                   : s.kind === "knowledge_base" ? <span key={j} className="badge note-gold">Clinic-approved: {s.title}</span>
                   : <Link key={j} href="/quote" className="badge note-info no-underline">Your approved quotation</Link>)}</div>)}
+              {m.notice && <Note tone="warn">{m.notice}</Note>}
               <div className="flex flex-wrap items-center gap-2">{m.status && <StatusBadge status={m.status} />}{m.abstained && <span className="text-sm text-muted">You can ask the clinic team to review this.</span>}</div>
               <AudioPlayer compact text={m.content.slice(0, 1500)} />
             </div>
@@ -125,6 +127,8 @@ function Chat() {
         <Link href="/care" className="chip"><Stethoscope className="h-4 w-4" aria-hidden /> Doctor Review</Link>
       </div>
 
+      <AgentActions />
+
       <section id="suggested" aria-label="Suggested questions" className="space-y-2">
         <h3 className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-gold" aria-hidden /> Suggested Questions</h3>
         {suggest.length === 0 ? <p className="text-sm text-muted">Upload a report to get suggestions based on it.</p>
@@ -136,7 +140,7 @@ function Chat() {
         <textarea id="q" ref={input} className="input !rounded-2xl" rows={2} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(text); } }} placeholder="Type your question in English, Hindi or Hinglish…" />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <VoiceInput trigger={voiceTrig} onText={(t) => { setText(t); setVoiceNote("Please check the words and correct them if needed before sending."); input.current?.focus(); }} onState={(s, m) => setVoiceNote(s === "error" ? m ?? "" : "")} />
+          <VoiceInput trigger={voiceTrig} onText={(t, note) => { setText(t); setVoiceNote(note ?? "Please check the words and correct them if needed before sending."); input.current?.focus(); }} onState={(s, m) => { if (s === "error") setVoiceNote(m ?? ""); else if (s !== "idle") setVoiceNote(""); }} />
           <button className="btn btn-primary shrink-0" type="submit" disabled={busy || !text.trim()} aria-label="Send question"><Send className="h-5 w-5" aria-hidden /> Send</button>
         </div>
         {voiceNote && <p className="text-sm text-[var(--warn-ink)]" role="status">{voiceNote}</p>}

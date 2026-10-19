@@ -13,8 +13,8 @@ import { api, CATEGORY_LABEL, DOC_TYPE_LABEL, post } from "@/lib/api";
 type Field = { id: string; name: string; value: string; unit: string; ref_range: string; source_page: number; source_text: string; confidence: number; flag: string; review_status: string; patient_flag: string };
 type Page = { page_no: number; text: string; method: string; ocr_confidence: number | null };
 type Detail = { document: { id: string; filename: string; doc_type: string; user_category: string; doc_date: string; page_count: number; mime: string; review_status: string; created_at: number }; pages: Page[]; fields: Field[] };
-type Section = { title: string; summary: string; items: { text: string; field_id?: string; source?: { page: number } }[] };
-type Explanation = { language: string; speech_language: string; sections: Section[]; spoken_text: string; disclaimer: string; clinician_review_message: string; extraction_warnings: string[] };
+type Section = { id?: string; title: string; summary: string; items: { text: string; field_id?: string; source?: { page: number }; citation?: { page?: number; kind?: string; title?: string } }[] };
+type Explanation = { language: string; speech_language: string; sections: Section[]; spoken_text: string; disclaimer: string; clinician_review_message: string; extraction_warnings: string[]; translation_notice?: string | null };
 
 const TABS = [{ id: "summary", label: "Summary", Icon: ScrollText }, { id: "results", label: "Key Results", Icon: BarChart3 }, { id: "detail", label: "Detailed View", Icon: FileText }, { id: "questions", label: "Questions", Icon: MessagesSquare }] as const;
 const LANGS = [["en", "English"], ["hi", "हिन्दी"], ["hinglish", "Hinglish"]] as const;
@@ -57,8 +57,10 @@ export default function ReportPage() {
   const doc = d.document;
   const cur = d.pages.find((p) => p.page_no === page) ?? d.pages[0];
   const outside = d.fields.filter((f) => ["printed_flag_low", "printed_flag_high", "outside_printed_range"].includes(f.flag)).length;
-  const questions = ex.sections.find((s) => s.items.length && !s.items[0].source && !s.items[0].field_id);
-  const found = ex.sections[0], uncertain = ex.sections[1];
+  const byId = (k: string) => ex.sections.find((s) => s.id === k);
+  const questions = byId("questions") ?? ex.sections.find((s) => s.items.length && !s.items[0].source && !s.items[0].field_id);
+  const found = byId("found") ?? ex.sections[0], uncertain = byId("uncertain") ?? ex.sections[1];
+  const printed = ex.sections.filter((s) => ["facts", "medicines", "background"].includes(s.id ?? "") && (s.items.length > 0 || s.summary));
 
   return (
     <div className="space-y-6">
@@ -79,6 +81,7 @@ export default function ReportPage() {
 
       <Note tone="info"><span className="mr-2"><StatusBadge status="clinician_review_required" /></span>{ex.clinician_review_message}{doc.review_status === "reviewed_by_clinician" && " A clinician has reviewed this document."}</Note>
       {ex.extraction_warnings.map((w) => <Note key={w} tone="warn">{w}</Note>)}
+      {ex.translation_notice && <Note tone="warn">{ex.translation_notice}</Note>}
 
       {tab === "summary" && (
         <div className="space-y-5" role="tabpanel">
@@ -92,6 +95,14 @@ export default function ReportPage() {
               <p className="text-muted">{uncertain.summary}</p></div>
             <AudioPlayer key={`${lang}:${ex.spoken_text.length}`} text={ex.spoken_text} language={ex.speech_language} />
           </section>
+
+          {printed.map((s) => (
+            <section key={s.id} className="card space-y-3" aria-label={s.title}><h2>{s.title}</h2>
+              {s.summary && <p className="text-sm text-muted">{s.summary}</p>}
+              <ul className="space-y-2">{s.items.map((it, i) => (
+                <li key={i} className="rounded-2xl bg-sage p-3"><p className="whitespace-pre-wrap">{it.text}</p>
+                  {it.citation?.kind === "document" && it.citation.page ? <button className="btn btn-sm mt-2" onClick={() => { setPage(it.citation!.page!); setTab("detail"); }}>See original page {it.citation.page}</button> : null}</li>))}</ul>
+            </section>))}
 
           <section className="card space-y-3" aria-label="Key results preview"><div className="flex items-center justify-between"><h2>Key Results</h2><button className="font-semibold text-teal" onClick={() => setTab("results")}>View all results</button></div>
             {d.fields.length === 0 ? <p className="text-muted">We couldn&apos;t confidently read individual results from this document. Please check the original or upload a clearer copy.</p>

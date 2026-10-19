@@ -30,6 +30,13 @@ repository; the independent audit with per-item classification is **`PROJECT_GAP
 ## Phase 2 (2026-10-18): production data architecture, security and privacy
 Backend suite on SQLite: **622 passed, 4 skipped** (16 min 34 s); PostgreSQL-mode run of the 21 data-touching files: 449 passed, 2 skipped, 2 failed from test-order pollution (details and the fix in `docs/STATUS_REPORT.md` section 0). Delivered: validated configuration, PostgreSQL layer with migrations 0001-0005 and forced row-level security, Supabase account lifecycle, authorization/IDOR tests, consent history, private storage with a scanner interface, retention framework, encrypted PostgreSQL backups with verified restore, request limits and SSRF guard. The migrations were dry-run (rolled back) on the real Supabase project and not applied. See `docs/PHASE_2_IMPLEMENTATION.md`.
 
+## Phase 3 (2026-10-19): unified AI engine, document and image intelligence, secure agent, voice and model lifecycle
+Backend suite on SQLite: **1045 passed, 4 skipped, 0 failed** (14 min 56 s; the skips are the live-Supabase tests, no credentials supplied); PostgreSQL-mode run of 34 data-touching files: **761 passed, 2 skipped, 0 failed** (8 min 13 s); frontend `tsc`/`eslint`/`next build` clean; browser checks `e2e/phase3-ui.mjs` 39/39 and `e2e/p11-a11y.mjs` 65/65. Delivered: one AI engine with honest availability and approval states; a shared safety policy; image routing and quality v2; dataset registry, safe importer and resource-planned training
+(nothing trained or downloaded); document provenance, header facts, medication parser, cited and verified explanations; grounded retrieval with prompt-injection defence; a typed-tool agent where every change needs the
+person's confirmation; bounded speech recognition, spoken text that matches the screen, and plain statements of what was checked per language; a model lifecycle with known-good fallback and rollback; the screens for
+all of it. **No model is approved or active, nothing is clinically validated, and every evaluation used synthetic or public-research data.** Re-running the extraction evaluation found and fixed a real defect (laboratory
+rows starting with "Serum" were dropped). Details, figures and open gaps: `docs/STATUS_REPORT.md` section 00 and `docs/PHASE_3_AI_ENGINE.md`. Migrations 0006-0009 are not applied to the real Supabase project.
+
 ## Implemented this phase (earlier phase)
 Inference gateway `/api/v1` (jobs, SSE, idempotency, back-pressure, health/ready, metrics, rate limits); licence-gated dataset acquisition with official checksums;
 label-conflict-aware import; patient-level stratified training with baselines, calibration, bootstrap CIs, subgroup/robustness/OOD evaluation, release gates;

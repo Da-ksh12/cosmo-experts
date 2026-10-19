@@ -121,10 +121,14 @@ export default function Admin() {
           <strong>{m.task} · {m.model_id.slice(0, 8)}</strong>
           <ModelCard m={m} />
           {m.approval?.missing_requirements.length ? <p className="text-sm">Missing for approval: {m.approval.missing_requirements.join(", ")}{m.approval.failed_evaluation_gates?.length ? ` · failed evaluation gates: ${m.approval.failed_evaluation_gates.join(", ")}` : ""}</p> : null}
+          {m.approval?.refused_because?.length ? <p className="text-sm text-[var(--bad-ink)]">Approval refused: {m.approval.refused_because.join("; ")}</p> : null}
           <div className="flex flex-wrap gap-2">
-            <button className="btn" onClick={() => { const ok = REQS.filter((r) => confirm(`Has this been completed and documented?\n${r}`)); const use = prompt("Narrow intended use:") ?? ""; void act(() => post(`/api/admin/models/${m.model_id}/approval`, { intended_use: use, requirements: Object.fromEntries(REQS.map((r) => [r, ok.includes(r)])) })); }}>Record approval review</button>
+            <button className="btn" onClick={() => { const ok = REQS.filter((r) => confirm(`Has this been completed and documented?\n${r}`)); const use = prompt("Narrow intended use:") ?? ""; const by = ok.includes("clinical_signoff_recorded") ? (prompt("User id of the VERIFIED clinician who signed off:") ?? "") : ""; void act(() => post(`/api/admin/models/${m.model_id}/approval`, { intended_use: use, requirements: Object.fromEntries(REQS.map((r) => [r, ok.includes(r)])), clinical_signoff_by: by || null })); }}>Record approval review</button>
+            <button className="btn" onClick={() => act(() => post(`/api/admin/models/${m.model_id}/evaluate`))}>Run evaluation gates</button>
             <button className="btn" onClick={() => act(() => post(`/api/admin/models/${m.model_id}/deploy`))}>Deploy</button>
-            <button className="btn" onClick={() => act(() => post(`/api/admin/tasks/${m.task}/rollback`))}>Roll back task</button></div>
+            <button className="btn" title="A technical rollback changes which model answers from now on. It does not change results already shown." onClick={() => { const reason = prompt("Reason for the technical rollback (results already shown are not changed):"); if (reason !== null) void act(() => post(`/api/admin/tasks/${m.task}/rollback`, { reason })); }}>Roll back task (technical)</button>
+            <button className="btn" onClick={() => { const d = prompt("Describe the possible clinical problem with this model's output:"); if (d && d.trim().length >= 3) void act(() => post(`/api/admin/models/${m.model_id}/clinical-issue`, { description: d.trim() })); }}>Report clinical issue</button>
+            <button className="btn" onClick={() => { const reason = prompt("Why is this model being deprecated?"); if (reason !== null) void act(() => post(`/api/admin/models/${m.model_id}/deprecate`, { reason })); }}>Deprecate</button></div>
         </div>))}
       </section>
 

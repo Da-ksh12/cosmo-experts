@@ -109,7 +109,8 @@ written by one author; real patients will phrase things differently. English onl
   an unapproved request falls back to the rules and the response says so.
 * **Model-drafted answers (`COSMO_ASSISTANT_MODE=llm`)** no longer switch on by environment variable alone. They need an evaluation record meeting `ANSWER_GATES` (≥100 questions; support rate
   ≥0.90; correct-after-verifier ≥0.80; correct source ≥0.80; wrongly-answered unanswerable ≤5%; zero injection leaks) plus an approval. **Qwen2.5-1.5B fails**: 34 questions, claim support 0.394,
-  answerable correct 0.2, 2 of 6 unanswerable wrongly answered, correct source 0.4 (`docs/eval/llm_qwen2.5-1.5b-instruct-q4_k_m.json`). The assistant says `llm_mode: not_enabled`.
+  answerable correct 0.2, 2 of 6 unanswerable wrongly answered, correct source 0.4 (`docs/eval/llm_qwen2.5-1.5b-instruct-q4_k_m.json`, recorded on 2026-10-17, before this phase changed how retrieved text is
+  delimited in the prompt; not re-run, because it fails by a wide margin and the model is off). The assistant says `llm_mode: not_enabled`.
 * The local model's per-request state is reset before every generation, so one person's prompt prefix is never reused for another's and answers are reproducible.
 
 ## 8. Evaluation results (`docs/eval/agent.json`, synthetic, 164 intent utterances)
@@ -130,7 +131,10 @@ written by one author; real patients will phrase things differently. English onl
 * Intent accuracy is ~90% on one fresh set of 39 (see section 6), English only. There is no multi-turn memory: each turn stands alone (this also keeps history from becoming an attack path).
 * Patients only: there is no clinician or administrator agent. No tool deletes anything.
 * The measurements concern synthetic people and documents; nothing here is validated on real patients or real attackers.
-* Not driven in a browser: the frontend has no agent screen yet (API only).
+* The Ask screen has a small assistant-actions card (`frontend/components/AgentActions.tsx`): quick actions, a text box, answers whose sources link to the report page, and proposed changes shown with
+  "Yes, do this" / "No, don't". Driven in a real browser (`e2e/phase3-ui.mjs`): a proposal alone notifies nobody; cancelling changes nothing and leaves nothing pending; confirming asks the clinic exactly
+  once; an urgent message and a request for a diagnosis or medicine offer no action; axe finds no WCAG A/AA violation and there is no horizontal overflow at 390 px. The card shows the latest answer only (no
+  conversation view) and does not list proposals left over from earlier requests (they expire after 15 minutes).
 
 ## 10. Operating notes
 

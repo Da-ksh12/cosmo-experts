@@ -1,6 +1,6 @@
 {
   "suite": "a11y",
-  "when": "2026-10-18T06:58:54.777Z",
+  "when": "2026-10-19T08:48:50.483Z",
   "passed": 65,
   "failed": 0,
   "rows": [
@@ -26,7 +26,7 @@
     },
     {
       "pass": true,
-      "check": "axe: patient1 /reports (desktop) has no WCAG A/AA violations (23 rules passed)",
+      "check": "axe: patient1 /reports (desktop) has no WCAG A/AA violations (26 rules passed)",
       "detail": []
     },
     {
@@ -41,7 +41,7 @@
     },
     {
       "pass": true,
-      "check": "axe: patient1 /history (desktop) has no WCAG A/AA violations (27 rules passed)",
+      "check": "axe: patient1 /history (desktop) has no WCAG A/AA violations (29 rules passed)",
       "detail": []
     },
     {
@@ -61,7 +61,7 @@
     },
     {
       "pass": true,
-      "check": "axe: patient1 /reports (390 px) has no WCAG A/AA violations (24 rules passed)",
+      "check": "axe: patient1 /reports (390 px) has no WCAG A/AA violations (27 rules passed)",
       "detail": []
     },
     {
@@ -76,7 +76,7 @@
     },
     {
       "pass": true,
-      "check": "axe: patient1 /history (390 px) has no WCAG A/AA violations (28 rules passed)",
+      "check": "axe: patient1 /history (390 px) has no WCAG A/AA violations (30 rules passed)",
       "detail": []
     },
     {
@@ -86,32 +86,32 @@
     },
     {
       "pass": true,
-      "check": "axe: doctor1 /clinic (desktop) has no WCAG A/AA violations (26 rules passed)",
+      "check": "axe: doctor1 /clinic (desktop) has no WCAG A/AA violations (28 rules passed)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "axe: doctor1 /clinic (390 px) has no WCAG A/AA violations (26 rules passed)",
+      "check": "axe: doctor1 /clinic (390 px) has no WCAG A/AA violations (29 rules passed)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "axe: admin1 /admin (desktop) has no WCAG A/AA violations (27 rules passed)",
+      "check": "axe: admin1 /admin (desktop) has no WCAG A/AA violations (29 rules passed)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "axe: admin1 /clinic (desktop) has no WCAG A/AA violations (26 rules passed)",
+      "check": "axe: admin1 /clinic (desktop) has no WCAG A/AA violations (28 rules passed)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "axe: admin1 /admin (390 px) has no WCAG A/AA violations (28 rules passed)",
+      "check": "axe: admin1 /admin (390 px) has no WCAG A/AA violations (30 rules passed)",
       "detail": []
     },
     {
       "pass": true,
-      "check": "axe: admin1 /clinic (390 px) has no WCAG A/AA violations (26 rules passed)",
+      "check": "axe: admin1 /clinic (390 px) has no WCAG A/AA violations (29 rules passed)",
       "detail": []
     },
     {
@@ -217,7 +217,7 @@
     },
     {
       "pass": true,
-      "check": "axe: clinic knowledge-base review dialog open has no WCAG A/AA violations (27 rules passed)",
+      "check": "axe: clinic knowledge-base review dialog open has no WCAG A/AA violations (29 rules passed)",
       "detail": []
     },
     {

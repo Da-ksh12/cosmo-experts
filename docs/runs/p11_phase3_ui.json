@@ -1,0 +1,192 @@
+{
+  "suite": "phase3_ui",
+  "when": "2026-10-19T08:46:45.166Z",
+  "passed": 39,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "the uploaded report is listed for the patient"
+    },
+    {
+      "pass": true,
+      "check": "the explanation keeps its section order: found, uncertain, questions first",
+      "detail": [
+        "found",
+        "uncertain",
+        "questions",
+        "facts",
+        "medicines"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "the report screen shows the \"Dates and details printed on the document\" section"
+    },
+    {
+      "pass": true,
+      "check": "...and its statement: Laboratory or provider, as printed: \"Cosmo Test Laboratory\"."
+    },
+    {
+      "pass": true,
+      "check": "...and its statement: Report date, as printed: \"12/03/2025\". This date can be read"
+    },
+    {
+      "pass": true,
+      "check": "...and its statement: Clinician named in the document, as printed: \"Dr. A Example,"
+    },
+    {
+      "pass": true,
+      "check": "...and its statement: Allergy statement, as printed: \"NKDA\". Source: page 1."
+    },
+    {
+      "pass": true,
+      "check": "...and its statement: Follow-up statement, as printed: \"Follow up after 2 weeks\". "
+    },
+    {
+      "pass": true,
+      "check": "the report screen shows the \"Medicines listed on the document\" section"
+    },
+    {
+      "pass": true,
+      "check": "...and its statement: The document lists: \"Tab Metformin 500 mg BD after food x 5 "
+    },
+    {
+      "pass": true,
+      "check": "the English view carries no unreviewed-translation notice"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /reports/[id] (English) has no WCAG A/AA violations (27 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "the Hindi view says plainly that its wording has not been reviewed"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /reports/[id] (Hindi) has no WCAG A/AA violations (27 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "/reports/[id] at 390 px (Hindi): no horizontal overflow"
+    },
+    {
+      "pass": true,
+      "check": "a read-only request answers from the person's own records"
+    },
+    {
+      "pass": true,
+      "check": "a read-only answer offers no action to confirm"
+    },
+    {
+      "pass": true,
+      "check": "a proposal alone notified nobody"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask with a pending proposal has no WCAG A/AA violations (24 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "cancelling changed nothing"
+    },
+    {
+      "pass": true,
+      "check": "no proposal is left pending after cancelling"
+    },
+    {
+      "pass": true,
+      "check": "confirming asked the clinic exactly once",
+      "detail": {
+        "before": 1,
+        "after": 2
+      }
+    },
+    {
+      "pass": true,
+      "check": "an urgent message offers no action"
+    },
+    {
+      "pass": true,
+      "check": "a request for a diagnosis or a medicine is refused and offers no action"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask after a refusal has no WCAG A/AA violations (24 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "/ask at 390 px: no horizontal overflow"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask (390 px) has no WCAG A/AA violations (24 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "a spoken question arrives as text in the question box (8 of 8 words)",
+      "detail": "what does my hemoglobin results say about my report?"
+    },
+    {
+      "pass": true,
+      "check": "...with the standing request to check the words before sending"
+    },
+    {
+      "pass": true,
+      "check": "...in a box the person can correct before pressing Send (nothing is sent by itself)"
+    },
+    {
+      "pass": true,
+      "check": "silence is reported as no speech and no words are invented"
+    },
+    {
+      "pass": true,
+      "check": "an imported model is registered through the administrator API",
+      "detail": {
+        "model_id": "9e06626abc154b0ebeb47ec0cebbe5f4",
+        "state": "imported",
+        "artifact_sha256_prefix": "3aef4a3810acbf46"
+      }
+    },
+    {
+      "pass": true,
+      "check": "the administrator screen lists the imported model with its lifecycle state instead of failing"
+    },
+    {
+      "pass": true,
+      "check": "...and says plainly that nothing has been evaluated"
+    },
+    {
+      "pass": true,
+      "check": "axe: admin1 /admin with an imported model has no WCAG A/AA violations (29 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "claiming every requirement does not approve a model that fails the gates; the reasons are on screen"
+    },
+    {
+      "pass": true,
+      "check": "deploying a model that is not approved is refused, with the reason on screen"
+    },
+    {
+      "pass": true,
+      "check": "the registry still holds it as research-only, not active, with the refusal recorded",
+      "detail": {
+        "status": "research_only",
+        "state": "evaluation_failed"
+      }
+    },
+    {
+      "pass": true,
+      "check": "no page errors and no 5xx responses in the whole run",
+      "detail": []
+    }
+  ]
+}
