@@ -535,7 +535,9 @@ GATES = {  # evaluation gates to be STAGED (not to be approved: approval additio
     "critical_class_min_sensitivity": 0.80, "critical_class_min_test_images": 20, "ood_min_auroc": 0.90, "dark_skin_min_test_images": 50,
 }
 # Task-specific safety definitions. For lesion classification, missing a malignant class is the costly error.
-TASK_SAFETY = {"lesion_classification_research": {"critical_classes": ["MEL", "BCC", "SCC"]}}
+TASK_SAFETY = {"lesion_classification_research": {"critical_classes": ["MEL", "BCC", "SCC"]},
+               "dermoscopy_lesion_research": {"critical_classes": ["MEL", "BCC", "SCC"]},
+               "skin_condition_research": {"critical_classes": []}}          # no class is singled out, but the skin-tone and out-of-distribution gates still apply
 
 
 def evaluate_gates(card: dict) -> list[dict]:
@@ -563,7 +565,8 @@ def evaluate_gates(card: dict) -> list[dict]:
                 bad.append(f"{c}: only {m.get('n', 0)} test images")
             elif (m.get("sensitivity") or 0) < GATES["critical_class_min_sensitivity"]:
                 bad.append(f"{c}: sensitivity {m.get('sensitivity')}")
-        checks.append(("critical_class_sensitivity", not bad, "; ".join(bad) if bad else f"all of {crit} >= {GATES['critical_class_min_sensitivity']}"))
+        if crit:
+            checks.append(("critical_class_sensitivity", not bad, "; ".join(bad) if bad else f"all of {crit} >= {GATES['critical_class_min_sensitivity']}"))
         sub = (t.get("subgroups_by_fitzpatrick") or {}).get("4-6", {})
         checks.append(("dark_skin_evaluated", (sub.get("n") or 0) >= GATES["dark_skin_min_test_images"], f"Fitzpatrick 4-6 test images: {sub.get('n', 0)} (need >= {GATES['dark_skin_min_test_images']})"))
         ood = t.get("ood", {}).get("auroc_confidence_separates_in_vs_out")

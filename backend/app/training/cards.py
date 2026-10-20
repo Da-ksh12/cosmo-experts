@@ -129,6 +129,19 @@ def model_card_markdown(card: dict, gates: list[dict], lifecycle: str = "", evid
          f"- n={t.get('n')}; accuracy {t.get('accuracy')}; macro-F1 {t.get('macro_f1')} (95 % CI {t.get('macro_f1_ci95')}); balanced accuracy {t.get('balanced_accuracy')}; ECE {t.get('ece')}"]
     if t.get("per_class"):
         L += ["", "| class | n | sensitivity | specificity | precision |", "|---|---|---|---|---|"] + [f"| {c} | {m['n']} | {m.get('sensitivity')} | {m.get('specificity')} | {m.get('precision')} |" for c, m in t["per_class"].items()]
+    if card.get("sources"):                                                   # models trained on several datasets (Phase 5): every source, its role and its licence
+        L += ["", "## Data sources"] + [f"- {s['name']}: {s['dataset']} v{s['version']}, {s['images']} images, {'external test only (never trained on or selected with)' if s['role'] == 'external' else 'train/val/test'}; licence "
+                                          f"{(s.get('license') or {}).get('official_license_name') or (s.get('license') or {}).get('spdx')}; attribution: {(s.get('license') or {}).get('attribution')}" for s in card["sources"]]
+        if card.get("near_duplicates_removed_before_evaluation"):
+            L.append(f"- Near-duplicates of a training image removed before any metric was computed: {card['near_duplicates_removed_before_evaluation']}")
+    if len(t.get("by_source") or {}) > 1:
+        L += ["", "## Held-out test by source"] + [f"- {k}: n={v['n']}, accuracy {v['accuracy']}, balanced accuracy {v['balanced_accuracy']}{'' if v['reliable'] else ' (too few images to rely on)'}" for k, v in t["by_source"].items()]
+    if t.get("external"):
+        L += ["", "## External validation (scored once, after the model was fixed)"] + [
+            f"- {k}: n={v['n']}, macro-F1 {v['macro_f1']} (95 % CI {v.get('macro_f1_ci95')}), balanced accuracy {v['balanced_accuracy']}, accuracy {v['accuracy']}" for k, v in t["external"].items()]
+    if t.get("case_level"):
+        cl = t["case_level"]
+        L += ["", "## Case level", f"- {cl['unit']}: n={cl['n']}, accuracy {cl['accuracy']}, macro-F1 {cl['macro_f1']} (95 % CI {cl['macro_f1_ci95']}), balanced accuracy {cl['balanced_accuracy']}"]
     L += ["", "## Baselines"] + [f"- {k}: macro-F1 {v.get('macro_f1')}" for k, v in card.get("baselines", {}).items()]
     L += ["", "## Release gates (unchanged thresholds)"] + [f"- [{'x' if g['passed'] else ' '}] {g['gate']}: {g['detail']}" for g in gates]
     L += ["", "## Limitations"] + [f"- {x}" for x in card.get("limitations", [])] + ["- Previously reported results were inadequate for clinical release; see the gate table above."]

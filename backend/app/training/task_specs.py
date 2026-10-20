@@ -44,8 +44,13 @@ SPECS: dict[str, TaskSpec] = {s.task_id: s for s in (
              "scalp photograph", 100, 100, False, _COMMON, (), notes="Cause of hair loss cannot be determined from a photograph; hair-type-stratified evaluation required."),
     TaskSpec("scalp_findings", "Classify visible scalp findings on a scalp (ideally trichoscopy) photograph.", "classification", None, "scalp photograph", 100, 100, False, _COMMON, ()),
     TaskSpec("lesion_classification_research", "Research benchmark: classify a skin lesion photograph into the dataset's diagnostic categories. Never offered to patients.", "classification", None,
-             "lesion photograph", 20, 200, True, _COMMON + ("critical_class_sensitivity",), ("pad-ufes-20", "ham10000", "ddi", "fitzpatrick17k"), critical_classes=("MEL", "BCC", "SCC"),
+             "lesion photograph", 20, 200, True, _COMMON + ("critical_class_sensitivity",), ("pad-ufes-20", "isic-clinical"), critical_classes=("MEL", "BCC", "SCC"),
              notes="Previously trained models failed their release gates; this task stays research-only."),
+    TaskSpec("dermoscopy_lesion_research", "Research benchmark: classify a dermoscopic image into eight diagnostic classes. Never offered to patients.", "classification",
+             ("NV", "MEL", "BCC", "SCC", "AK", "BKL", "DF", "VASC"), "dermoscopic image", 100, 200, True, _COMMON + ("critical_class_sensitivity", "external_validation"), ("isic-dermoscopy", "derm12345"),
+             critical_classes=("MEL", "BCC", "SCC"), notes="Dermoscopy only; Fitzpatrick type is recorded for a minority of the images, so skin-tone results rest on that subset."),
+    TaskSpec("skin_condition_research", "Research benchmark: classify a smartphone photograph into common skin conditions, reported by skin tone. Never offered to patients.", "classification", None,
+             "photograph (cases are split as a whole)", 100, 100, True, _COMMON, ("scin",), notes="Closed set with no 'other' class; labels are dermatologist opinions, not biopsy results."),
 )}
 
 

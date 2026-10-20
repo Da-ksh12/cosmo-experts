@@ -89,6 +89,10 @@ def validate_dataset(spec: task_specs.TaskSpec, manifest: dict, seed: int = 17) 
     small = {c: n for c, n in counts.items() if n < spec.min_images_per_class}
     if small:
         problems.append(f"Classes with fewer than {spec.min_images_per_class} images: {small}.")
+    anonymous = sum(1 for e in entries if "nogroup" in str(e.get("label_provenance", "")))
+    if anonymous:                                   # this pipeline splits by group_id; an image with no real identifier is its own "subject", so one patient's images could land in train AND test
+        problems.append(f"{anonymous} images have no patient or lesion identifier, so subject-level splits cannot be guaranteed here. Use the Phase 5 pipeline (scripts.phase5_train), "
+                        "which trains on such images but keeps them out of validation and test.")
     subjects = {e["group_id"] for e in entries}
     if len(subjects) < spec.min_subjects:
         problems.append(f"Only {len(subjects)} distinct subjects (need at least {spec.min_subjects}); results would not generalise across people.")

@@ -1,0 +1,1116 @@
+{
+ "model_id": "0e29da33555a4a7b94399a3084e1da94",
+ "task": "dermoscopy_lesion_research",
+ "experiment": "derm-isic-derm12345",
+ "architecture": "dinov2_vit_s14_frozen + logistic_regression_probe",
+ "feature_kind": "cls+mean",
+ "backbone": "dinov2_s14-04d27f3400d0",
+ "classes": [
+  "AK",
+  "BCC",
+  "BKL",
+  "DF",
+  "MEL",
+  "NV",
+  "SCC",
+  "VASC"
+ ],
+ "dataset_id": "isic-dermoscopy",
+ "dataset_version_id": "e38b2d7da03b4e8b850ede7940c3ede5",
+ "dataset_version": 1,
+ "sources": [
+  {
+   "name": "isic-dermoscopy",
+   "role": "train",
+   "dataset": "isic-dermoscopy",
+   "version_id": "e38b2d7da03b4e8b850ede7940c3ede5",
+   "version": 1,
+   "manifest_sha256": "4a347a6d78b6ad769fe71fb5a38df49316d8786bf8cb826578dd34c5fda823c2",
+   "images": 11974,
+   "split_policy": "random-group",
+   "unknown_group_train_only": true,
+   "license": {
+    "dataset": "isic-dermoscopy",
+    "version": 1,
+    "spdx": "LicenseRef-ISIC-Contributor-CC0-or-CC-BY",
+    "official_license_name": "Per image: CC-0 or CC-BY (contributor licence), version of CC-BY not stated by ISIC",
+    "terms_snapshot_hash": "be37d38698d720f4b51a821d15bec143a0f5d37faf0cb802ac00cf8215870584",
+    "source": "https://api.isic-archive.com/api/v2/",
+    "attribution": "Per-image attribution is recorded in attribution.csv and must be kept with any redistribution."
+   }
+  },
+  {
+   "name": "derm12345",
+   "role": "train",
+   "dataset": "derm12345",
+   "version_id": "45ae454b41ba4a339b4950dd6b2d4e39",
+   "version": 1,
+   "manifest_sha256": "af2a0a3df23b0493ee26765befea468ebc1d668988e284c0fb18d4facbe7c522",
+   "images": 4821,
+   "split_policy": "official",
+   "unknown_group_train_only": false,
+   "license": {
+    "dataset": "derm12345",
+    "version": 1,
+    "spdx": "CC-BY-4.0",
+    "official_license_name": "CC BY 4.0",
+    "terms_snapshot_hash": "49c8dd1037ad67b84bd195b05138202aef1d267772c400f951658e6bc7398bea",
+    "source": "https://doi.org/10.7910/DVN/DAXZ7P",
+    "attribution": "Cite Yilmaz et al., DERM12345, Harvard Dataverse, doi:10.7910/DVN/DAXZ7P."
+   }
+  }
+ ],
+ "seed": 17,
+ "device": "cpu",
+ "image_size": 224,
+ "finetune": "none (frozen backbone)",
+ "epochs": 0,
+ "lr": null,
+ "batch": null,
+ "selected_C": 0.003,
+ "best_val_macro_f1": 0.5103,
+ "model_selection": [
+  {
+   "feature_kind": "cls",
+   "C": 0.1,
+   "val_macro_f1": 0.4736
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.1,
+   "val_macro_f1": 0.4935
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.003,
+   "val_macro_f1": 0.5103
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.01,
+   "val_macro_f1": 0.5007
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.03,
+   "val_macro_f1": 0.4911
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.3,
+   "val_macro_f1": 0.4815
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 1.0,
+   "val_macro_f1": 0.4814
+  }
+ ],
+ "split_sizes": {
+  "train": 12338,
+  "val": 1680,
+  "test": 2053
+ },
+ "patients_per_split": {
+  "train": 5922,
+  "val": 766,
+  "test": 1008
+ },
+ "class_counts_per_split": {
+  "train": {
+   "AK": 416,
+   "BCC": 1605,
+   "BKL": 1973,
+   "DF": 190,
+   "MEL": 2788,
+   "NV": 4216,
+   "SCC": 889,
+   "VASC": 261
+  },
+  "val": {
+   "AK": 62,
+   "BCC": 208,
+   "BKL": 245,
+   "DF": 31,
+   "MEL": 276,
+   "NV": 708,
+   "SCC": 106,
+   "VASC": 44
+  },
+  "test": {
+   "AK": 66,
+   "BCC": 222,
+   "BKL": 302,
+   "DF": 45,
+   "MEL": 318,
+   "NV": 911,
+   "SCC": 121,
+   "VASC": 68
+  }
+ },
+ "split_notes": {
+  "isic-dermoscopy": {},
+  "derm12345": {
+   "patients_in_both_official_splits_moved_to_train": 1
+  }
+ },
+ "excluded_labels_not_in_class_set": {},
+ "near_duplicates_vs_train": {
+  "val": 0,
+  "test": 0
+ },
+ "near_duplicates_removed_before_evaluation": {
+  "val": 341,
+  "test": 383
+ },
+ "split_hash": "5bfdf94ca3f62f855e35b010d0622e48e6e6d0ff3cf70f3bb8146d534e45678e",
+ "pretrained_weights": "data/models/pretrained/dinov2_small/model.safetensors",
+ "pretrained_sha256": "04d27f3400d059fc0cfd7d17dd1909a75bf3ea8fb3eeb48b97cb99e57ee20081",
+ "pretrained_provenance": "{\"source\": \"https://huggingface.co/timm/vit_small_patch14_dinov2.lvd142m\", \"commit\": \"4610ca143709d58a633b6397a74412c2c3842454\", \"sha256\": \"04d27f3400d059fc0cfd7d17dd1909a75bf3ea8fb3eeb48b97cb99e57ee20081\", \"license_tags\": [\"license:apache-2.0\"], \"trained_on\": \"LVD-142M (Meta, self-supervised, curated web images); upstream data terms not independently reviewed\", \"architecture\": \"DINOv2 ViT-S/14 as published by timm\"}",
+ "baselines": {
+  "majority_class": {
+   "class": "NV",
+   "n": 2053,
+   "accuracy": 0.444,
+   "macro_f1": 0.077,
+   "balanced_accuracy": 0.125,
+   "macro_f1_ci95": [
+    0.074,
+    0.079
+   ],
+   "ece": 0.556
+  },
+  "dinov2_knn_cosine": {
+   "k": 5,
+   "n": 2053,
+   "accuracy": 0.554,
+   "macro_f1": 0.351,
+   "balanced_accuracy": 0.335,
+   "macro_f1_ci95": [
+    0.32,
+    0.38
+   ],
+   "ece": 0.138
+  },
+  "resnet18_frozen_features_logreg": {
+   "n": 2053,
+   "accuracy": 0.517,
+   "macro_f1": 0.405,
+   "balanced_accuracy": 0.458,
+   "macro_f1_ci95": [
+    0.381,
+    0.431
+   ],
+   "ece": 0.143,
+   "note": "ImageNet-1k weights: comparison only; their licence status for commercial use is unresolved"
+  }
+ },
+ "history": [],
+ "test_metrics": {
+  "n": 2053,
+  "accuracy": 0.586,
+  "macro_f1": 0.472,
+  "balanced_accuracy": 0.534,
+  "macro_f1_ci95": [
+   0.444,
+   0.497
+  ],
+  "balanced_accuracy_ci95": [
+   0.5,
+   0.565
+  ],
+  "ece": 0.047,
+  "per_class": {
+   "AK": {
+    "n": 66,
+    "sensitivity": 0.348,
+    "specificity": 0.946,
+    "precision": 0.177,
+    "auroc": 0.867,
+    "false_negatives": 43,
+    "false_positives": 107
+   },
+   "BCC": {
+    "n": 222,
+    "sensitivity": 0.495,
+    "specificity": 0.933,
+    "precision": 0.472,
+    "auroc": 0.908,
+    "false_negatives": 112,
+    "false_positives": 123
+   },
+   "BKL": {
+    "n": 302,
+    "sensitivity": 0.381,
+    "specificity": 0.915,
+    "precision": 0.436,
+    "auroc": 0.799,
+    "false_negatives": 187,
+    "false_positives": 149
+   },
+   "DF": {
+    "n": 45,
+    "sensitivity": 0.622,
+    "specificity": 0.954,
+    "precision": 0.231,
+    "auroc": 0.92,
+    "false_negatives": 17,
+    "false_positives": 93
+   },
+   "MEL": {
+    "n": 318,
+    "sensitivity": 0.503,
+    "specificity": 0.924,
+    "precision": 0.548,
+    "auroc": 0.873,
+    "false_negatives": 158,
+    "false_positives": 132
+   },
+   "NV": {
+    "n": 911,
+    "sensitivity": 0.728,
+    "specificity": 0.907,
+    "precision": 0.862,
+    "auroc": 0.92,
+    "false_negatives": 248,
+    "false_positives": 106
+   },
+   "SCC": {
+    "n": 121,
+    "sensitivity": 0.43,
+    "specificity": 0.955,
+    "precision": 0.377,
+    "auroc": 0.91,
+    "false_negatives": 69,
+    "false_positives": 86
+   },
+   "VASC": {
+    "n": 68,
+    "sensitivity": 0.765,
+    "specificity": 0.973,
+    "precision": 0.491,
+    "auroc": 0.958,
+    "false_negatives": 16,
+    "false_positives": 54
+   }
+  },
+  "confusion_matrix": [
+   [
+    23,
+    6,
+    12,
+    4,
+    9,
+    2,
+    10,
+    0
+   ],
+   [
+    40,
+    110,
+    13,
+    5,
+    13,
+    5,
+    32,
+    4
+   ],
+   [
+    26,
+    19,
+    115,
+    22,
+    38,
+    43,
+    17,
+    22
+   ],
+   [
+    2,
+    1,
+    0,
+    28,
+    2,
+    9,
+    1,
+    2
+   ],
+   [
+    22,
+    27,
+    38,
+    7,
+    160,
+    44,
+    19,
+    1
+   ],
+   [
+    5,
+    32,
+    77,
+    49,
+    63,
+    663,
+    2,
+    20
+   ],
+   [
+    12,
+    33,
+    9,
+    5,
+    5,
+    0,
+    52,
+    5
+   ],
+   [
+    0,
+    5,
+    0,
+    1,
+    2,
+    3,
+    5,
+    52
+   ]
+  ],
+  "classes": [
+   "AK",
+   "BCC",
+   "BKL",
+   "DF",
+   "MEL",
+   "NV",
+   "SCC",
+   "VASC"
+  ],
+  "subgroups_by_fitzpatrick": {
+   "1-2": {
+    "n": 102,
+    "accuracy": 0.5,
+    "balanced_accuracy": 0.47,
+    "reliable": true
+   },
+   "3": {
+    "n": 38,
+    "accuracy": 0.421,
+    "balanced_accuracy": 0.348,
+    "reliable": false
+   },
+   "4-6": {
+    "n": 4,
+    "accuracy": 0.25,
+    "balanced_accuracy": null,
+    "reliable": false
+   },
+   "NA": {
+    "n": 1909,
+    "accuracy": 0.595,
+    "balanced_accuracy": 0.536,
+    "reliable": true
+   }
+  },
+  "failure_cases": [
+   {
+    "file": "ISIC_4345168.jpg",
+    "true": "NV",
+    "predicted": "VASC",
+    "confidence": 0.977
+   },
+   {
+    "file": "DERM_275938.jpg",
+    "true": "NV",
+    "predicted": "DF",
+    "confidence": 0.969
+   },
+   {
+    "file": "ISIC_7636162.jpg",
+    "true": "MEL",
+    "predicted": "NV",
+    "confidence": 0.96
+   },
+   {
+    "file": "ISIC_0024008.jpg",
+    "true": "BCC",
+    "predicted": "AK",
+    "confidence": 0.938
+   },
+   {
+    "file": "DERM_169735.jpg",
+    "true": "BKL",
+    "predicted": "NV",
+    "confidence": 0.932
+   },
+   {
+    "file": "ISIC_7658729.jpg",
+    "true": "MEL",
+    "predicted": "NV",
+    "confidence": 0.915
+   },
+   {
+    "file": "ISIC_0011802.jpg",
+    "true": "MEL",
+    "predicted": "NV",
+    "confidence": 0.905
+   },
+   {
+    "file": "DERM_115836.jpg",
+    "true": "NV",
+    "predicted": "DF",
+    "confidence": 0.904
+   },
+   {
+    "file": "ISIC_0281631.jpg",
+    "true": "NV",
+    "predicted": "VASC",
+    "confidence": 0.902
+   },
+   {
+    "file": "DERM_812312.jpg",
+    "true": "VASC",
+    "predicted": "SCC",
+    "confidence": 0.898
+   },
+   {
+    "file": "DERM_966587.jpg",
+    "true": "BKL",
+    "predicted": "DF",
+    "confidence": 0.898
+   },
+   {
+    "file": "DERM_780613.jpg",
+    "true": "BKL",
+    "predicted": "NV",
+    "confidence": 0.893
+   },
+   {
+    "file": "ISIC_0021824.jpg",
+    "true": "SCC",
+    "predicted": "MEL",
+    "confidence": 0.889
+   },
+   {
+    "file": "DERM_638646.jpg",
+    "true": "NV",
+    "predicted": "BKL",
+    "confidence": 0.887
+   },
+   {
+    "file": "DERM_995418.jpg",
+    "true": "DF",
+    "predicted": "NV",
+    "confidence": 0.876
+   },
+   {
+    "file": "ISIC_3945700.jpg",
+    "true": "BKL",
+    "predicted": "SCC",
+    "confidence": 0.872
+   },
+   {
+    "file": "ISIC_7232860.jpg",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.87
+   },
+   {
+    "file": "DERM_862440.jpg",
+    "true": "NV",
+    "predicted": "DF",
+    "confidence": 0.87
+   },
+   {
+    "file": "ISIC_8904448.jpg",
+    "true": "NV",
+    "predicted": "VASC",
+    "confidence": 0.868
+   },
+   {
+    "file": "ISIC_1879385.jpg",
+    "true": "NV",
+    "predicted": "BKL",
+    "confidence": 0.867
+   },
+   {
+    "file": "DERM_589134.jpg",
+    "true": "NV",
+    "predicted": "BCC",
+    "confidence": 0.864
+   },
+   {
+    "file": "ISIC_9598230.jpg",
+    "true": "NV",
+    "predicted": "MEL",
+    "confidence": 0.863
+   },
+   {
+    "file": "ISIC_8733622.jpg",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.861
+   },
+   {
+    "file": "ISIC_0014877.jpg",
+    "true": "MEL",
+    "predicted": "NV",
+    "confidence": 0.858
+   },
+   {
+    "file": "DERM_708524.jpg",
+    "true": "NV",
+    "predicted": "SCC",
+    "confidence": 0.855
+   },
+   {
+    "file": "ISIC_9082696.jpg",
+    "true": "NV",
+    "predicted": "DF",
+    "confidence": 0.853
+   },
+   {
+    "file": "DERM_236170.jpg",
+    "true": "BKL",
+    "predicted": "NV",
+    "confidence": 0.851
+   },
+   {
+    "file": "ISIC_0022637.jpg",
+    "true": "BCC",
+    "predicted": "AK",
+    "confidence": 0.849
+   },
+   {
+    "file": "DERM_498194.jpg",
+    "true": "NV",
+    "predicted": "DF",
+    "confidence": 0.849
+   },
+   {
+    "file": "DERM_740007.jpg",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.845
+   },
+   {
+    "file": "DERM_985554.jpg",
+    "true": "BKL",
+    "predicted": "NV",
+    "confidence": 0.844
+   },
+   {
+    "file": "ISIC_0014539.jpg",
+    "true": "BKL",
+    "predicted": "AK",
+    "confidence": 0.84
+   },
+   {
+    "file": "ISIC_5719555.jpg",
+    "true": "MEL",
+    "predicted": "SCC",
+    "confidence": 0.832
+   },
+   {
+    "file": "DERM_672975.jpg",
+    "true": "NV",
+    "predicted": "VASC",
+    "confidence": 0.832
+   },
+   {
+    "file": "ISIC_0021699.jpg",
+    "true": "NV",
+    "predicted": "MEL",
+    "confidence": 0.831
+   },
+   {
+    "file": "ISIC_0022438.jpg",
+    "true": "MEL",
+    "predicted": "NV",
+    "confidence": 0.83
+   },
+   {
+    "file": "DERM_978486.jpg",
+    "true": "MEL",
+    "predicted": "SCC",
+    "confidence": 0.824
+   },
+   {
+    "file": "ISIC_0021539.jpg",
+    "true": "AK",
+    "predicted": "SCC",
+    "confidence": 0.823
+   },
+   {
+    "file": "ISIC_0638700.jpg",
+    "true": "MEL",
+    "predicted": "BCC",
+    "confidence": 0.822
+   },
+   {
+    "file": "ISIC_0022440.jpg",
+    "true": "MEL",
+    "predicted": "NV",
+    "confidence": 0.82
+   },
+   {
+    "file": "DERM_680922.jpg",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.82
+   },
+   {
+    "file": "ISIC_9341159.jpg",
+    "true": "MEL",
+    "predicted": "NV",
+    "confidence": 0.814
+   },
+   {
+    "file": "DERM_721428.jpg",
+    "true": "BKL",
+    "predicted": "NV",
+    "confidence": 0.811
+   },
+   {
+    "file": "ISIC_0021210.jpg",
+    "true": "NV",
+    "predicted": "MEL",
+    "confidence": 0.81
+   },
+   {
+    "file": "ISIC_6786198.jpg",
+    "true": "MEL",
+    "predicted": "BKL",
+    "confidence": 0.81
+   },
+   {
+    "file": "DERM_830142.jpg",
+    "true": "AK",
+    "predicted": "BCC",
+    "confidence": 0.802
+   },
+   {
+    "file": "ISIC_0021039.jpg",
+    "true": "BKL",
+    "predicted": "MEL",
+    "confidence": 0.797
+   },
+   {
+    "file": "ISIC_2122607.jpg",
+    "true": "NV",
+    "predicted": "MEL",
+    "confidence": 0.795
+   },
+   {
+    "file": "ISIC_5718895.jpg",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.795
+   },
+   {
+    "file": "DERM_812163.jpg",
+    "true": "BKL",
+    "predicted": "DF",
+    "confidence": 0.792
+   }
+  ],
+  "warnings": [],
+  "ece_uncalibrated": 0.038,
+  "temperature": 0.95,
+  "selective_prediction": [
+   {
+    "threshold": 0.0,
+    "coverage": 1.0,
+    "accuracy_on_accepted": 0.586
+   },
+   {
+    "threshold": 0.4,
+    "coverage": 0.812,
+    "accuracy_on_accepted": 0.651
+   },
+   {
+    "threshold": 0.5,
+    "coverage": 0.644,
+    "accuracy_on_accepted": 0.731
+   },
+   {
+    "threshold": 0.6,
+    "coverage": 0.495,
+    "accuracy_on_accepted": 0.801
+   },
+   {
+    "threshold": 0.7,
+    "coverage": 0.376,
+    "accuracy_on_accepted": 0.852
+   },
+   {
+    "threshold": 0.8,
+    "coverage": 0.266,
+    "accuracy_on_accepted": 0.916
+   },
+   {
+    "threshold": 0.9,
+    "coverage": 0.14,
+    "accuracy_on_accepted": 0.969
+   }
+  ],
+  "by_source": {
+   "derm12345": {
+    "n": 828,
+    "accuracy": 0.711,
+    "balanced_accuracy": 0.59,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 32,
+     "value": 0.625
+    },
+    "sensitivity_BCC": {
+     "n": 34,
+     "value": 0.5
+    },
+    "sensitivity_SCC": {
+     "n": 25,
+     "value": 0.56
+    }
+   },
+   "isic-dermoscopy": {
+    "n": 1225,
+    "accuracy": 0.501,
+    "balanced_accuracy": 0.495,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 286,
+     "value": 0.49
+    },
+    "sensitivity_BCC": {
+     "n": 188,
+     "value": 0.495
+    },
+    "sensitivity_SCC": {
+     "n": 96,
+     "value": 0.396
+    }
+   }
+  },
+  "by_identifier_known": {
+   "patient/lesion id known": {
+    "n": 2053,
+    "accuracy": 0.586,
+    "balanced_accuracy": 0.534,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 318,
+     "value": 0.503
+    },
+    "sensitivity_BCC": {
+     "n": 222,
+     "value": 0.495
+    },
+    "sensitivity_SCC": {
+     "n": 121,
+     "value": 0.43
+    }
+   }
+  },
+  "critical_class_sensitivity_by_fitzpatrick": {
+   "I-II": {
+    "n": 102,
+    "accuracy": 0.5,
+    "balanced_accuracy": 0.47,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 29,
+     "value": 0.517
+    },
+    "sensitivity_BCC": {
+     "n": 25,
+     "value": 0.52
+    },
+    "sensitivity_SCC": {
+     "n": 11,
+     "value": 0.455
+    }
+   },
+   "III": {
+    "n": 38,
+    "accuracy": 0.421,
+    "balanced_accuracy": 0.348,
+    "reliable": false,
+    "sensitivity_MEL": {
+     "n": 8,
+     "value": 0.125
+    },
+    "sensitivity_BCC": {
+     "n": 5,
+     "value": 0.4
+    }
+   },
+   "IV-VI": {
+    "n": 4,
+    "accuracy": 0.25,
+    "balanced_accuracy": null,
+    "reliable": false
+   },
+   "not recorded": {
+    "n": 1909,
+    "accuracy": 0.595,
+    "balanced_accuracy": 0.536,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 281,
+     "value": 0.512
+    },
+    "sensitivity_BCC": {
+     "n": 192,
+     "value": 0.495
+    },
+    "sensitivity_SCC": {
+     "n": 110,
+     "value": 0.427
+    }
+   }
+  },
+  "robustness_reference": {
+   "subset_n": 300,
+   "clean": {
+    "macro_f1": 0.418,
+    "balanced_accuracy": 0.489
+   },
+   "note": "the perturbations were applied to a fixed random subset of the test set; compare them with these clean figures on the same images, not with the whole-test-set figures"
+  },
+  "robustness": {
+   "blur": {
+    "macro_f1": 0.308,
+    "balanced_accuracy": 0.356,
+    "mean_confidence": 0.609
+   },
+   "dark": {
+    "macro_f1": 0.429,
+    "balanced_accuracy": 0.482,
+    "mean_confidence": 0.628
+   },
+   "jpeg20": {
+    "macro_f1": 0.351,
+    "balanced_accuracy": 0.412,
+    "mean_confidence": 0.61
+   },
+   "rotate90": {
+    "macro_f1": 0.465,
+    "balanced_accuracy": 0.542,
+    "mean_confidence": 0.601
+   }
+  },
+  "ood": {
+   "n": 19,
+   "source": "non-skin natural images (scikit-image sample set)",
+   "mean_confidence": 0.717,
+   "in_distribution_mean_confidence": 0.62,
+   "fraction_above_threshold": {
+    "0.5": 0.684,
+    "0.7": 0.632,
+    "0.9": 0.316
+   },
+   "in_distribution_fraction_above_threshold": {
+    "0.5": 0.644,
+    "0.7": 0.376,
+    "0.9": 0.14
+   },
+   "auroc_confidence_separates_in_vs_out": 0.374
+  }
+ },
+ "training_seconds": 306,
+ "artifact_path": "data/models/dermoscopy_lesion_research/0e29da33555a4a7b94399a3084e1da94.npz",
+ "artifact_sha256": "f9e6e22ce9ee3645c57f710ece4b5d6f87e2d924007c8729d2a55546d885945f",
+ "code_revision": "src-274ecbdf1224807a",
+ "dataset_license": {
+  "dataset": "isic-dermoscopy",
+  "version": 1,
+  "spdx": "LicenseRef-ISIC-Contributor-CC0-or-CC-BY",
+  "official_license_name": "Per image: CC-0 or CC-BY (contributor licence), version of CC-BY not stated by ISIC",
+  "terms_snapshot_hash": "be37d38698d720f4b51a821d15bec143a0f5d37faf0cb802ac00cf8215870584",
+  "source": "https://api.isic-archive.com/api/v2/",
+  "attribution": "Per-image attribution is recorded in attribution.csv and must be kept with any redistribution."
+ },
+ "dataset_licenses": [
+  {
+   "dataset": "isic-dermoscopy",
+   "version": 1,
+   "spdx": "LicenseRef-ISIC-Contributor-CC0-or-CC-BY",
+   "official_license_name": "Per image: CC-0 or CC-BY (contributor licence), version of CC-BY not stated by ISIC",
+   "terms_snapshot_hash": "be37d38698d720f4b51a821d15bec143a0f5d37faf0cb802ac00cf8215870584",
+   "source": "https://api.isic-archive.com/api/v2/",
+   "attribution": "Per-image attribution is recorded in attribution.csv and must be kept with any redistribution."
+  },
+  {
+   "dataset": "derm12345",
+   "version": 1,
+   "spdx": "CC-BY-4.0",
+   "official_license_name": "CC BY 4.0",
+   "terms_snapshot_hash": "49c8dd1037ad67b84bd195b05138202aef1d267772c400f951658e6bc7398bea",
+   "source": "https://doi.org/10.7910/DVN/DAXZ7P",
+   "attribution": "Cite Yilmaz et al., DERM12345, Harvard Dataverse, doi:10.7910/DVN/DAXZ7P."
+  }
+ ],
+ "intended_use": "Research only. Not clinically validated. Not offered to patients.",
+ "approval": null,
+ "evidence_class": "public_research_dataset",
+ "log": [
+  "22:04:25 derm-isic-derm12345: task dermoscopy_lesion_research; classes ['AK', 'BCC', 'BKL', 'DF', 'MEL', 'NV', 'SCC', 'VASC']; images train/val/test = [12338, 2021, 2436]; external {}",
+  "22:05:13 auto-tuned: {'threads': 2, 'batch': 8, 'images_per_s': 6.73} (free RAM 3319 MB); measured [{'threads': 2, 'batch': 8, 'images_per_s': 6.73}, {'threads': 2, 'batch': 16, 'images_per_s': 3.91}, {'threads': 3, 'batch': 8, 'images_per_s': 5.26}, {'threads': 3, 'batch': 16, 'images_per_s': 5.31}, {'threads': 4, 'batch': 8, 'images_per_s': 5.77}, {'threads': 4, 'batch': 16, 'images_per_s': 6.57}]",
+  "22:05:23 near-duplicates of a training image removed before evaluation: {'val': 341, 'test': 383}",
+  "22:05:26 feature kind cls, C=0.1: val macro-F1 0.474",
+  "22:05:31 feature kind cls+mean, C=0.1: val macro-F1 0.493",
+  "22:05:34 feature kind cls+mean, C=0.003: val macro-F1 0.510",
+  "22:05:37 feature kind cls+mean, C=0.01: val macro-F1 0.501",
+  "22:05:41 feature kind cls+mean, C=0.03: val macro-F1 0.491",
+  "22:05:46 feature kind cls+mean, C=0.3: val macro-F1 0.481",
+  "22:05:54 feature kind cls+mean, C=1.0: val macro-F1 0.481",
+  "22:06:05 baseline majority_class: macro-F1 0.077",
+  "22:06:05 baseline dinov2_knn_cosine: macro-F1 0.351",
+  "22:06:05 baseline resnet18_frozen_features_logreg: macro-F1 0.405"
+ ],
+ "limitations": [
+  "Dermoscopic images only.",
+  "Two centres; DERM12345 has no skin-tone labels.",
+  "ISIC images without a patient or lesion identifier are used for training only."
+ ],
+ "serving": {
+  "quality_gate": "none",
+  "warnings": [
+   "Trained on dermoscopic images only (ISIC contributor-licensed images, mostly lighter skin); a phone photograph is a different kind of image and this model must not be run on one.",
+   "Research only: not a diagnosis and never shown to patients."
+  ]
+ },
+ "resources": {
+  "hardware": {
+   "cpu": "Intel64 Family 6 Model 61 Stepping 4, GenuineIntel",
+   "logical_cpus": 4,
+   "ram_total_mb": 8488,
+   "gpu": "none"
+  },
+  "device": "cpu",
+  "autotune": {
+   "device": "cpu",
+   "free_ram_mb_at_start": 3319,
+   "cpu_logical": 4,
+   "chosen": {
+    "threads": 2,
+    "batch": 8,
+    "images_per_s": 6.73
+   },
+   "measured": [
+    {
+     "threads": 2,
+     "batch": 8,
+     "images_per_s": 6.73
+    },
+    {
+     "threads": 2,
+     "batch": 16,
+     "images_per_s": 3.91
+    },
+    {
+     "threads": 3,
+     "batch": 8,
+     "images_per_s": 5.26
+    },
+    {
+     "threads": 3,
+     "batch": 16,
+     "images_per_s": 5.31
+    },
+    {
+     "threads": 4,
+     "batch": 8,
+     "images_per_s": 5.77
+    },
+    {
+     "threads": 4,
+     "batch": 16,
+     "images_per_s": 6.57
+    }
+   ],
+   "image_size": 224,
+   "precision": "fp32 (mixed precision is only used on CUDA)"
+  },
+  "stage_seconds": {
+   "image_cache": 12.2,
+   "dinov2_features": 55.7,
+   "resnet18_features": 55.9,
+   "leakage_audit": 64.6,
+   "head": 98.5,
+   "baselines": 106.7,
+   "test_metrics": 107.4,
+   "robustness_ood": 305.5,
+   "external": 305.5
+  },
+  "peak_working_set_mb": 3347,
+  "artifact_bytes": 38526,
+  "backbone_bytes": 88240510,
+  "precision": "fp32 (mixed precision is only used on CUDA)",
+  "feature_store": "data/features (not in Git)"
+ },
+ "pipeline": {
+  "version": "featuretrain-1.0.0",
+  "run_id": "a7cbadb73d6e4ba6bc81c0792ecfa362",
+  "config_sha256": "32cf604e1a1adbf9a1c466efcd8314cdcf05823dd0abce54d72bcdc89ce398c8"
+ },
+ "gates": [
+  {
+   "gate": "licence_gate_passed",
+   "passed": true,
+   "detail": "licence LicenseRef-ISIC-Contributor-CC0-or-CC-BY with evidence hash"
+  },
+  {
+   "gate": "min_test_images",
+   "passed": true,
+   "detail": "test n=2053 (need >= 200)"
+  },
+  {
+   "gate": "no_near_duplicates_in_test",
+   "passed": true,
+   "detail": "near-duplicates test/train: 0"
+  },
+  {
+   "gate": "beat_baselines_macro_f1",
+   "passed": true,
+   "detail": "macro-F1 0.472 vs best baseline 0.405"
+  },
+  {
+   "gate": "improvement_supported_by_ci",
+   "passed": true,
+   "detail": "95% CI lower bound 0.444 must exceed the best baseline 0.405"
+  },
+  {
+   "gate": "max_ece_calibrated",
+   "passed": true,
+   "detail": "ECE 0.047 (limit 0.15)"
+  },
+  {
+   "gate": "robustness_report_present",
+   "passed": true,
+   "detail": "robustness table present"
+  },
+  {
+   "gate": "subgroup_report_present",
+   "passed": true,
+   "detail": "Fitzpatrick subgroup table present"
+  },
+  {
+   "gate": "critical_class_sensitivity",
+   "passed": false,
+   "detail": "MEL: sensitivity 0.503; BCC: sensitivity 0.495; SCC: sensitivity 0.43"
+  },
+  {
+   "gate": "dark_skin_evaluated",
+   "passed": false,
+   "detail": "Fitzpatrick 4-6 test images: 4 (need >= 50)"
+  },
+  {
+   "gate": "ood_detection",
+   "passed": false,
+   "detail": "confidence separates lesion from non-lesion images with AUROC 0.374 (need >= 0.9)"
+  }
+ ],
+ "lifecycle_state": "experimental"
+}

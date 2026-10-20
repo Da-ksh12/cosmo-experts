@@ -1,0 +1,1015 @@
+{
+ "model_id": "c128eb967c3f481bb25e8d9adbb71a43",
+ "task": "lesion_classification_research",
+ "experiment": "clinical-pad-only",
+ "architecture": "dinov2_vit_s14_frozen + logistic_regression_probe",
+ "feature_kind": "cls",
+ "backbone": "dinov2_s14-04d27f3400d0",
+ "classes": [
+  "ACK",
+  "BCC",
+  "MEL",
+  "NEV",
+  "SCC",
+  "SEK"
+ ],
+ "dataset_id": "pad-ufes-20",
+ "dataset_version_id": "c69a778ba6f243fe839ac2dd0c182d0c",
+ "dataset_version": 2,
+ "sources": [
+  {
+   "name": "pad-ufes-20",
+   "role": "train",
+   "dataset": "pad-ufes-20",
+   "version_id": "c69a778ba6f243fe839ac2dd0c182d0c",
+   "version": 2,
+   "manifest_sha256": "2e332085a3f770d128303e0640c9316121bf83f31bcc76677ae860a57d11a6b2",
+   "images": 2271,
+   "split_policy": "random-group",
+   "unknown_group_train_only": false,
+   "license": {
+    "dataset": "pad-ufes-20",
+    "version": 2,
+    "spdx": "CC-BY-4.0",
+    "official_license_name": "CC BY 4.0",
+    "terms_snapshot_hash": "494df2235e4824fb69abe7e835721f6f3be78f35509b8ae8b4f6a4a797a5b841",
+    "source": "https://data.mendeley.com/datasets/zr7vgbcyr2",
+    "attribution": "Cite Pacheco et al. 2020."
+   }
+  }
+ ],
+ "seed": 17,
+ "device": "cpu",
+ "image_size": 224,
+ "finetune": "none (frozen backbone)",
+ "epochs": 0,
+ "lr": null,
+ "batch": null,
+ "selected_C": 0.03,
+ "best_val_macro_f1": 0.5858,
+ "model_selection": [
+  {
+   "feature_kind": "cls",
+   "C": 0.1,
+   "val_macro_f1": 0.5388
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.1,
+   "val_macro_f1": 0.538
+  },
+  {
+   "feature_kind": "cls",
+   "C": 0.003,
+   "val_macro_f1": 0.5435
+  },
+  {
+   "feature_kind": "cls",
+   "C": 0.01,
+   "val_macro_f1": 0.5746
+  },
+  {
+   "feature_kind": "cls",
+   "C": 0.03,
+   "val_macro_f1": 0.5858
+  },
+  {
+   "feature_kind": "cls",
+   "C": 0.3,
+   "val_macro_f1": 0.5165
+  },
+  {
+   "feature_kind": "cls",
+   "C": 1.0,
+   "val_macro_f1": 0.5054
+  }
+ ],
+ "split_sizes": {
+  "train": 1621,
+  "val": 325,
+  "test": 325
+ },
+ "patients_per_split": {
+  "train": 980,
+  "val": 197,
+  "test": 194
+ },
+ "class_counts_per_split": {
+  "train": {
+   "ACK": 516,
+   "BCC": 596,
+   "MEL": 37,
+   "NEV": 173,
+   "SCC": 132,
+   "SEK": 167
+  },
+  "val": {
+   "ACK": 103,
+   "BCC": 119,
+   "MEL": 8,
+   "NEV": 35,
+   "SCC": 26,
+   "SEK": 34
+  },
+  "test": {
+   "ACK": 104,
+   "BCC": 119,
+   "MEL": 7,
+   "NEV": 35,
+   "SCC": 27,
+   "SEK": 33
+  }
+ },
+ "split_notes": {
+  "pad-ufes-20": {}
+ },
+ "excluded_labels_not_in_class_set": {},
+ "near_duplicates_vs_train": {
+  "val": 0,
+  "test": 0
+ },
+ "near_duplicates_removed_before_evaluation": {
+  "val": 0,
+  "test": 0
+ },
+ "split_hash": "53280c28e74bb2879f41b11abda150062bf91e0cf682de5570cca8947e950644",
+ "pretrained_weights": "data/models/pretrained/dinov2_small/model.safetensors",
+ "pretrained_sha256": "04d27f3400d059fc0cfd7d17dd1909a75bf3ea8fb3eeb48b97cb99e57ee20081",
+ "pretrained_provenance": "{\"source\": \"https://huggingface.co/timm/vit_small_patch14_dinov2.lvd142m\", \"commit\": \"4610ca143709d58a633b6397a74412c2c3842454\", \"sha256\": \"04d27f3400d059fc0cfd7d17dd1909a75bf3ea8fb3eeb48b97cb99e57ee20081\", \"license_tags\": [\"license:apache-2.0\"], \"trained_on\": \"LVD-142M (Meta, self-supervised, curated web images); upstream data terms not independently reviewed\", \"architecture\": \"DINOv2 ViT-S/14 as published by timm\"}",
+ "baselines": {
+  "majority_class": {
+   "class": "BCC",
+   "n": 325,
+   "accuracy": 0.366,
+   "macro_f1": 0.089,
+   "balanced_accuracy": 0.167,
+   "macro_f1_ci95": [
+    0.08,
+    0.098
+   ],
+   "ece": 0.634
+  },
+  "dinov2_knn_cosine": {
+   "k": 15,
+   "n": 325,
+   "accuracy": 0.582,
+   "macro_f1": 0.423,
+   "balanced_accuracy": 0.403,
+   "macro_f1_ci95": [
+    0.342,
+    0.505
+   ],
+   "ece": 0.045
+  },
+  "resnet18_frozen_features_logreg": {
+   "n": 325,
+   "accuracy": 0.538,
+   "macro_f1": 0.508,
+   "balanced_accuracy": 0.511,
+   "macro_f1_ci95": [
+    0.423,
+    0.567
+   ],
+   "ece": 0.232,
+   "note": "ImageNet-1k weights: comparison only; their licence status for commercial use is unresolved"
+  }
+ },
+ "history": [],
+ "test_metrics": {
+  "n": 325,
+  "accuracy": 0.615,
+  "macro_f1": 0.558,
+  "balanced_accuracy": 0.576,
+  "macro_f1_ci95": [
+   0.471,
+   0.63
+  ],
+  "balanced_accuracy_ci95": [
+   0.492,
+   0.665
+  ],
+  "ece": 0.035,
+  "per_class": {
+   "ACK": {
+    "n": 104,
+    "sensitivity": 0.721,
+    "specificity": 0.891,
+    "precision": 0.758,
+    "auroc": 0.888,
+    "false_negatives": 29,
+    "false_positives": 24
+   },
+   "BCC": {
+    "n": 119,
+    "sensitivity": 0.546,
+    "specificity": 0.874,
+    "precision": 0.714,
+    "auroc": 0.85,
+    "false_negatives": 54,
+    "false_positives": 26
+   },
+   "MEL": {
+    "n": 7,
+    "sensitivity": 0.429,
+    "specificity": 0.987,
+    "precision": 0.429,
+    "auroc": 0.91,
+    "false_negatives": 4,
+    "false_positives": 4
+   },
+   "NEV": {
+    "n": 35,
+    "sensitivity": 0.657,
+    "specificity": 0.941,
+    "precision": 0.575,
+    "auroc": 0.953,
+    "false_negatives": 12,
+    "false_positives": 17
+   },
+   "SCC": {
+    "n": 27,
+    "sensitivity": 0.407,
+    "specificity": 0.862,
+    "precision": 0.212,
+    "auroc": 0.786,
+    "false_negatives": 16,
+    "false_positives": 41
+   },
+   "SEK": {
+    "n": 33,
+    "sensitivity": 0.697,
+    "specificity": 0.955,
+    "precision": 0.639,
+    "auroc": 0.967,
+    "false_negatives": 10,
+    "false_positives": 13
+   }
+  },
+  "confusion_matrix": [
+   [
+    75,
+    11,
+    0,
+    2,
+    13,
+    3
+   ],
+   [
+    21,
+    65,
+    0,
+    6,
+    27,
+    0
+   ],
+   [
+    0,
+    0,
+    3,
+    2,
+    0,
+    2
+   ],
+   [
+    0,
+    1,
+    2,
+    23,
+    1,
+    8
+   ],
+   [
+    2,
+    13,
+    0,
+    1,
+    11,
+    0
+   ],
+   [
+    1,
+    1,
+    2,
+    6,
+    0,
+    23
+   ]
+  ],
+  "classes": [
+   "ACK",
+   "BCC",
+   "MEL",
+   "NEV",
+   "SCC",
+   "SEK"
+  ],
+  "subgroups_by_fitzpatrick": {
+   "1-2": {
+    "n": 147,
+    "accuracy": 0.503,
+    "balanced_accuracy": 0.514,
+    "reliable": true
+   },
+   "3": {
+    "n": 58,
+    "accuracy": 0.603,
+    "balanced_accuracy": 0.569,
+    "reliable": true
+   },
+   "4-6": {
+    "n": 8,
+    "accuracy": 0.5,
+    "balanced_accuracy": null,
+    "reliable": false
+   },
+   "NA": {
+    "n": 112,
+    "accuracy": 0.777,
+    "balanced_accuracy": 0.756,
+    "reliable": true
+   }
+  },
+  "failure_cases": [
+   {
+    "file": "imgs_part_1/PAT_286_1459_926.png",
+    "true": "NEV",
+    "predicted": "SEK",
+    "confidence": 0.937
+   },
+   {
+    "file": "imgs_part_3/PAT_1842_3615_850.png",
+    "true": "NEV",
+    "predicted": "MEL",
+    "confidence": 0.933
+   },
+   {
+    "file": "imgs_part_1/PAT_264_1368_868.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.924
+   },
+   {
+    "file": "imgs_part_1/PAT_215_330_224.png",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.9
+   },
+   {
+    "file": "imgs_part_2/PAT_731_1387_634.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.899
+   },
+   {
+    "file": "imgs_part_2/PAT_691_1312_389.png",
+    "true": "MEL",
+    "predicted": "SEK",
+    "confidence": 0.894
+   },
+   {
+    "file": "imgs_part_2/PAT_645_1461_111.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.893
+   },
+   {
+    "file": "imgs_part_1/PAT_70_107_155.png",
+    "true": "MEL",
+    "predicted": "NEV",
+    "confidence": 0.875
+   },
+   {
+    "file": "imgs_part_2/PAT_722_1376_280.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.839
+   },
+   {
+    "file": "imgs_part_1/PAT_54_83_405.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.816
+   },
+   {
+    "file": "imgs_part_2/PAT_878_1663_7.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.815
+   },
+   {
+    "file": "imgs_part_2/PAT_663_1254_732.png",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.807
+   },
+   {
+    "file": "imgs_part_2/PAT_645_1222_140.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.798
+   },
+   {
+    "file": "imgs_part_2/PAT_1026_124_206.png",
+    "true": "ACK",
+    "predicted": "BCC",
+    "confidence": 0.783
+   },
+   {
+    "file": "imgs_part_2/PAT_883_1682_256.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.782
+   },
+   {
+    "file": "imgs_part_2/PAT_1026_124_346.png",
+    "true": "ACK",
+    "predicted": "BCC",
+    "confidence": 0.778
+   },
+   {
+    "file": "imgs_part_1/PAT_92_141_551.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.774
+   },
+   {
+    "file": "imgs_part_1/PAT_265_407_137.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.771
+   },
+   {
+    "file": "imgs_part_2/PAT_951_1836_991.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.771
+   },
+   {
+    "file": "imgs_part_1/PAT_460_894_242.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.767
+   },
+   {
+    "file": "imgs_part_2/PAT_645_1500_364.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.752
+   },
+   {
+    "file": "imgs_part_2/PAT_745_1406_409.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.741
+   },
+   {
+    "file": "imgs_part_2/PAT_639_1208_986.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.737
+   },
+   {
+    "file": "imgs_part_1/PAT_274_423_374.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.729
+   },
+   {
+    "file": "imgs_part_1/PAT_143_213_489.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.706
+   },
+   {
+    "file": "imgs_part_1/PAT_573_1090_164.png",
+    "true": "BCC",
+    "predicted": "NEV",
+    "confidence": 0.706
+   },
+   {
+    "file": "imgs_part_1/PAT_215_330_341.png",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.701
+   },
+   {
+    "file": "imgs_part_1/PAT_316_674_318.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.694
+   },
+   {
+    "file": "imgs_part_2/PAT_849_1612_143.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.688
+   },
+   {
+    "file": "imgs_part_1/PAT_564_1079_430.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.686
+   },
+   {
+    "file": "imgs_part_1/PAT_227_347_19.png",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.677
+   },
+   {
+    "file": "imgs_part_3/PAT_1415_1437_527.png",
+    "true": "SEK",
+    "predicted": "NEV",
+    "confidence": 0.672
+   },
+   {
+    "file": "imgs_part_1/PAT_567_1077_64.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.671
+   },
+   {
+    "file": "imgs_part_1/PAT_61_299_74.png",
+    "true": "NEV",
+    "predicted": "SEK",
+    "confidence": 0.669
+   },
+   {
+    "file": "imgs_part_1/PAT_184_284_721.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.665
+   },
+   {
+    "file": "imgs_part_1/PAT_482_924_134.png",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.662
+   },
+   {
+    "file": "imgs_part_3/PAT_1906_3798_588.png",
+    "true": "ACK",
+    "predicted": "SEK",
+    "confidence": 0.658
+   },
+   {
+    "file": "imgs_part_1/PAT_338_710_93.png",
+    "true": "SCC",
+    "predicted": "BCC",
+    "confidence": 0.655
+   },
+   {
+    "file": "imgs_part_2/PAT_849_1613_824.png",
+    "true": "ACK",
+    "predicted": "BCC",
+    "confidence": 0.65
+   },
+   {
+    "file": "imgs_part_1/PAT_202_308_692.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.647
+   },
+   {
+    "file": "imgs_part_2/PAT_645_1222_860.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.635
+   },
+   {
+    "file": "imgs_part_1/PAT_551_1047_567.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.625
+   },
+   {
+    "file": "imgs_part_1/PAT_75_114_73.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.625
+   },
+   {
+    "file": "imgs_part_2/PAT_691_1310_780.png",
+    "true": "BCC",
+    "predicted": "SCC",
+    "confidence": 0.625
+   },
+   {
+    "file": "imgs_part_1/PAT_417_3537_45.png",
+    "true": "NEV",
+    "predicted": "SEK",
+    "confidence": 0.624
+   },
+   {
+    "file": "imgs_part_1/PAT_108_162_526.png",
+    "true": "ACK",
+    "predicted": "SCC",
+    "confidence": 0.606
+   },
+   {
+    "file": "imgs_part_1/PAT_281_1518_571.png",
+    "true": "NEV",
+    "predicted": "SCC",
+    "confidence": 0.604
+   },
+   {
+    "file": "imgs_part_1/PAT_473_911_610.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.601
+   },
+   {
+    "file": "imgs_part_2/PAT_744_1405_742.png",
+    "true": "BCC",
+    "predicted": "ACK",
+    "confidence": 0.592
+   },
+   {
+    "file": "imgs_part_1/PAT_70_107_591.png",
+    "true": "MEL",
+    "predicted": "NEV",
+    "confidence": 0.591
+   }
+  ],
+  "warnings": [
+   "Class 'MEL' has fewer than 20 test images; its metrics are unreliable."
+  ],
+  "ece_uncalibrated": 0.105,
+  "temperature": 1.3,
+  "selective_prediction": [
+   {
+    "threshold": 0.0,
+    "coverage": 1.0,
+    "accuracy_on_accepted": 0.615
+   },
+   {
+    "threshold": 0.4,
+    "coverage": 0.923,
+    "accuracy_on_accepted": 0.64
+   },
+   {
+    "threshold": 0.5,
+    "coverage": 0.763,
+    "accuracy_on_accepted": 0.673
+   },
+   {
+    "threshold": 0.6,
+    "coverage": 0.548,
+    "accuracy_on_accepted": 0.73
+   },
+   {
+    "threshold": 0.7,
+    "coverage": 0.369,
+    "accuracy_on_accepted": 0.775
+   },
+   {
+    "threshold": 0.8,
+    "coverage": 0.203,
+    "accuracy_on_accepted": 0.818
+   },
+   {
+    "threshold": 0.9,
+    "coverage": 0.095,
+    "accuracy_on_accepted": 0.871
+   }
+  ],
+  "by_source": {
+   "pad-ufes-20": {
+    "n": 325,
+    "accuracy": 0.615,
+    "balanced_accuracy": 0.576,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 7,
+     "value": 0.429
+    },
+    "sensitivity_BCC": {
+     "n": 119,
+     "value": 0.546
+    },
+    "sensitivity_SCC": {
+     "n": 27,
+     "value": 0.407
+    }
+   }
+  },
+  "by_identifier_known": {
+   "patient/lesion id known": {
+    "n": 325,
+    "accuracy": 0.615,
+    "balanced_accuracy": 0.576,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 7,
+     "value": 0.429
+    },
+    "sensitivity_BCC": {
+     "n": 119,
+     "value": 0.546
+    },
+    "sensitivity_SCC": {
+     "n": 27,
+     "value": 0.407
+    }
+   }
+  },
+  "critical_class_sensitivity_by_fitzpatrick": {
+   "I-II": {
+    "n": 147,
+    "accuracy": 0.503,
+    "balanced_accuracy": 0.514,
+    "reliable": true,
+    "sensitivity_MEL": {
+     "n": 7,
+     "value": 0.429
+    },
+    "sensitivity_BCC": {
+     "n": 84,
+     "value": 0.512
+    },
+    "sensitivity_SCC": {
+     "n": 23,
+     "value": 0.435
+    }
+   },
+   "III": {
+    "n": 58,
+    "accuracy": 0.603,
+    "balanced_accuracy": 0.569,
+    "reliable": true,
+    "sensitivity_BCC": {
+     "n": 31,
+     "value": 0.645
+    },
+    "sensitivity_SCC": {
+     "n": 3,
+     "value": 0.0
+    }
+   },
+   "IV-VI": {
+    "n": 8,
+    "accuracy": 0.5,
+    "balanced_accuracy": null,
+    "reliable": false,
+    "sensitivity_BCC": {
+     "n": 4,
+     "value": 0.5
+    },
+    "sensitivity_SCC": {
+     "n": 1,
+     "value": 1.0
+    }
+   },
+   "not recorded": {
+    "n": 112,
+    "accuracy": 0.777,
+    "balanced_accuracy": 0.756,
+    "reliable": true
+   }
+  },
+  "robustness": {
+   "blur": {
+    "macro_f1": 0.472,
+    "balanced_accuracy": 0.513,
+    "mean_confidence": 0.665
+   },
+   "dark": {
+    "macro_f1": 0.539,
+    "balanced_accuracy": 0.555,
+    "mean_confidence": 0.639
+   },
+   "jpeg20": {
+    "macro_f1": 0.281,
+    "balanced_accuracy": 0.355,
+    "mean_confidence": 0.63
+   },
+   "rotate90": {
+    "macro_f1": 0.542,
+    "balanced_accuracy": 0.563,
+    "mean_confidence": 0.635
+   }
+  },
+  "ood": {
+   "n": 19,
+   "source": "non-skin natural images (scikit-image sample set)",
+   "mean_confidence": 0.75,
+   "in_distribution_mean_confidence": 0.643,
+   "fraction_above_threshold": {
+    "0.5": 0.789,
+    "0.7": 0.632,
+    "0.9": 0.421
+   },
+   "in_distribution_fraction_above_threshold": {
+    "0.5": 0.763,
+    "0.7": 0.369,
+    "0.9": 0.095
+   },
+   "auroc_confidence_separates_in_vs_out": 0.349
+  },
+  "robustness_reference": {
+   "subset_n": 300,
+   "clean": {
+    "macro_f1": 0.54,
+    "balanced_accuracy": 0.557
+   },
+   "note": "the perturbations were applied to a fixed random subset of the test set; compare them with these clean figures on the same images, not with the whole-test-set figures"
+  }
+ },
+ "training_seconds": 1332,
+ "artifact_path": "data/models/lesion_classification_research/c128eb967c3f481bb25e8d9adbb71a43.npz",
+ "artifact_sha256": "fad05a260f1250c3062ee2c36e5f78ed0d72229672934574f893a701a4d8b4f7",
+ "code_revision": "src-71cd7506223ae75f",
+ "dataset_license": {
+  "dataset": "pad-ufes-20",
+  "version": 2,
+  "spdx": "CC-BY-4.0",
+  "official_license_name": "CC BY 4.0",
+  "terms_snapshot_hash": "494df2235e4824fb69abe7e835721f6f3be78f35509b8ae8b4f6a4a797a5b841",
+  "source": "https://data.mendeley.com/datasets/zr7vgbcyr2",
+  "attribution": "Cite Pacheco et al. 2020."
+ },
+ "dataset_licenses": [
+  {
+   "dataset": "pad-ufes-20",
+   "version": 2,
+   "spdx": "CC-BY-4.0",
+   "official_license_name": "CC BY 4.0",
+   "terms_snapshot_hash": "494df2235e4824fb69abe7e835721f6f3be78f35509b8ae8b4f6a4a797a5b841",
+   "source": "https://data.mendeley.com/datasets/zr7vgbcyr2",
+   "attribution": "Cite Pacheco et al. 2020."
+  }
+ ],
+ "intended_use": "Research only. Not clinically validated. Not offered to patients.",
+ "approval": null,
+ "evidence_class": "public_research_dataset",
+ "log": [
+  "19:55:05 features dinov2_s14 1280/2271 (4.19 img/s, 305s)",
+  "19:56:08 features dinov2_s14 1536/2271 (4.17 img/s, 368s)",
+  "19:57:22 features dinov2_s14 1792/2271 (4.05 img/s, 442s)",
+  "19:58:46 features dinov2_s14 2048/2271 (3.89 img/s, 526s)",
+  "19:59:49 features dinov2_s14 2271/2271 (3.85 img/s, 589s)",
+  "20:00:11 features resnet18_in1k 256/2271 (11.80 img/s, 22s)",
+  "20:00:33 features resnet18_in1k 512/2271 (11.77 img/s, 43s)",
+  "20:00:55 features resnet18_in1k 768/2271 (11.81 img/s, 65s)",
+  "20:01:16 features resnet18_in1k 1024/2271 (11.85 img/s, 86s)",
+  "20:01:38 features resnet18_in1k 1280/2271 (11.84 img/s, 108s)",
+  "20:01:59 features resnet18_in1k 1536/2271 (11.86 img/s, 130s)",
+  "20:02:21 features resnet18_in1k 1792/2271 (11.81 img/s, 152s)",
+  "20:02:47 features resnet18_in1k 2048/2271 (11.58 img/s, 177s)",
+  "20:03:06 features resnet18_in1k 2271/2271 (11.55 img/s, 197s)",
+  "20:03:07 near-duplicates of a training image removed before evaluation: {'val': 0, 'test': 0}",
+  "20:03:09 feature kind cls, C=0.1: val macro-F1 0.539",
+  "20:03:10 feature kind cls+mean, C=0.1: val macro-F1 0.538",
+  "20:03:11 feature kind cls, C=0.003: val macro-F1 0.544",
+  "20:03:11 feature kind cls, C=0.01: val macro-F1 0.575",
+  "20:03:12 feature kind cls, C=0.03: val macro-F1 0.586",
+  "20:03:12 feature kind cls, C=0.3: val macro-F1 0.517",
+  "20:03:13 feature kind cls, C=1.0: val macro-F1 0.505",
+  "20:03:17 baseline majority_class: macro-F1 0.089",
+  "20:03:17 baseline dinov2_knn_cosine: macro-F1 0.423",
+  "20:03:17 baseline resnet18_frozen_features_logreg: macro-F1 0.508"
+ ],
+ "limitations": [
+  "Trained on one centre's smartphone photographs (PAD-UFES-20): few melanoma examples and almost no dark-skin examples.",
+  "Small-sample metrics are unreliable"
+ ],
+ "serving": {
+  "quality_gate": "skin_closeup",
+  "warnings": [
+   "Trained on smartphone and clinical photographs of skin lesions (PAD-UFES-20, and ISIC clinical photographs when listed on the card), mostly Fitzpatrick 1-3; not valid for other image types.",
+   "Research only: not a diagnosis and never shown to patients."
+  ]
+ },
+ "resources": {
+  "hardware": {
+   "cpu": "Intel64 Family 6 Model 61 Stepping 4, GenuineIntel",
+   "logical_cpus": 4,
+   "ram_total_mb": 8488,
+   "gpu": "none"
+  },
+  "device": "cpu",
+  "autotune": {
+   "device": "cpu",
+   "free_ram_mb_at_start": 944,
+   "cpu_logical": 4,
+   "chosen": {
+    "threads": 4,
+    "batch": 8,
+    "images_per_s": 5.03
+   },
+   "measured": [
+    {
+     "threads": 2,
+     "batch": 8,
+     "images_per_s": 2.27
+    },
+    {
+     "threads": 2,
+     "batch": 16,
+     "images_per_s": 3.48
+    },
+    {
+     "threads": 3,
+     "batch": 8,
+     "images_per_s": 4.19
+    },
+    {
+     "threads": 3,
+     "batch": 16,
+     "images_per_s": 3.87
+    },
+    {
+     "threads": 4,
+     "batch": 8,
+     "images_per_s": 5.03
+    },
+    {
+     "threads": 4,
+     "batch": 16,
+     "images_per_s": 4.31
+    }
+   ],
+   "image_size": 224,
+   "precision": "fp32 (mixed precision is only used on CUDA)"
+  },
+  "stage_seconds": {
+   "image_cache": 139.3,
+   "dinov2_features": 799.6,
+   "resnet18_features": 997.0,
+   "leakage_audit": 997.7,
+   "head": 1004.4,
+   "baselines": 1007.7,
+   "test_metrics": 1008.3,
+   "robustness_ood": 1331.0,
+   "external": 1331.0
+  },
+  "peak_working_set_mb": 1081,
+  "artifact_bytes": 16958,
+  "backbone_bytes": 88240510,
+  "precision": "fp32 (mixed precision is only used on CUDA)",
+  "feature_store": "data/features (not in Git)"
+ },
+ "pipeline": {
+  "version": "featuretrain-1.0.0",
+  "run_id": "92239063161f48dfb092163f37141822",
+  "config_sha256": "3d13b99d8c80500f39cc30288a69cb3af9ed51182996f04d8e4d28281240932c"
+ },
+ "gates": [
+  {
+   "gate": "licence_gate_passed",
+   "passed": true,
+   "detail": "licence CC-BY-4.0 with evidence hash"
+  },
+  {
+   "gate": "min_test_images",
+   "passed": true,
+   "detail": "test n=325 (need >= 200)"
+  },
+  {
+   "gate": "no_near_duplicates_in_test",
+   "passed": true,
+   "detail": "near-duplicates test/train: 0"
+  },
+  {
+   "gate": "beat_baselines_macro_f1",
+   "passed": true,
+   "detail": "macro-F1 0.558 vs best baseline 0.508"
+  },
+  {
+   "gate": "improvement_supported_by_ci",
+   "passed": false,
+   "detail": "95% CI lower bound 0.471 must exceed the best baseline 0.508"
+  },
+  {
+   "gate": "max_ece_calibrated",
+   "passed": true,
+   "detail": "ECE 0.035 (limit 0.15)"
+  },
+  {
+   "gate": "robustness_report_present",
+   "passed": true,
+   "detail": "robustness table present"
+  },
+  {
+   "gate": "subgroup_report_present",
+   "passed": true,
+   "detail": "Fitzpatrick subgroup table present"
+  },
+  {
+   "gate": "critical_class_sensitivity",
+   "passed": false,
+   "detail": "MEL: only 7 test images; BCC: sensitivity 0.546; SCC: sensitivity 0.407"
+  },
+  {
+   "gate": "dark_skin_evaluated",
+   "passed": false,
+   "detail": "Fitzpatrick 4-6 test images: 8 (need >= 50)"
+  },
+  {
+   "gate": "ood_detection",
+   "passed": false,
+   "detail": "confidence separates lesion from non-lesion images with AUROC 0.349 (need >= 0.9)"
+  }
+ ],
+ "lifecycle_state": "experimental"
+}

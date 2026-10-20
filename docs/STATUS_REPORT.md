@@ -1,8 +1,73 @@
 # Cosmo Experts AI: status report against the final master brief
 
-Evidence date: 2026-10-19 (Phase 3; Phase 2 sections keep their 2026-10-18 evidence). Every line below is backed by something that was run in this repository; where it was not run, the line says so.
+Evidence date: 2026-10-20 (Phase 5); Phase 3 sections keep their 2026-10-19 evidence and Phase 2 sections their 2026-10-18 evidence. Every line below is backed by something that was run in this repository; where it was not run, the line says so.
 Classifications: **VERIFIED COMPLETE** (implemented and its automated checks were executed here), **IMPLEMENTED BUT UNVERIFIED**, **PARTIALLY IMPLEMENTED**, **MISSING**, **BLOCKED** (needs something only the owner can provide).
 "Verified" never means clinically validated, legally approved, or tested on real devices.
+
+## 000. Phase 5: maximum dataset training and model optimisation (2026-10-20)
+
+Detailed documents: [PHASE_5_TRAINING_REPORT.md](PHASE_5_TRAINING_REPORT.md), [DATASET_AND_TRAINING.md](DATASET_AND_TRAINING.md) section 7, [../DATASET_CATALOG.md](../DATASET_CATALOG.md), [../MODEL_REGISTRY.md](../MODEL_REGISTRY.md), [LICENSES.md](LICENSES.md).
+
+**Nothing in this phase is clinically validated, approved or production-ready. Five research models were trained on public datasets on a 2-core CPU; every one is experimental and administrator-only, none is active, and none is shown to patients. No patient-facing feature uses any of them.**
+The earlier sections keep their evidence dates. "Verified" never means clinically validated, legally approved, or tested on real devices.
+
+Final integration verification: run once at the end on the tree that was committed.
+
+* **Backend, SQLite**: `cd backend && .venv\Scripts\python -m pytest tests -q -p no:cacheprovider -rfEs` -> **1080 passed, 4 skipped, 0 failed** in 16 min 15 s (35 new tests: `test_phase5_data.py` 17, `test_phase5_training.py` 18). The 4 skips are the live-Supabase tests (`test_storage.py` 2, `test_supabase_auth.py` 2: "no Supabase development project credentials in the environment"); they did not run and are not counted as passed.
+* **Backend, PostgreSQL mode** (disposable PostgreSQL 17, `COSMO_TEST_DB=postgres`): only the four data-touching files this phase changed or added, `test_phase5_data.py`, `test_phase5_training.py`, `test_ai_training.py`, `test_datasets_ops.py`: **78 passed, 0 failed** in 4 min 7 s. The other PostgreSQL files were **not** re-run; Phase 5 added no migration or table.
+* **Frontend**: `npx tsc --noEmit`, `npx eslint .` and `npx next build` all exit 0 (19 routes).
+* **Serving against evaluation**: `python -m eval.phase5_serving_check clinical-pad-isic skin-condition-scin derm-isic derm-isic-derm12345 --n 60` -> top-1 agreement 60/60 on each model, largest probability difference 0.00005 ([eval/phase5_serving_consistency.json](eval/phase5_serving_consistency.json)).
+* **Not re-run**: the browser journeys (`e2e/*.mjs`) and the Phase 3 evaluations. The only screens touched are the administrator model card and the research-inference model list.
+* **Secret scan** (`python backend/scripts/scan_secrets.py .`): no credentials found.
+
+### Implemented and tested
+
+| Module | What exists | Evidence (executed in this repository) |
+|---|---|---|
+| A. Acquisition from official hosts | ISIC API v2, SCIN bucket and Harvard Dataverse clients: https-only through the SSRF guard, resumable listing, back-off on HTTP 429, every file checksum-verified (MD5, S3 ETag) before it is kept, bounded safe extraction | `test_phase5_data.py`; about 15,300 real downloads, 0 failures |
+| B. Licence governance | fetch-terms, verify, approve or refuse with hashed evidence and audit entries; a custom licence passes only with a recorded permission document; 9 decisions (4 approved, 5 refused) | `test_phase5_data.py`; [eval/dataset_decisions.json](eval/dataset_decisions.json) |
+| C. Resource-aware training | memory-mapped resumable image cache and feature store, thread and batch chosen by measurement and bounded by free RAM, safe pause on low memory, stop request or time limit, CPU unless a verified GPU is requested, fp16 only on CUDA | `test_phase5_training.py` |
+| D. Leakage control | subject-level splits per source with the earlier splitter (PAD-UFES-20's test images unchanged), identifier-less images training-only, external sources never used for selection, near-duplicates removed before any metric, PAD-UFES-20's own copies inside ISIC excluded | `test_phase5_training.py`; counts on each card |
+| E. Probe training and evaluation | frozen DINOv2 ViT-S/14 plus a balanced logistic head chosen on validation; majority, k-NN and ResNet18-frozen baselines; calibration, bootstrap intervals, per-source, skin-tone and case-level tables, robustness, out-of-distribution; release gates unchanged | five models, [eval/phase5/](eval/phase5/) |
+| F. Registry and serving | registered `research_only` and `experimental` through the existing registry and research interface; the card's own input check and warnings; checksums of artifact and backbone verified before loading | `test_phase5_training.py`, `test_serving_edges.py` |
+| G. Comparison arm | ResNet18 layer-4 fine-tune on exactly a probe's sources, splits and baselines; resumable | `test_phase5_training.py` on synthetic images; **not run on real data** |
+| H. Screens | the model card shows sources and licences, per-source and external results and the robustness reference | `tsc`, `eslint`, `next build` |
+
+### Trained on real data (all experimental; none approved)
+
+| Model | Task | Data | Test n | Macro-F1 (95% CI) | Best baseline | Gates | Fails |
+|---|---|---|---|---|---|---|---|
+| `c128eb96` `clinical-pad-only` | lesion_classification_research | PAD-UFES-20 | 325 | **0.558** (0.471-0.630) | 0.508 | 7/11 | improvement_supported_by_ci, critical_class_sensitivity, dark_skin_evaluated, ood_detection |
+| `0f7e066f` `clinical-pad-isic` | lesion_classification_research | PAD-UFES-20 + ISIC clinical | 374 | **0.559** (0.496-0.614) | 0.476 | 8/11 | critical_class_sensitivity, dark_skin_evaluated, ood_detection |
+| `e0ce44b3` `skin-condition-scin` | skin_condition_research | SCIN | 406 | **0.347** (0.287-0.395) | 0.223 | 9/10 | ood_detection |
+| `bab527c0` `derm-isic` | dermoscopy_lesion_research | ISIC dermoscopy (external: DERM12345) | 1343 | **0.404** (0.368-0.437) | 0.344 | 8/11 | critical_class_sensitivity, dark_skin_evaluated, ood_detection |
+| `0e29da33` `derm-isic-derm12345` | dermoscopy_lesion_research | ISIC dermoscopy + DERM12345 | 2053 | **0.472** (0.444-0.497) | 0.405 | 8/11 | critical_class_sensitivity, dark_skin_evaluated, ood_detection |
+
+### Blocked
+
+* **Data and licences**: acne, pigmentation, redness, dryness, texture/scarring, hair and scalp tasks have no dataset with traceable rights and matching labels (970 candidates surveyed); dark-skin test images for every lesion task. Details and what would unblock each: [PHASE_5_TRAINING_REPORT.md](PHASE_5_TRAINING_REPORT.md) section 8.
+* **Legal**: the ISIC contributor licences (CC-0/CC-BY, version of CC-BY not stated) and the custom SCIN licence were accepted by the Phase 5 run on the owner's instruction on a recorded permission document; a lawyer must confirm them before commercial use. The ResNet18-ImageNet weights are unresolved for commercial use.
+* **A clinician**: no model has a clinical review, an intended use or a sign-off.
+* **Hardware**: a GPU or 16 GB+ of RAM for larger or fine-tuned vision models; the GPU code path has never been run.
+* **Credentials**: nothing in this phase touched the real Supabase project. **Two Supabase management tokens were pasted into the chat in earlier phases; revoke both.**
+
+### Approved
+
+None. No model, dataset-derived claim or wording has a recorded clinical approval.
+
+### Known gaps found or kept during this phase
+
+**Defects found and fixed (each with a test or a recorded correction):** PAD-UFES-20's own images were 2,298 of the ISIC clinical records and would have leaked test images into training (excluded by attribution); an ISIC query that required an optional field silently kept 56 images instead of 474
+(version invalidated, rebuilt); ISIC's published file sizes are 3,173 bytes off (verification by S3 ETag); HTTP 429 from the ISIC site (back-off, evidence cache, independent decisions); the image cache raised "paused" after its last chunk and held a memory map open so Windows refused the rename; a bookkeeping
+layout in the first three cards broke the registry exporter and showed blank rows on screen (fixed, cards corrected, audit entries); refusal reasons were hidden; an empty evidence item. Details: report section 9.
+
+**Still open, measured or known:**
+
+* **Every model fails at least one release gate**, and all are more confident on non-skin pictures than on real test pictures (out-of-distribution AUROC below 0.5 where 0.5 is chance), so an input check must precede any use; the dermoscopy models have none and must never see a phone photograph.
+* **The gates measure process, not usefulness**: the skin-condition model passes 9 of 10 gates with 34% accuracy on 11 conditions. No threshold was changed.
+* **Serious-class sensitivity** (melanoma, basal and squamous cell carcinoma) is far below the 0.80 gate for phone photographs and is reported per model; darker skin is effectively untested for every lesion model (8 Fitzpatrick IV-VI test images for phone photographs, 20 in all of ISIC dermoscopy).
+* **Labels** are from public datasets collected for other purposes (pathology or dermatologist opinion from photographs); skin-tone labels in SCIN are estimates; the same PAD-UFES-20 test images were reused across experiments, so those results are not independent of each other.
+* **Not run**: the ResNet18 fine-tune on the new data (unit-tested code only); any GPU path; any real-device or clinic test. The registry's task-compatibility check is loose (it lists unrelated datasets as compatible; the licence gate and explicit source lists decide).
 
 ## 00. Phase 3: unified AI engine, medical image intelligence, document AI, agent automation and model lifecycle (2026-10-19)
 
@@ -194,7 +259,7 @@ Final integration verification (one run, not repeated per batch): SQLite mode, f
 | **Clinician review** | Any approved knowledge-base article; the urgent-symptom policy and message; Hindi/Hinglish wording; thresholds for model gates; any patient-facing model | 11 draft articles, 10-category policy draft, review packet, attested approval workflow and loader | Signed-off packet; escalation tests updated; install via `make_approved_policy` |
 | **Legal counsel** | The privacy notice text, retention schedule, regulatory classification, jurisdictional obligations | Consent mechanism, hash-bound approved-notice loader, draft text marked DRAFT | Approved notice installed via `make_approved_notice`; production start-up passes |
 | **Real, consented, de-identified documents and audio** | Evaluating extraction, OCR, STT on real inputs | Synthetic evaluations only (`docs/eval/doc_extraction.md`, `stt.md`) | Report on at least 100 documents |
-| **Datasets and licences** | Additional lesion/skin/hair datasets, dark-skin test data | Catalog, licence gate, importer, PAD-UFES-20 imported (CC BY 4.0, checksum-verified) | Per-dataset terms capture and approval, then import and evaluation |
+| **Datasets and licences** | Acne, pigmentation, redness, scarring, hair and scalp data; dark-skin test data | Catalog, licence gate, importer; PAD-UFES-20, two ISIC subsets, SCIN and DERM12345 imported with verified licences; 970 further candidates surveyed, 5 datasets refused with evidence | Datasets with traceable rights and matching labels (Phase 5 report section 8); a lawyer's confirmation of the ISIC and SCIN licences |
 | **GPU / more RAM** | Larger models, faster training, a 7B+ language model | CPU pipelines, 2-core measurements | Re-run training and `eval/llm_eval.py` |
 | **Supabase database connection string** | Applying Phase 2 to the real database | PostgreSQL layer, migrations, RLS, backup/restore; dry run rolled back on the real project | `migrate apply`, copy of existing data, restore drill on the real database |
 | **Devices and assistive technology** | Real-device camera/microphone, screen-reader results | Emulation, axe, keyboard tests | Signed checklist (section 8) |
@@ -203,7 +268,8 @@ Final integration verification (one run, not repeated per batch): SQLite mode, f
 ## 4. Models, datasets, training and evaluation (real numbers)
 
 Models used by the product are listed with licences and hashes in `MODEL_REGISTRY.md`: Tesseract 5.4.0, BGE-small-en-v1.5 (MIT), faster-whisper base (MIT), Qwen2.5-1.5B-Instruct Q4_K_M (Apache-2.0, off), ResNet18 ImageNet weights, DINOv2 ViT-S/14 (Apache-2.0).
-Trained here, all **research-only and failing their release gates**: ResNet18 fine-tune `fc7eef89…` (macro-F1 0.502, CI 0.429-0.576, accuracy 0.637) and its reproduction run `f9396683…` (identical metrics), DINOv2 linear probe `124f81d4…` (macro-F1 0.558, CI 0.471-0.630), plus one earlier CNN. Gate failures: no improvement over the frozen-features baseline, melanoma/SCC sensitivity far below 0.80, 8 test images in Fitzpatrick 4-6 (50 required), near-duplicates, no OOD evidence for the ResNet.
+Phase 5 (2026-10-20) added five DINOv2-probe research models on four more licence-verified sources: see section 000 and [PHASE_5_TRAINING_REPORT.md](PHASE_5_TRAINING_REPORT.md). All are research-only and fail at least one release gate.
+Phase 3 models, all **research-only and failing their release gates**: ResNet18 fine-tune `fc7eef89…` (macro-F1 0.502, CI 0.429-0.576, accuracy 0.637) and its reproduction run `f9396683…` (identical metrics), DINOv2 linear probe `124f81d4…` (macro-F1 0.558, CI 0.471-0.630), plus one earlier CNN. Gate failures: no improvement over the frozen-features baseline, melanoma/SCC sensitivity far below 0.80, 8 test images in Fitzpatrick 4-6 (50 required), near-duplicates, no OOD evidence for the ResNet.
 Dataset: PAD-UFES-20, CC BY 4.0, official checksum verified, patient-level splits (train 1621 / val 325 / test 325 images). ISIC, Fitzpatrick17k, DDI, HAM10000, ACNE04, FUNSD are in the catalog as **unreviewed and blocked**.
 Reproducibility: DINOv2 probe byte-identical; ResNet fine-tune identical metrics and split, **different artifact bytes** (`24ed3c80…` vs `a2c5e42d…`); resume-vs-uninterrupted run agrees within 1e-4 on identical seeds with one CPU thread.
 Input-quality gate v1.1 on 231 untouched validation photos: motion-blur detection 93-100% (v1.0: 53-84%), false rejection of usable close-ups 9.5%; heavy JPEG is a warning (66-69% of re-encoded images flagged, 3% of usable photos flagged). Simulated degradations, lesion close-ups only.

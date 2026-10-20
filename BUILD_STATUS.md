@@ -37,6 +37,12 @@ person's confirmation; bounded speech recognition, spoken text that matches the 
 all of it. **No model is approved or active, nothing is clinically validated, and every evaluation used synthetic or public-research data.** Re-running the extraction evaluation found and fixed a real defect (laboratory
 rows starting with "Serum" were dropped). Details, figures and open gaps: `docs/STATUS_REPORT.md` section 00 and `docs/PHASE_3_AI_ENGINE.md`. Migrations 0006-0009 are not applied to the real Supabase project.
 
+## Phase 5 (2026-10-20): maximum dataset training and model optimisation
+Backend suite on SQLite: **1080 passed, 4 skipped, 0 failed** (16 min 15 s; the skips are the live-Supabase tests, no credentials supplied); PostgreSQL-mode run of the 4 data-touching files this phase changed: **78 passed**; frontend `tsc`/`eslint`/`next build` clean (19 routes); secret scan clean. Delivered: licence-verified acquisition of four more sources from their official hosts (ISIC dermoscopy 11,974 images, ISIC clinical 474, SCIN 2,842, DERM12345 4,821; 9 recorded licence decisions, 5 of them refusals with evidence; 970 candidates surveyed), a resumable
+and memory-aware training pipeline (measured thread and batch choice, safe pause, cached features), five DINOv2-probe research models with baselines, subject-level splits, near-duplicate removal, external validation, calibration, skin-tone, robustness and out-of-distribution evaluation, registry and
+serving integration, two new research tasks, and a model card that shows sources and external results. **All five models are experimental, administrator-only and fail at least one release gate; none is approved or active; seven tasks (acne, pigmentation, redness, dryness, texture/scarring, hair, scalp) remain
+blocked for lack of data.** Real defects found and fixed along the way (PAD-UFES-20's own images inside ISIC, a query that dropped 88% of the records, wrong file sizes, a card layout mismatch). Details: `docs/PHASE_5_TRAINING_REPORT.md`, `docs/STATUS_REPORT.md` section 000.
+
 ## Implemented this phase (earlier phase)
 Inference gateway `/api/v1` (jobs, SSE, idempotency, back-pressure, health/ready, metrics, rate limits); licence-gated dataset acquisition with official checksums;
 label-conflict-aware import; patient-level stratified training with baselines, calibration, bootstrap CIs, subgroup/robustness/OOD evaluation, release gates;

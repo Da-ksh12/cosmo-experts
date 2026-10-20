@@ -4,8 +4,12 @@ import { Check, X } from "lucide-react";
 import { Details, Note, Pill, StatusBadge } from "@/components/ui";
 
 type PerClass = Record<string, { n: number; sensitivity: number | null; specificity: number; precision: number | null; auroc: number | null; false_negatives: number; false_positives: number }>;
+type SourceRow = { n: number; accuracy: number | null; balanced_accuracy: number | null; reliable?: boolean } & Record<string, unknown>;
+type SourceLicense = { dataset?: string; version?: number; spdx?: string; official_license_name?: string; source?: string; attribution?: string };
 export type Model = {
-  model_id: string; task: string; architecture: string; status: string; dataset_version?: number; classes?: string[]; epochs?: number; finetune?: string; device?: string;
+  model_id: string; task: string; architecture: string; status: string; dataset_version?: number; classes?: string[]; epochs?: number; finetune?: string; device?: string; experiment?: string; feature_kind?: string;
+  sources?: { name: string; role: string; dataset: string; version: number; images: number; split_policy?: string; unknown_group_train_only?: boolean; license?: SourceLicense }[];
+  near_duplicates_removed_before_evaluation?: Record<string, number>;
   pretrained_weights: string; pretrained_sha256?: string | null; pretrained_provenance?: string; code_revision?: string; artifact_sha256?: string; training_seconds?: number;
   split_sizes?: Record<string, number>; patients_per_split?: Record<string, number>; near_duplicates_vs_train?: { val: number; test: number };
   dataset_license?: { spdx?: string; official_license_name?: string; source?: string; attribution?: string };
@@ -20,13 +24,20 @@ export type Model = {
     per_class?: PerClass; confusion_matrix?: number[][]; classes?: string[]; warnings?: string[]; failure_cases?: unknown[];
     subgroups_by_fitzpatrick?: Record<string, { n: number; accuracy: number; balanced_accuracy: number | null; reliable: boolean }>;
     robustness?: Record<string, { macro_f1: number; balanced_accuracy: number; mean_confidence: number }>;
+    robustness_reference?: { subset_n: number; clean: { macro_f1: number; balanced_accuracy: number }; note?: string };
     selective_prediction?: { threshold: number; coverage: number; accuracy_on_accepted: number | null }[];
     ood?: { n: number; mean_confidence: number; fraction_above_threshold: Record<string, number> };
+    by_source?: Record<string, SourceRow>;
+    external?: Record<string, { n: number; macro_f1: number; balanced_accuracy: number; accuracy: number; macro_f1_ci95?: number[]; per_class?: PerClass; removed_as_near_duplicate_of_training?: number; note?: string }>;
   };
 };
 
 const pct = (v: number | null | undefined) => (v === null || v === undefined ? "—" : (v * 100).toFixed(1) + "%");
 const ci = (c?: number[]) => (c ? ` (95% CI ${c[0]}–${c[1]})` : "");
+/** "MEL 40.0% (n=10) · BCC …" from the sensitivity_<CLASS> entries the evaluation stores per source. */
+const criticalSens = (v: SourceRow) => Object.entries(v).filter(([k, x]) => k.startsWith("sensitivity_") && x && typeof x === "object")
+  .map(([k, x]) => { const s = x as { n: number; value: number | null }; return `${k.slice("sensitivity_".length)} ${pct(s.value)} (n=${s.n})`; }).join(" · ") || "—";
+const classSens = (pc?: PerClass) => Object.entries(pc ?? {}).filter(([, v]) => v.n > 0).map(([c, v]) => `${c} ${pct(v.sensitivity)} (n=${v.n})`).join(" · ") || "—";
 
 export default function ModelCard({ m }: { m: Model }) {
   const t = m.test_metrics ?? {};
@@ -62,9 +73,20 @@ export default function ModelCard({ m }: { m: Model }) {
         <p className="mt-2 text-sm text-muted">Types 4–6 are extremely under-represented. No claim can be made for darker skin tones.</p></Details>}
 
       {t.robustness && <Details title="Robustness & calibration"><p className="mb-2 text-sm">Calibration (ECE): {t.ece_uncalibrated} before → {t.ece} after temperature scaling (T={t.temperature}, fitted on validation).</p><div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table"><table><thead><tr><th>Perturbation</th><th>Macro-F1</th><th>Balanced acc.</th><th>Mean confidence</th></tr></thead><tbody>
+        {t.robustness_reference && <tr><th>none (same {t.robustness_reference.subset_n} images)</th><td>{t.robustness_reference.clean.macro_f1}</td><td>{t.robustness_reference.clean.balanced_accuracy}</td><td>—</td></tr>}
         {Object.entries(t.robustness).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v.macro_f1}</td><td>{v.balanced_accuracy}</td><td>{v.mean_confidence}</td></tr>)}</tbody></table></div>
         {t.selective_prediction && <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table"><table><thead><tr><th>Abstain below confidence</th><th>Coverage</th><th>Accuracy on accepted</th></tr></thead><tbody>{t.selective_prediction.map((s) => <tr key={s.threshold}><th>{s.threshold}</th><td>{pct(s.coverage)}</td><td>{pct(s.accuracy_on_accepted)}</td></tr>)}</tbody></table></div>}
         {t.ood && <p className="mt-3 text-sm">Out-of-distribution images (n={t.ood.n}, not skin lesions): mean confidence {t.ood.mean_confidence}; share still above each threshold: {Object.entries(t.ood.fraction_above_threshold).map(([k, v]) => `${k}: ${pct(v)}`).join(" · ")}.</p>}</Details>}
+
+      {(m.sources?.length || t.by_source || t.external) && <Details title="Data sources, per-source and external results">
+        {m.sources && <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table"><table><thead><tr><th>Source</th><th>Role</th><th>Images</th><th>Licence</th><th>Attribution</th></tr></thead><tbody>
+          {m.sources.map((s) => <tr key={s.name}><th>{s.name} <span className="text-muted">v{s.version}</span></th><td>{s.role === "external" ? "external test only" : "train / val / test"}</td><td>{s.images}</td><td>{s.license?.official_license_name ?? s.license?.spdx ?? "—"}</td><td>{s.license?.attribution ?? "—"}</td></tr>)}</tbody></table></div>}
+        {t.by_source && <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table"><table><thead><tr><th>Held-out test, by source</th><th>n</th><th>Accuracy</th><th>Balanced acc.</th><th>Serious-class sensitivity</th><th>Reliable?</th></tr></thead><tbody>
+          {Object.entries(t.by_source).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v.n}</td><td>{pct(v.accuracy)}</td><td>{pct(v.balanced_accuracy)}</td><td>{criticalSens(v)}</td><td>{v.reliable ? "yes" : "no — too few images"}</td></tr>)}</tbody></table></div>}
+        {t.external && <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table"><table><thead><tr><th>External validation (never trained on, selected with or calibrated on)</th><th>n</th><th>Macro-F1</th><th>Balanced acc.</th><th>Accuracy</th><th>Sensitivity by class</th><th>Duplicates removed</th></tr></thead><tbody>
+          {Object.entries(t.external).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v.n}</td><td>{v.macro_f1}{ci(v.macro_f1_ci95)}</td><td>{v.balanced_accuracy}</td><td>{v.accuracy}</td><td>{classSens(v.per_class)}</td><td>{v.removed_as_near_duplicate_of_training ?? 0}</td></tr>)}</tbody></table></div>}
+        {m.near_duplicates_removed_before_evaluation && <p className="mt-2 text-sm text-muted">Near-duplicates of a training image removed before any metric was computed: {Object.entries(m.near_duplicates_removed_before_evaluation).map(([k, v]) => `${k}: ${v}`).join(" · ")}.</p>}
+      </Details>}
 
       <Details title="Provenance & reproducibility"><table><tbody>
         <tr><th>Dataset licence</th><td>{m.dataset_license?.official_license_name ?? m.dataset_license?.spdx ?? "—"} <span className="text-muted">({m.dataset_license?.source})</span></td></tr>

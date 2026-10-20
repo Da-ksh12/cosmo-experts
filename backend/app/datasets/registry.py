@@ -55,6 +55,29 @@ SEED = [
          populations="Undocumented; likely limited diversity.", claimed_license="Unclear; availability and terms must be confirmed with authors",
          attribution="Cite Wu et al. ICCV 2019.", download_method="Author-provided", version="2019",
          limitations="Terms unclear; consent for face images unclear."),
+    dict(id="isic-dermoscopy", name="ISIC Archive: dermoscopic images (CC-0 and CC-BY contributor licences only)", url="https://api.isic-archive.com/api/v2/", maintainer="International Skin Imaging Collaboration (MSKCC)",
+         description="Dermoscopic lesion images with histopathology, expert-consensus or serial-imaging diagnoses, selected through the official API by contributor licence (CC-0, CC-BY); the CC-BY-NC pool is never queried.",
+         intended_task="dermoscopic lesion classification", modality="dermoscopy", annotations=["lesion diagnosis", "benign/malignant", "anatomic site", "Fitzpatrick skin type (a subset)", "patient and lesion identifiers"],
+         populations="Mostly lighter skin; Fitzpatrick type is recorded for only part of the images.", claimed_license="Per image: CC-0 or CC-BY (contributor licence); verify",
+         attribution="Per-image attribution is recorded in attribution.csv and must be kept with any redistribution.", download_method="Official ISIC API (256 px thumbnails)", version="API v2",
+         limitations="Dermoscopy is not an ordinary photograph; lesion diagnoses are not acne, pigmentation or hair labels."),
+    dict(id="isic-clinical", name="ISIC Archive: clinical photographs (CC-0 and CC-BY; PAD-UFES-20's own images excluded)", url="https://api.isic-archive.com/api/v2/", maintainer="International Skin Imaging Collaboration (MSKCC)",
+         description="Clinical (non-dermoscopic) lesion photographs under CC-0 or CC-BY contributor licences. Images attributed to the Federal University of Espirito Santo are PAD-UFES-20 itself and are excluded so no photograph can sit in two splits.",
+         intended_task="skin lesion classification (clinical photographs)", modality="clinical photographs", annotations=["lesion diagnosis", "Fitzpatrick skin type (a subset)", "patient identifiers"],
+         populations="Contributors: Memorial Sloan Kettering, Hospital Italiano de Buenos Aires, anonymous.", claimed_license="Per image: CC-0 or CC-BY (contributor licence); verify",
+         attribution="Per-image attribution is recorded in attribution.csv.", download_method="Official ISIC API (full-size files)", version="API v2",
+         limitations="Few images per class outside basal cell carcinoma, nevus and melanoma."),
+    dict(id="scin", name="SCIN (Skin Condition Image Network)", url="https://github.com/google-research-datasets/scin", maintainer="Google Research with Stanford Medicine",
+         description="Smartphone photographs of everyday skin conditions contributed by volunteers, with dermatologist condition labels (weighted by up to three raters) and dermatologist-estimated Fitzpatrick and Monk skin tones.",
+         intended_task="skin condition classification", modality="clinical photographs", annotations=["dermatologist condition label (weighted)", "dermatologist Fitzpatrick estimate", "Monk skin tone"],
+         populations="United States volunteers; designed to include darker skin tones (Fitzpatrick 4-6 about one third of the labelled cases).", claimed_license="SCIN Data Use License (verify)",
+         attribution="Cite Ward et al. 2024 (SCIN). Keep the licence notice with any redistribution.", download_method="Public Google Cloud Storage bucket dx-scin-public-data (per-object MD5)", version="1.0.0",
+         limitations="Self-selected volunteers; condition labels are dermatologist opinions from photographs, not biopsy results; the licence forbids any attempt to re-identify contributors."),
+    dict(id="derm12345", name="DERM12345 (dermatoscopic images, 40 subclasses)", url="https://doi.org/10.7910/DVN/DAXZ7P", maintainer="Yilmaz et al. (Harvard Dataverse)",
+         description="12,345 dermatoscopic images from Turkey with expert annotations in 40 subclasses and patient identifiers; every image is CC BY.",
+         intended_task="dermoscopic lesion classification", modality="dermoscopy", annotations=["lesion diagnosis", "benign/malignant", "patient identifiers"],
+         populations="One country; skin-tone labels are not provided.", claimed_license="CC BY 4.0 (claimed; verify)", attribution="Cite Yilmaz et al., DERM12345, Harvard Dataverse, doi:10.7910/DVN/DAXZ7P.",
+         download_method="Harvard Dataverse download (MD5 listed per file)", version="2.1", limitations="No skin-tone labels; some classes have very few images."),
     dict(id="funsd", name="FUNSD (form understanding)", url="https://guillaumejaume.github.io/FUNSD/", maintainer="Jaume et al.",
          description="199 scanned noisy forms with key-value annotations; NOT medical records.",
          intended_task="document layout / OCR benchmark", modality="scanned documents", annotations=["entities", "relations"],
@@ -187,7 +210,8 @@ def license_gate(d: dict, use: str, commercial: bool) -> dict:
     if use == "redistribution" and spdx not in COMMERCIAL_OK and not d.get("permission_document"):
         reasons.append("Redistribution rights are not confirmed.")
     if d.get("approval_status") != "approved":
-        reasons.append("An administrator has not approved this dataset for the project.")
+        why = f" It was reviewed and rejected: {d['verify_notes']}" if d.get("approval_status") == "rejected" and d.get("verify_notes") else ""
+        reasons.append("An administrator has not approved this dataset for the project." + why)       # callers that approve ignore this reason by its first sentence
     return {"allowed": not reasons, "reasons": reasons, "attribution": d.get("attribution", "")}
 
 

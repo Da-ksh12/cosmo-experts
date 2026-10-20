@@ -1,0 +1,224 @@
+{
+ "schema": "dataset-discovery-2",
+ "searched_at": "2026-10-19T15:45:19+0530",
+ "reviewed_at": "2026-10-20",
+ "tool": "backend/scripts/discover_datasets.py (read-only; nothing is downloaded by the survey)",
+ "sources_searched": [
+  "zenodo",
+  "figshare",
+  "dataverse",
+  "huggingface"
+ ],
+ "keywords": [
+  "acne",
+  "alopecia",
+  "hair loss",
+  "scalp",
+  "trichoscopy",
+  "dermatology images",
+  "skin lesion",
+  "melasma",
+  "vitiligo",
+  "psoriasis",
+  "eczema",
+  "rosacea",
+  "hyperpigmentation",
+  "skin disease images",
+  "dermoscopy",
+  "scar keloid",
+  "facial skin",
+  "skin tone"
+ ],
+ "counts": {
+  "hits": 970,
+  "permissive_licence": 741,
+  "permissive_and_relevant_title": 426
+ },
+ "how_to_read": "The survey returned 970 candidates; 741 carry a permissive publisher licence and 426 of those have a relevant word in the title. Almost all are supplementary files of papers, genomics, EEG, or non-image data. Each candidate whose title suggests images for a task this project lacks data for (acne, pigmentation, redness, scarring, texture, hair, scalp) or a general dermatology image set was opened and read; those are listed below with the verdict and its reason. A publisher's licence statement is only a claim: it passes the registry's licence gate only after the official terms are read, evidenced and approved, and a re-upload never inherits more rights than the original has.",
+ "reviewed": [
+  {
+   "id": "doi:10.7910/DVN/DAXZ7P",
+   "source": "Harvard Dataverse",
+   "title": "DERM12345: a large, multisource dermatoscopic skin lesion dataset with 40 subclasses",
+   "publisher_licence": "CC BY 4.0",
+   "verdict": "used",
+   "reason": "Original authors' deposit; licence read from the repository record; every image row also carries copyright-license CC-BY. 4,821 images selected (the 2,500-image cap on benign nevi keeps the class balance sane).",
+   "evidence": "https://dataverse.harvard.edu/api/datasets/:persistentId/?persistentId=doi:10.7910/DVN/DAXZ7P",
+   "used_for": "dermoscopy_lesion_research (external validation and second training set)"
+  },
+  {
+   "id": "isic-archive (licence-filtered)",
+   "source": "ISIC Archive API v2",
+   "title": "ISIC Archive: dermoscopic and clinical images with contributor licence CC-0 or CC-BY only",
+   "publisher_licence": "per image: CC-0 / CC-BY (a CC-BY-NC pool exists and is never listed)",
+   "verdict": "used",
+   "reason": "The archive as a whole is refused (mixed licences). Two licence-filtered subsets are registered and approved: dermoscopic images (11,974 official 256 px thumbnails) and clinical photographs (474 full-size images; the 2,298 images attributed to the Federal University of Espirito Santo are PAD-UFES-20 itself and are excluded).",
+   "evidence": "https://www.isic-archive.com/terms-conditions",
+   "used_for": "dermoscopy_lesion_research, lesion_classification_research"
+  },
+  {
+   "id": "scin",
+   "source": "Google Cloud Storage / GitHub",
+   "title": "SCIN: Skin Condition Image Network",
+   "publisher_licence": "SCIN Data Use License (attribution; no re-identification; no non-commercial clause)",
+   "verdict": "used",
+   "reason": "Licence text read in full from the official repository. Self-submitted photographs with dermatologist labels; 2,842 images of 11 conditions that each have at least 40 qualifying cases.",
+   "evidence": "https://raw.githubusercontent.com/google-research-datasets/scin/main/LICENSE",
+   "used_for": "skin_condition_research"
+  },
+  {
+   "id": "hf:HawkFranklin-Research/SCIN-Dermatology-Raw-Images",
+   "source": "Hugging Face",
+   "title": "SCIN-Dermatology-Raw-Images",
+   "publisher_licence": "mit (uploader's statement)",
+   "verdict": "rejected",
+   "reason": "A third-party curated copy of SCIN (its card says so) under an MIT label; an uploader cannot grant rights that SCIN's own licence does not grant, so the official source and its licence are used.",
+   "evidence": "https://huggingface.co/datasets/HawkFranklin-Research/SCIN-Dermatology-Raw-Images"
+  },
+  {
+   "id": "zenodo:17702692",
+   "source": "Zenodo",
+   "title": "Raw HAM10000 dataset",
+   "publisher_licence": "CC BY 4.0 (uploader's statement)",
+   "verdict": "rejected",
+   "reason": "A copy of HAM10000, whose rights holder (Harvard Dataverse record of the original authors) states CC BY-NC 4.0; an uploader who is not the rights holder cannot relicense it.",
+   "evidence": "https://zenodo.org/records/17702692"
+  },
+  {
+   "id": "doi:10.7910/DVN/OZKS1L",
+   "source": "Harvard Dataverse",
+   "title": "FitzDerm-CF: a controlled multimodal dermatology resource for skin-tone counterfactual and leakage evaluation",
+   "publisher_licence": "CC0 1.0 (uploader's statement)",
+   "verdict": "rejected",
+   "reason": "Its own description says it augments images from Fitzpatrick17k and DDI with synthetic notes; those two datasets are non-commercial, so the CC0 label on the derived package cannot be relied on.",
+   "evidence": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/OZKS1L"
+  },
+  {
+   "id": "figshare:31641331",
+   "source": "Figshare",
+   "title": "Binary_Skin_Cancer_Dataset",
+   "publisher_licence": "CC BY 4.0 (uploader's statement)",
+   "verdict": "rejected",
+   "reason": "6,482 dermoscopic images 'curated from publicly available dermatology image sources' with no named source or per-image licence: the rights cannot be traced.",
+   "evidence": "https://figshare.com/articles/dataset/31641331"
+  },
+  {
+   "id": "figshare:33084632",
+   "source": "Figshare",
+   "title": "Curated Skin Disease Dataset for Ringworm, Scabies, and Normal Human Skin Classification",
+   "publisher_licence": "CC BY 4.0 (uploader's statement)",
+   "verdict": "rejected",
+   "reason": "2,100 images 'collected from multiple publicly available sources' with no named sources, and the description itself says the set is intended for non-commercial research.",
+   "evidence": "https://figshare.com/articles/dataset/33084632"
+  },
+  {
+   "id": "hf:huynhnhu213/acne",
+   "source": "Hugging Face",
+   "title": "huynhnhu213/acne",
+   "publisher_licence": "apache-2.0 (uploader's statement)",
+   "verdict": "rejected",
+   "reason": "The dataset card is only a licence header: no source of the images, no description of the labels, no consent statement. The only acne image set found in the survey, and its provenance cannot be established.",
+   "evidence": "https://huggingface.co/datasets/huynhnhu213/acne"
+  },
+  {
+   "id": "hf:kg-09/SkinTone-Dataset",
+   "source": "Hugging Face",
+   "title": "Skin Tone Matching LoRA Training Dataset",
+   "publisher_licence": "mit",
+   "verdict": "not applicable",
+   "reason": "98 image pairs for training an inpainting model; no labels for any task in this project.",
+   "evidence": "https://huggingface.co/datasets/kg-09/SkinTone-Dataset"
+  },
+  {
+   "id": "zenodo:23433121",
+   "source": "Zenodo",
+   "title": "ScalpHairLabels v1: hand annotations of hair shafts and follicular openings on public-domain scalp dermoscopy",
+   "publisher_licence": "CC BY 4.0 (annotations); CC-0 (images, from ISIC)",
+   "verdict": "not usable for the tasks",
+   "reason": "The only lead for the hair and scalp tasks. 504 tiles cut from 108 CC-0 ISIC scalp dermoscopy images with binary hair masks and 1,101 follicular-opening points: a segmentation dataset for measuring hair shafts, far too small for a model, with no hair-loss grade and no scalp-condition label, so it cannot support `hair_thinning` or `scalp_findings`.",
+   "evidence": "https://zenodo.org/records/23433121"
+  },
+  {
+   "id": "zenodo:18324962",
+   "source": "Zenodo",
+   "title": "DermArtifactDB: a multi-label dataset for artifact annotation in public dermoscopic image repositories",
+   "publisher_licence": "CC BY 4.0 (annotations)",
+   "verdict": "not applicable",
+   "reason": "Annotations of hair, rulers, ink and similar artefacts on ISIC-2019, PH2 and Derm7pt images (repositories with mixed licences); no diagnosis or condition labels.",
+   "evidence": "https://zenodo.org/records/18324962"
+  },
+  {
+   "id": "zenodo:17484952",
+   "source": "Zenodo",
+   "title": "First set of facial skin images (PURE dataset)",
+   "publisher_licence": "CC BY 4.0",
+   "verdict": "not applicable",
+   "reason": "Facial video frames for pulse estimation; no skin-condition labels.",
+   "evidence": "https://zenodo.org/records/17484952"
+  },
+  {
+   "id": "zenodo:14882299",
+   "source": "Zenodo",
+   "title": "AI-generated synthetic dataset with face images of skin disease patients",
+   "publisher_licence": "CC BY 4.0",
+   "verdict": "rejected",
+   "reason": "Images generated by DALL-E 3: they say nothing about real skin and would invalidate any evaluation.",
+   "evidence": "https://zenodo.org/records/14882299"
+  },
+  {
+   "id": "zenodo:19218299",
+   "source": "Zenodo",
+   "title": "Psoriasis and Eczema dataset",
+   "publisher_licence": "CC BY 4.0",
+   "verdict": "not applicable",
+   "reason": "A 0.7 MB archive of study data, not images.",
+   "evidence": "https://zenodo.org/records/19218299"
+  },
+  {
+   "id": "doi:10.7910/DVN/HUQK9R",
+   "source": "Harvard Dataverse",
+   "title": "Skin Cancer Diagnostics with an All-Inclusive Smartphone Application",
+   "publisher_licence": "CC0 1.0",
+   "verdict": "not applicable",
+   "reason": "One sample photograph and a paper.",
+   "evidence": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/HUQK9R"
+  },
+  {
+   "id": "registry:ham10000",
+   "source": "Harvard Dataverse",
+   "title": "HAM10000",
+   "publisher_licence": "CC BY-NC 4.0",
+   "verdict": "rejected",
+   "reason": "Non-commercial licence from the original publisher.",
+   "evidence": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T"
+  },
+  {
+   "id": "registry:fitzpatrick17k",
+   "source": "GitHub",
+   "title": "Fitzpatrick 17k",
+   "publisher_licence": "CC BY-NC-SA 3.0",
+   "verdict": "rejected",
+   "reason": "Non-commercial, share-alike; the images belong to the websites they were taken from.",
+   "evidence": "https://github.com/mattgroh/fitzpatrick17k"
+  },
+  {
+   "id": "registry:ddi",
+   "source": "Stanford AIMI",
+   "title": "Diverse Dermatology Images",
+   "publisher_licence": "non-commercial research use",
+   "verdict": "rejected",
+   "reason": "Registration-gated; commercial use needs a separate licence.",
+   "evidence": "https://aimi.stanford.edu/datasets/ddi-diverse-dermatology-images"
+  },
+  {
+   "id": "registry:acne04",
+   "source": "GitHub",
+   "title": "ACNE04",
+   "publisher_licence": "none stated",
+   "verdict": "rejected",
+   "reason": "No licence in the authors' repository; consent for the face images is undocumented; written permission from the authors would be needed.",
+   "evidence": "https://github.com/xpwu95/LDL"
+  }
+ ],
+ "result_for_the_blocked_tasks": "No candidate with traceable rights and task-matched labels exists for acne, pigmentation, redness, dryness/scaling, texture/scarring, hair thinning or scalp findings. Those tasks stay unavailable; what would unblock them is in docs/PHASE_5_TRAINING_REPORT.md."
+}

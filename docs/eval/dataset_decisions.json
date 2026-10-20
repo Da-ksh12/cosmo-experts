@@ -1,0 +1,239 @@
+{
+ "schema": "dataset-decisions-1",
+ "decided_at": "2026-10-20T21:15:24+0530",
+ "actor": "phase5-agent",
+ "note": "Decisions taken by the automated Phase 5 run on the owner's instruction to use only datasets with verified licences. Each is reversible; legal review is recommended before commercial deployment.",
+ "decisions": [
+  {
+   "dataset": "isic-dermoscopy",
+   "name": "ISIC Archive: dermoscopic images (CC-0 and CC-BY contributor licences only)",
+   "decision": "approved",
+   "verified_spdx": "LicenseRef-ISIC-Contributor-CC0-or-CC-BY",
+   "licence": "Per image: CC-0 or CC-BY (contributor licence), version of CC-BY not stated by ISIC",
+   "notes": "Subset: 256 px official thumbnails of dermoscopic images. Licence verified from ISIC's own terms and API.",
+   "restrictions": [
+    "attribution per image",
+    "no attempt to re-identify",
+    "CC-BY-NC images are never listed or downloaded"
+   ],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "ISIC Terms & Conditions (sections 3.1, 4.2)",
+     "url": "https://www.isic-archive.com/terms-conditions",
+     "sha256": "50eb2188234ab50299bece4084f318cbcf3f9ebd83c582ac520f495b78abd92b",
+     "bytes": 743790
+    },
+    {
+     "label": "ISIC API: licence facet of the subset query (only CC-0 and CC-BY may be non-zero)",
+     "url": "https://api.isic-archive.com/api/v2/images/facets/?query=%28copyright_license%3A%22CC-0%22%20OR%20copyright_license%3A%22CC-BY%22%29%20AND%20image_type%3A%22dermoscopic%22%20AND%20-image_manipulation%3A%22altered%22%20AND%20-image_manipulation%3A%22synthetic%22%20AND%20%28diagnosis_1%3A%22Benign%22%20OR%20diagnosis_1%3A%22Malignant%22%20OR%20diagnosis_3%3A%22Solar%20or%20actinic%20keratosis%22%29%20AND%20%28diagnosis_confirm_type%3A%22histopathology%22%20OR%20diagnosis_confirm_type%3A%22single%20image%20expert%20consensus%22%20OR%20diagnosis_confirm_type%3A%22serial%20imaging%20showing%20no%20change%22%29",
+     "sha256": "09892e95ffcf7a678464942dc5860f841e6b324b4d7eb267816e872c0c7f3470",
+     "bytes": 21561
+    },
+    {
+     "label": "ISIC API: first records of the subset (licence and attribution per image)",
+     "url": "https://api.isic-archive.com/api/v2/images/search/?query=%28copyright_license%3A%22CC-0%22%20OR%20copyright_license%3A%22CC-BY%22%29%20AND%20image_type%3A%22dermoscopic%22%20AND%20-image_manipulation%3A%22altered%22%20AND%20-image_manipulation%3A%22synthetic%22%20AND%20%28diagnosis_1%3A%22Benign%22%20OR%20diagnosis_1%3A%22Malignant%22%20OR%20diagnosis_3%3A%22Solar%20or%20actinic%20keratosis%22%29%20AND%20%28diagnosis_confirm_type%3A%22histopathology%22%20OR%20diagnosis_confirm_type%3A%22single%20image%20expert%20consensus%22%20OR%20diagnosis_confirm_type%3A%22serial%20imaging%20showing%20no%20change%22%29",
+     "sha256": "e124a3f37e4fa98f5b1119898399043cc8043d0c4c02c410e2defe64f60101f6",
+     "bytes": 2773
+    }
+   ]
+  },
+  {
+   "dataset": "isic-clinical",
+   "name": "ISIC Archive: clinical photographs (CC-0 and CC-BY; PAD-UFES-20's own images excluded)",
+   "decision": "approved",
+   "verified_spdx": "LicenseRef-ISIC-Contributor-CC0-or-CC-BY",
+   "licence": "Per image: CC-0 or CC-BY (contributor licence), version of CC-BY not stated by ISIC",
+   "notes": "Subset: full-size clinical photographs, PAD-UFES-20's own images excluded. Licence verified from ISIC's own terms and API.",
+   "restrictions": [
+    "attribution per image",
+    "no attempt to re-identify",
+    "CC-BY-NC images are never listed or downloaded"
+   ],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "ISIC Terms & Conditions (sections 3.1, 4.2)",
+     "url": "https://www.isic-archive.com/terms-conditions",
+     "sha256": "50eb2188234ab50299bece4084f318cbcf3f9ebd83c582ac520f495b78abd92b",
+     "bytes": 743790
+    },
+    {
+     "label": "ISIC API: licence facet of the subset query (only CC-0 and CC-BY may be non-zero)",
+     "url": "https://api.isic-archive.com/api/v2/images/facets/?query=%28copyright_license%3A%22CC-0%22%20OR%20copyright_license%3A%22CC-BY%22%29%20AND%20%28image_type%3A%22clinical%3A%20close-up%22%20OR%20image_type%3A%22clinical%3A%20overview%22%29%20AND%20-image_manipulation%3A%22altered%22%20AND%20-image_manipulation%3A%22synthetic%22%20AND%20%28diagnosis_1%3A%22Benign%22%20OR%20diagnosis_1%3A%22Malignant%22%20OR%20diagnosis_3%3A%22Solar%20or%20actinic%20keratosis%22%29",
+     "sha256": "f628af343849a69ce6698a0598986028ff3d94b60cbdc4e01a3582645c69d535",
+     "bytes": 21230
+    },
+    {
+     "label": "ISIC API: first records of the subset (licence and attribution per image)",
+     "url": "https://api.isic-archive.com/api/v2/images/search/?query=%28copyright_license%3A%22CC-0%22%20OR%20copyright_license%3A%22CC-BY%22%29%20AND%20%28image_type%3A%22clinical%3A%20close-up%22%20OR%20image_type%3A%22clinical%3A%20overview%22%29%20AND%20-image_manipulation%3A%22altered%22%20AND%20-image_manipulation%3A%22synthetic%22%20AND%20%28diagnosis_1%3A%22Benign%22%20OR%20diagnosis_1%3A%22Malignant%22%20OR%20diagnosis_3%3A%22Solar%20or%20actinic%20keratosis%22%29",
+     "sha256": "ca8b5d298baf224fc3053d576e6821d2aea5698601e1666a59822cf4beaad387",
+     "bytes": 2533
+    }
+   ]
+  },
+  {
+   "dataset": "scin",
+   "name": "SCIN (Skin Condition Image Network)",
+   "decision": "approved",
+   "verified_spdx": "LicenseRef-SCIN-Data-Use-License",
+   "licence": "SCIN Data Use License (worldwide, royalty-free, irrevocable; attribution; no re-identification)",
+   "notes": "Licence text read in full from the official repository.",
+   "restrictions": [
+    "no attempt to re-identify contributors",
+    "attribution when sharing",
+    "images may be sensitive or graphic"
+   ],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "SCIN Data Use License (LICENSE)",
+     "url": "https://raw.githubusercontent.com/google-research-datasets/scin/main/LICENSE",
+     "sha256": "e29f7f0a84f0ad50e4920fa195e852bcd14c9e8b9e6c899ce9e3276be0b75da4",
+     "bytes": 13794
+    },
+    {
+     "label": "SCIN README",
+     "url": "https://raw.githubusercontent.com/google-research-datasets/scin/main/README.md",
+     "sha256": "ce7aa32f1b648b893371311992bfb8611bff81ae4d07cebcd7845ef35e065e5a",
+     "bytes": 6401
+    },
+    {
+     "label": "SCIN dataset schema",
+     "url": "https://raw.githubusercontent.com/google-research-datasets/scin/main/dataset_schema.md",
+     "sha256": "9dfeac982eeebd11be994b2a7eb4362fe05bb06c28ae0fa28dc5b64912abcf21",
+     "bytes": 11047
+    }
+   ]
+  },
+  {
+   "dataset": "derm12345",
+   "name": "DERM12345 (dermatoscopic images, 40 subclasses)",
+   "decision": "approved",
+   "verified_spdx": "CC-BY-4.0",
+   "licence": "CC BY 4.0",
+   "notes": "Licence read from the repository's own record for the original authors' deposit; every image row also carries copyright-license = CC-BY.",
+   "restrictions": [
+    "attribution (cite Yilmaz et al.)"
+   ],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "Harvard Dataverse record (latest version) with its licence",
+     "url": "https://dataverse.harvard.edu/api/datasets/:persistentId/?persistentId=doi:10.7910/DVN/DAXZ7P",
+     "sha256": "fd8131649dc304fd7919acd681cd17f26661113409da5a9889ce9cd7559500aa",
+     "bytes": 14241
+    }
+   ]
+  },
+  {
+   "dataset": "isic-archive",
+   "name": "ISIC Archive",
+   "decision": "rejected",
+   "verified_spdx": "mixed",
+   "licence": "Mixed per image: CC-0, CC-BY and CC-BY-NC",
+   "notes": "Refused as a whole: it contains a large non-commercial pool. The CC-0/CC-BY subsets are registered separately (isic-dermoscopy, isic-clinical).",
+   "restrictions": [],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "ISIC Terms & Conditions",
+     "url": "https://www.isic-archive.com/terms-conditions",
+     "sha256": "50eb2188234ab50299bece4084f318cbcf3f9ebd83c582ac520f495b78abd92b",
+     "bytes": 743790
+    },
+    {
+     "label": "ISIC API: licence facet over the whole archive",
+     "url": "https://api.isic-archive.com/api/v2/images/facets/?fields=copyright_license",
+     "sha256": "eea644f23c1940febffaa6b22990c22b2fa865d3e759f9200f1b33ae065ae303",
+     "bytes": 21816
+    }
+   ]
+  },
+  {
+   "dataset": "ham10000",
+   "name": "HAM10000",
+   "decision": "rejected",
+   "verified_spdx": "CC-BY-NC-4.0",
+   "licence": "CC BY-NC 4.0 (stated by the original publisher, Harvard Dataverse)",
+   "notes": "Non-commercial licence from the original publisher. A third-party Zenodo copy under CC BY 4.0 (record 17702692, uploader is not the rights holder and says use remains subject to the original terms) cannot re-license it and was not used.",
+   "restrictions": [],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "Harvard Dataverse record of HAM10000 (terms of use)",
+     "url": "https://dataverse.harvard.edu/api/datasets/:persistentId/?persistentId=doi:10.7910/DVN/DBW86T",
+     "sha256": "67cb3bb1be68801bdf0a182b96353ff42acc950972ce813c078f1b077c19d4e7",
+     "bytes": 36739
+    }
+   ]
+  },
+  {
+   "dataset": "fitzpatrick17k",
+   "name": "Fitzpatrick 17k",
+   "decision": "rejected",
+   "verified_spdx": "CC-BY-NC-SA-3.0",
+   "licence": "CC BY-NC-SA 3.0; image rights remain with the source websites",
+   "notes": "Non-commercial, share-alike; the images themselves are scraped from websites whose terms are not those of the annotations.",
+   "restrictions": [],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "Fitzpatrick17k README",
+     "url": "https://raw.githubusercontent.com/mattgroh/fitzpatrick17k/main/README.md",
+     "sha256": "ccc80b3b86ff23a977fc4a53030feead4def5e9d05321065d77e59298f496719",
+     "bytes": 4106
+    }
+   ]
+  },
+  {
+   "dataset": "ddi",
+   "name": "Diverse Dermatology Images (DDI)",
+   "decision": "rejected",
+   "verified_spdx": "Stanford-AIMI-noncommercial",
+   "licence": "Non-commercial research use under Stanford AIMI data use terms; commercial use needs a separate licence",
+   "notes": "Registration-gated download; commercial use requires a commercial licence from Stanford.",
+   "restrictions": [],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "Stanford AIMI shared datasets (terms)",
+     "url": "https://aimi.stanford.edu/shared-datasets",
+     "sha256": "e79b99c2663ac85f195bc703fa90ebb8fe6464b14a720cc51fbbdd77d521468f",
+     "bytes": 53337
+    },
+    {
+     "label": "Stanford AIMI DDI page",
+     "url": "https://aimi.stanford.edu/datasets/ddi-diverse-dermatology-images",
+     "sha256": "55a529a4c8719f32d5750d4e492cd04db6280234ce30aa920a0532836683a2ff",
+     "bytes": 45660
+    }
+   ]
+  },
+  {
+   "dataset": "acne04",
+   "name": "ACNE04 (acne severity)",
+   "decision": "rejected",
+   "verified_spdx": "none",
+   "licence": "No licence stated in the authors' repository",
+   "notes": "No licence file or statement; the face images' consent and reuse terms are undocumented; author-provided download links. Written permission from the authors would be needed.",
+   "restrictions": [],
+   "verified_by": "phase5-agent",
+   "evidence": [
+    {
+     "label": "GitHub repository record (licence field is null)",
+     "url": "https://api.github.com/repos/xpwu95/LDL",
+     "sha256": "7be0ceb8d687e0922d54e458cb5c24960304397aa7fea972b7626e32211f1fef",
+     "bytes": 4766
+    },
+    {
+     "label": "ACNE04 repository README",
+     "url": "https://raw.githubusercontent.com/xpwu95/LDL/master/README.md",
+     "sha256": "980f9c3b10bc57d5625cb853c2e2c6d40d170e44371b375e59c0f81bd9c7a951",
+     "bytes": 1016
+    }
+   ]
+  }
+ ],
+ "failures": []
+}

@@ -3,6 +3,8 @@
 How models and AI components are evaluated here, what has actually been measured, and the rules that decide whether any model may answer a patient. Code: `backend/app/ai/{evaluation,lifecycle,gates}`,
 `backend/app/training/trainer.py` (gates), `backend/eval/`. Tests: `test_model_lifecycle.py`, `test_ai_evaluation.py`, `test_ai_gates.py`.
 
+**Phase 5 update (2026-10-20):** five more research models exist (two phone-photo lesion probes, one skin-condition probe, two dermoscopy probes); the gates and their thresholds are unchanged, every model fails at least one, and none is approved or active ([PHASE_5_TRAINING_REPORT.md](PHASE_5_TRAINING_REPORT.md)). The text below describes the Phase 3 state.
+
 **Today no model is approved, none is active for any patient-facing task, and none could pass the gates on the evidence that exists.** The only learned models in the registry are four research models
 for lesion classification (below); the local language model fails its gates. Everything patient-facing that works today is rule-based, retrieval-based or classical image analysis.
 

@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app import db  # noqa: E402
 from app.config import MODEL_DIR  # noqa: E402
-from app.training import trainer as T  # noqa: E402
+from app.training import cards, trainer as T  # noqa: E402
 
 STATIC = [  # name, role, file (relative to MODEL_DIR), source, licence, intended use, limitations
     ("Tesseract OCR 5.4.0", "Scanned-document text recognition", None, "https://github.com/UB-Mannheim/tesseract (winget UB-Mannheim.TesseractOCR)", "Apache-2.0",
@@ -49,15 +49,26 @@ def main(out_path: str):
         L += [f"### {c['model_id']}  — {c['architecture']}", "",
               f"* **Status:** `{r['status']}` (research only; intended use: {c['intended_use']})",
               f"* **Task:** {c['task']} · classes {', '.join(c['classes'])}",
-              f"* **Dataset:** {c['dataset_id']} v{c['dataset_version']} (licence {c.get('dataset_license', {}).get('official_license_name') or c.get('dataset_license', {}).get('spdx')}); split images {c['split_sizes']}; patients {c.get('patients_per_split')}",
-              f"* **Training:** seed {c['seed']}, device {c['device']}, image {c['image_size']}px, fine-tune `{c['finetune']}`, epochs {c['epochs']}, {c.get('training_seconds')} s; code revision `{c.get('code_revision')}`",
-              f"* **Pretrained weights:** `{c['pretrained_weights']}` sha256 `{(c.get('pretrained_sha256') or '')[:16]}…`",
+              ("* **Dataset(s):** " + "; ".join(f"{s['name']} ({s['dataset']} v{s['version']}, {s['images']} images, {'external test only' if s['role'] == 'external' else 'train/val/test'}, licence {(s.get('license') or {}).get('official_license_name') or (s.get('license') or {}).get('spdx')})" for s in c["sources"])
+               if c.get("sources") else f"* **Dataset:** {c['dataset_id']} v{c['dataset_version']} (licence {c.get('dataset_license', {}).get('official_license_name') or c.get('dataset_license', {}).get('spdx')})")
+              + f"; split images {c['split_sizes']}; patients {c.get('patients_per_split')}",
+              f"* **Training:** seed {c['seed']}, device {c['device']}, image {c['image_size']}px, fine-tune `{c['finetune']}`, epochs {c['epochs']}, {c.get('training_seconds')} s; code revision `{c.get('code_revision')}`"
+              + (f"; experiment `{c['experiment']}`, feature kind `{c.get('feature_kind')}`, C={c.get('selected_C')}" if c.get("experiment") else ""),
+              f"* **Pretrained weights:** `{cards._rel(c['pretrained_weights'])}` sha256 `{(c.get('pretrained_sha256') or '')[:16]}…`",
               f"* **Artifact:** `{Path(c['artifact_path']).name}` sha256 `{c['artifact_sha256'][:16]}…`",
               f"* **Held-out test (n={t['n']}):** macro-F1 **{t['macro_f1']}** (95% CI {t.get('macro_f1_ci95')}), balanced accuracy {t.get('balanced_accuracy')}, accuracy {t['accuracy']}, ECE {t.get('ece')} (uncalibrated {t.get('ece_uncalibrated')}, T={t.get('temperature')})",
               "* **Baselines on the same test set:** " + "; ".join(f"{k}: macro-F1 {b['macro_f1']}" for k, b in c.get("baselines", {}).items()), "",
               "| Class | n (test) | Sensitivity | Specificity | Precision | AUROC | Missed |", "|---|---|---|---|---|---|---|"]
         for k, v in t["per_class"].items():
             L.append(f"| {k} | {v['n']} | {f(v['sensitivity'])} | {f(v['specificity'])} | {f(v['precision'])} | {f(v['auroc'])} | {v['false_negatives']} |")
+        if t.get("by_source") and len(t["by_source"]) > 1:
+            L += ["", "Held-out test by source: " + "; ".join(f"{k}: n={v['n']}, acc {v['accuracy']}, balanced acc {v['balanced_accuracy']}{'' if v['reliable'] else ' (unreliable)'}" for k, v in t["by_source"].items())]
+        if t.get("external"):
+            L += ["", "External validation (never trained on, selected with or calibrated on): " + "; ".join(
+                f"{k}: n={v['n']}, macro-F1 {v['macro_f1']} (95% CI {v.get('macro_f1_ci95')}), balanced accuracy {v['balanced_accuracy']}, accuracy {v['accuracy']}, {v.get('removed_as_near_duplicate_of_training', 0)} near-duplicates of training images removed" for k, v in t["external"].items())]
+        if t.get("case_level"):
+            cl = t["case_level"]
+            L += ["", f"Case level ({cl['unit']}): n={cl['n']}, accuracy {cl['accuracy']}, macro-F1 {cl['macro_f1']} (95% CI {cl['macro_f1_ci95']}), balanced accuracy {cl['balanced_accuracy']}"]
         L += ["", "Subgroups (Fitzpatrick): " + "; ".join(f"{g}: n={v['n']}, acc {v['accuracy']}{'' if v['reliable'] else ' (unreliable)'}" for g, v in t["subgroups_by_fitzpatrick"].items()),
               "", "Robustness (macro-F1): " + "; ".join(f"{k} {v['macro_f1']}" for k, v in t["robustness"].items())]
         if t.get("ood"):

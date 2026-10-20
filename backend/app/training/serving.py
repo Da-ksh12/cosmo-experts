@@ -112,7 +112,8 @@ def predict(model_id: str, data: bytes, request_id: str = "", enforce_quality: b
         return _rejected(model_id, card, ["The file could not be read as an image."], t0, request_id)
     q = suitability.quality_metrics(img)
     problems = [suitability.MESSAGES[r] for r in suitability.quality_issues(q, "skin_closeup")]
-    if problems and enforce_quality:
+    gate = (card.get("serving") or {}).get("quality_gate", "skin_closeup")
+    if problems and enforce_quality and gate != "none":
         return _rejected(model_id, card, problems, t0, request_id)
 
     import cv2
@@ -120,7 +121,11 @@ def predict(model_id: str, data: bytes, request_id: str = "", enforce_quality: b
     arr = np.asarray(T._square_resize(pil, b["size"]))[None]
     if b["kind"] == "probe":
         from . import probe
-        feat = probe.extract(b["backbone"], arr, "cpu")
+        if card.get("feature_kind"):                                   # Phase 5 heads: the CLS token alone, or CLS + mean patch token, exactly as in training
+            from . import features
+            feat = features.extract_batch("dinov2_s14", b["backbone"], arr, "cpu")[:, :384 if card["feature_kind"] == "cls" else 768]
+        else:
+            feat = probe.extract(b["backbone"], arr, "cpu")
         logits = probe.head_logits((feat - b["mean"]) / b["scale"], b["coef"], b["intercept"])
     else:
         logits = T.predict_logits(b["model"], arr, "cpu")
@@ -134,12 +139,18 @@ def predict(model_id: str, data: bytes, request_id: str = "", enforce_quality: b
         "top": top, "all_probabilities": {c: round(float(x), 4) for c, x in zip(b["classes"], p)}, "confidence": round(conf, 4),
         "abstain_below": b["threshold"], "abstained": conf < b["threshold"],
         "interpretation": "Research output only. Not a diagnosis and not for clinical decisions or patient display.",
-        "warnings": ["Trained on PAD-UFES-20 smartphone lesion photos (mostly Fitzpatrick 1-3); not valid for other image types or darker skin tones.",
-                     f"Confidence cannot flag unsupported images (measured AUROC {ood}); a confident answer does not mean the image is suitable." if ood is not None else
-                     "Out-of-distribution behaviour was not evaluated.",
-                     "Held-out sensitivity for melanoma, BCC and SCC was below the 0.80 release requirement."],
+        "warnings": _warnings(card, ood),
         "model": _model_info(model_id, card), "image_quality": q, "processing_ms": round((time.time() - t0) * 1000), "request_id": request_id, "timestamp": db.now(),
     }
+
+
+def _warnings(card: dict, ood) -> list[str]:
+    """What a reader of a research prediction must be told. Cards from Phase 5 carry their own wording (what the model was trained on); older cards keep the original text."""
+    own = (card.get("serving") or {}).get("warnings")
+    base = own or ["Trained on PAD-UFES-20 smartphone lesion photos (mostly Fitzpatrick 1-3); not valid for other image types or darker skin tones."]
+    failed = [g["gate"] for g in T.evaluate_gates(card) if not g["passed"]]
+    return base + [f"Confidence cannot flag unsupported images (measured AUROC {ood}); a confident answer does not mean the image is suitable." if ood is not None else "Out-of-distribution behaviour was not evaluated.",
+                   ("Held-out results did not meet these release gates: " + ", ".join(failed) + ".") if failed else "The evaluation gates passed, but release also needs clinical sign-off, which has not happened."]
 
 
 def _model_info(model_id: str, card: dict) -> dict:

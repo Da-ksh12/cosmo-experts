@@ -1,0 +1,1141 @@
+{
+ "model_id": "e0ce44b3a7894fac916e7d659f1efbe4",
+ "task": "skin_condition_research",
+ "experiment": "skin-condition-scin",
+ "architecture": "dinov2_vit_s14_frozen + logistic_regression_probe",
+ "feature_kind": "cls+mean",
+ "backbone": "dinov2_s14-04d27f3400d0",
+ "classes": [
+  "Acne",
+  "Allergic Contact Dermatitis",
+  "Eczema",
+  "Folliculitis",
+  "Herpes Simplex",
+  "Herpes Zoster",
+  "Insect Bite",
+  "Pigmented purpuric eruption",
+  "Psoriasis",
+  "Tinea",
+  "Urticaria"
+ ],
+ "dataset_id": "scin",
+ "dataset_version_id": "1e4da1da0edf4987984fa67bb4b783b9",
+ "dataset_version": 1,
+ "sources": [
+  {
+   "name": "scin",
+   "role": "train",
+   "dataset": "scin",
+   "version_id": "1e4da1da0edf4987984fa67bb4b783b9",
+   "version": 1,
+   "manifest_sha256": "8c49884b3ae9a02c60a66191a3eed945cce810127cd6184d1509caf2df131241",
+   "images": 2842,
+   "split_policy": "random-group",
+   "unknown_group_train_only": false,
+   "license": {
+    "dataset": "scin",
+    "version": 1,
+    "spdx": "LicenseRef-SCIN-Data-Use-License",
+    "official_license_name": "SCIN Data Use License (worldwide, royalty-free, irrevocable; attribution; no re-identification)",
+    "terms_snapshot_hash": "00693f4716ffbe935b0f2299010889d4a5eb2d5082f63fdf5aa40a9301b98179",
+    "source": "https://github.com/google-research-datasets/scin",
+    "attribution": "Cite Ward et al. 2024 (SCIN). Keep the licence notice with any redistribution."
+   }
+  }
+ ],
+ "seed": 17,
+ "device": "cpu",
+ "image_size": 224,
+ "finetune": "none (frozen backbone)",
+ "epochs": 0,
+ "lr": null,
+ "batch": null,
+ "selected_C": 0.03,
+ "best_val_macro_f1": 0.3146,
+ "model_selection": [
+  {
+   "feature_kind": "cls",
+   "C": 0.1,
+   "val_macro_f1": 0.29
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.1,
+   "val_macro_f1": 0.306
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.003,
+   "val_macro_f1": 0.2838
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.01,
+   "val_macro_f1": 0.2869
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.03,
+   "val_macro_f1": 0.3146
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 0.3,
+   "val_macro_f1": 0.2934
+  },
+  {
+   "feature_kind": "cls+mean",
+   "C": 1.0,
+   "val_macro_f1": 0.2756
+  }
+ ],
+ "split_sizes": {
+  "train": 2029,
+  "val": 407,
+  "test": 406
+ },
+ "patients_per_split": {
+  "train": 966,
+  "val": 194,
+  "test": 193
+ },
+ "class_counts_per_split": {
+  "train": {
+   "Acne": 70,
+   "Allergic Contact Dermatitis": 350,
+   "Eczema": 573,
+   "Folliculitis": 154,
+   "Herpes Simplex": 69,
+   "Herpes Zoster": 76,
+   "Insect Bite": 224,
+   "Pigmented purpuric eruption": 65,
+   "Psoriasis": 91,
+   "Tinea": 95,
+   "Urticaria": 262
+  },
+  "val": {
+   "Acne": 14,
+   "Allergic Contact Dermatitis": 69,
+   "Eczema": 115,
+   "Folliculitis": 30,
+   "Herpes Simplex": 13,
+   "Herpes Zoster": 16,
+   "Insect Bite": 45,
+   "Pigmented purpuric eruption": 13,
+   "Psoriasis": 19,
+   "Tinea": 20,
+   "Urticaria": 53
+  },
+  "test": {
+   "Acne": 14,
+   "Allergic Contact Dermatitis": 69,
+   "Eczema": 114,
+   "Folliculitis": 31,
+   "Herpes Simplex": 14,
+   "Herpes Zoster": 15,
+   "Insect Bite": 45,
+   "Pigmented purpuric eruption": 13,
+   "Psoriasis": 19,
+   "Tinea": 19,
+   "Urticaria": 53
+  }
+ },
+ "split_notes": {
+  "scin": {}
+ },
+ "excluded_labels_not_in_class_set": {},
+ "near_duplicates_vs_train": {
+  "val": 0,
+  "test": 0
+ },
+ "near_duplicates_removed_before_evaluation": {
+  "val": 0,
+  "test": 0
+ },
+ "split_hash": "f29a14ad8a1f6e82d201b6c9f4eb6d5fad1b146d8d199167c41f27eb27bd78c6",
+ "pretrained_weights": "data/models/pretrained/dinov2_small/model.safetensors",
+ "pretrained_sha256": "04d27f3400d059fc0cfd7d17dd1909a75bf3ea8fb3eeb48b97cb99e57ee20081",
+ "pretrained_provenance": "{\"source\": \"https://huggingface.co/timm/vit_small_patch14_dinov2.lvd142m\", \"commit\": \"4610ca143709d58a633b6397a74412c2c3842454\", \"sha256\": \"04d27f3400d059fc0cfd7d17dd1909a75bf3ea8fb3eeb48b97cb99e57ee20081\", \"license_tags\": [\"license:apache-2.0\"], \"trained_on\": \"LVD-142M (Meta, self-supervised, curated web images); upstream data terms not independently reviewed\", \"architecture\": \"DINOv2 ViT-S/14 as published by timm\"}",
+ "baselines": {
+  "majority_class": {
+   "class": "Eczema",
+   "n": 406,
+   "accuracy": 0.281,
+   "macro_f1": 0.04,
+   "balanced_accuracy": 0.091,
+   "macro_f1_ci95": [
+    0.035,
+    0.045
+   ],
+   "ece": 0.719
+  },
+  "dinov2_knn_cosine": {
+   "k": 15,
+   "n": 406,
+   "accuracy": 0.35,
+   "macro_f1": 0.223,
+   "balanced_accuracy": 0.236,
+   "macro_f1_ci95": [
+    0.178,
+    0.262
+   ],
+   "ece": 0.08
+  },
+  "resnet18_frozen_features_logreg": {
+   "n": 406,
+   "accuracy": 0.217,
+   "macro_f1": 0.206,
+   "balanced_accuracy": 0.216,
+   "macro_f1_ci95": [
+    0.158,
+    0.246
+   ],
+   "ece": 0.353,
+   "note": "ImageNet-1k weights: comparison only; their licence status for commercial use is unresolved"
+  }
+ },
+ "history": [],
+ "test_metrics": {
+  "n": 406,
+  "accuracy": 0.34,
+  "macro_f1": 0.347,
+  "balanced_accuracy": 0.377,
+  "macro_f1_ci95": [
+   0.287,
+   0.395
+  ],
+  "balanced_accuracy_ci95": [
+   0.319,
+   0.441
+  ],
+  "ece": 0.041,
+  "per_class": {
+   "Acne": {
+    "n": 14,
+    "sensitivity": 0.571,
+    "specificity": 0.974,
+    "precision": 0.444,
+    "auroc": 0.911,
+    "false_negatives": 6,
+    "false_positives": 10
+   },
+   "Allergic Contact Dermatitis": {
+    "n": 69,
+    "sensitivity": 0.217,
+    "specificity": 0.843,
+    "precision": 0.221,
+    "auroc": 0.635,
+    "false_negatives": 54,
+    "false_positives": 53
+   },
+   "Eczema": {
+    "n": 114,
+    "sensitivity": 0.333,
+    "specificity": 0.856,
+    "precision": 0.475,
+    "auroc": 0.712,
+    "false_negatives": 76,
+    "false_positives": 42
+   },
+   "Folliculitis": {
+    "n": 31,
+    "sensitivity": 0.323,
+    "specificity": 0.915,
+    "precision": 0.238,
+    "auroc": 0.703,
+    "false_negatives": 21,
+    "false_positives": 32
+   },
+   "Herpes Simplex": {
+    "n": 14,
+    "sensitivity": 0.214,
+    "specificity": 0.972,
+    "precision": 0.214,
+    "auroc": 0.76,
+    "false_negatives": 11,
+    "false_positives": 11
+   },
+   "Herpes Zoster": {
+    "n": 15,
+    "sensitivity": 0.533,
+    "specificity": 0.964,
+    "precision": 0.364,
+    "auroc": 0.914,
+    "false_negatives": 7,
+    "false_positives": 14
+   },
+   "Insect Bite": {
+    "n": 45,
+    "sensitivity": 0.311,
+    "specificity": 0.931,
+    "precision": 0.359,
+    "auroc": 0.739,
+    "false_negatives": 31,
+    "false_positives": 25
+   },
+   "Pigmented purpuric eruption": {
+    "n": 13,
+    "sensitivity": 0.462,
+    "specificity": 0.975,
+    "precision": 0.375,
+    "auroc": 0.927,
+    "false_negatives": 7,
+    "false_positives": 10
+   },
+   "Psoriasis": {
+    "n": 19,
+    "sensitivity": 0.632,
+    "specificity": 0.959,
+    "precision": 0.429,
+    "auroc": 0.923,
+    "false_negatives": 7,
+    "false_positives": 16
+   },
+   "Tinea": {
+    "n": 19,
+    "sensitivity": 0.158,
+    "specificity": 0.941,
+    "precision": 0.115,
+    "auroc": 0.709,
+    "false_negatives": 16,
+    "false_positives": 23
+   },
+   "Urticaria": {
+    "n": 53,
+    "sensitivity": 0.396,
+    "specificity": 0.909,
+    "precision": 0.396,
+    "auroc": 0.802,
+    "false_negatives": 32,
+    "false_positives": 32
+   }
+  },
+  "confusion_matrix": [
+   [
+    8,
+    1,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1
+   ],
+   [
+    4,
+    15,
+    21,
+    2,
+    1,
+    5,
+    7,
+    2,
+    1,
+    8,
+    3
+   ],
+   [
+    0,
+    22,
+    38,
+    8,
+    0,
+    6,
+    9,
+    6,
+    5,
+    3,
+    17
+   ],
+   [
+    1,
+    7,
+    0,
+    10,
+    3,
+    0,
+    1,
+    0,
+    4,
+    1,
+    4
+   ],
+   [
+    5,
+    0,
+    2,
+    0,
+    3,
+    1,
+    0,
+    1,
+    0,
+    1,
+    1
+   ],
+   [
+    0,
+    2,
+    1,
+    2,
+    0,
+    8,
+    0,
+    0,
+    0,
+    2,
+    0
+   ],
+   [
+    0,
+    9,
+    4,
+    8,
+    6,
+    1,
+    14,
+    0,
+    0,
+    1,
+    2
+   ],
+   [
+    0,
+    2,
+    3,
+    0,
+    0,
+    0,
+    1,
+    6,
+    1,
+    0,
+    0
+   ],
+   [
+    0,
+    2,
+    2,
+    1,
+    0,
+    0,
+    1,
+    0,
+    12,
+    0,
+    1
+   ],
+   [
+    0,
+    2,
+    5,
+    2,
+    0,
+    0,
+    1,
+    0,
+    3,
+    3,
+    3
+   ],
+   [
+    0,
+    6,
+    4,
+    5,
+    1,
+    1,
+    5,
+    1,
+    2,
+    7,
+    21
+   ]
+  ],
+  "classes": [
+   "Acne",
+   "Allergic Contact Dermatitis",
+   "Eczema",
+   "Folliculitis",
+   "Herpes Simplex",
+   "Herpes Zoster",
+   "Insect Bite",
+   "Pigmented purpuric eruption",
+   "Psoriasis",
+   "Tinea",
+   "Urticaria"
+  ],
+  "subgroups_by_fitzpatrick": {
+   "1-2": {
+    "n": 184,
+    "accuracy": 0.332,
+    "balanced_accuracy": 0.353,
+    "reliable": true
+   },
+   "3": {
+    "n": 129,
+    "accuracy": 0.326,
+    "balanced_accuracy": 0.38,
+    "reliable": true
+   },
+   "4-6": {
+    "n": 85,
+    "accuracy": 0.388,
+    "balanced_accuracy": 0.471,
+    "reliable": true
+   },
+   "NA": {
+    "n": 8,
+    "accuracy": 0.25,
+    "balanced_accuracy": null,
+    "reliable": false
+   }
+  },
+  "failure_cases": [
+   {
+    "file": "4013268428021902865.png",
+    "true": "Herpes Simplex",
+    "predicted": "Acne",
+    "confidence": 0.826
+   },
+   {
+    "file": "-737002406762138892.png",
+    "true": "Herpes Simplex",
+    "predicted": "Acne",
+    "confidence": 0.82
+   },
+   {
+    "file": "-1831080273137310044.png",
+    "true": "Folliculitis",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.668
+   },
+   {
+    "file": "9068834759287693167.png",
+    "true": "Herpes Simplex",
+    "predicted": "Acne",
+    "confidence": 0.659
+   },
+   {
+    "file": "-8541325890788453938.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Acne",
+    "confidence": 0.641
+   },
+   {
+    "file": "8857209346089120881.png",
+    "true": "Herpes Simplex",
+    "predicted": "Acne",
+    "confidence": 0.621
+   },
+   {
+    "file": "-8514985552097683346.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Acne",
+    "confidence": 0.57
+   },
+   {
+    "file": "-9204466149375548897.png",
+    "true": "Tinea",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.569
+   },
+   {
+    "file": "-3394614034935174533.png",
+    "true": "Insect Bite",
+    "predicted": "Herpes Simplex",
+    "confidence": 0.55
+   },
+   {
+    "file": "-3710485127899507294.png",
+    "true": "Insect Bite",
+    "predicted": "Folliculitis",
+    "confidence": 0.52
+   },
+   {
+    "file": "3586347795171594166.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Acne",
+    "confidence": 0.51
+   },
+   {
+    "file": "4012065403674643012.png",
+    "true": "Tinea",
+    "predicted": "Eczema",
+    "confidence": 0.504
+   },
+   {
+    "file": "-8200580858198604298.png",
+    "true": "Herpes Simplex",
+    "predicted": "Acne",
+    "confidence": 0.486
+   },
+   {
+    "file": "7710049218681093673.png",
+    "true": "Acne",
+    "predicted": "Folliculitis",
+    "confidence": 0.475
+   },
+   {
+    "file": "-1144385403699610414.png",
+    "true": "Insect Bite",
+    "predicted": "Folliculitis",
+    "confidence": 0.47
+   },
+   {
+    "file": "-3435580209784550568.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Tinea",
+    "confidence": 0.466
+   },
+   {
+    "file": "399191161180360402.png",
+    "true": "Acne",
+    "predicted": "Folliculitis",
+    "confidence": 0.466
+   },
+   {
+    "file": "-3912040042324761913.png",
+    "true": "Tinea",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.459
+   },
+   {
+    "file": "7460985154984411731.png",
+    "true": "Insect Bite",
+    "predicted": "Folliculitis",
+    "confidence": 0.455
+   },
+   {
+    "file": "-1908919976412842853.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Tinea",
+    "confidence": 0.451
+   },
+   {
+    "file": "-5486819123551817803.png",
+    "true": "Eczema",
+    "predicted": "Insect Bite",
+    "confidence": 0.443
+   },
+   {
+    "file": "1281951106283171619.png",
+    "true": "Urticaria",
+    "predicted": "Psoriasis",
+    "confidence": 0.438
+   },
+   {
+    "file": "-724292300951106502.png",
+    "true": "Eczema",
+    "predicted": "Urticaria",
+    "confidence": 0.43
+   },
+   {
+    "file": "6524779868046085293.png",
+    "true": "Folliculitis",
+    "predicted": "Urticaria",
+    "confidence": 0.43
+   },
+   {
+    "file": "-3960777895415462837.png",
+    "true": "Eczema",
+    "predicted": "Urticaria",
+    "confidence": 0.429
+   },
+   {
+    "file": "2518164485666214259.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Eczema",
+    "confidence": 0.429
+   },
+   {
+    "file": "8228002420112509347.png",
+    "true": "Folliculitis",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.427
+   },
+   {
+    "file": "-95547096244876957.png",
+    "true": "Eczema",
+    "predicted": "Urticaria",
+    "confidence": 0.426
+   },
+   {
+    "file": "4164628182881455069.png",
+    "true": "Urticaria",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.423
+   },
+   {
+    "file": "-4390482382607634718.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Eczema",
+    "confidence": 0.422
+   },
+   {
+    "file": "-8607337421690466021.png",
+    "true": "Urticaria",
+    "predicted": "Tinea",
+    "confidence": 0.418
+   },
+   {
+    "file": "-7782995076528179992.png",
+    "true": "Urticaria",
+    "predicted": "Herpes Zoster",
+    "confidence": 0.417
+   },
+   {
+    "file": "4521536798975368104.png",
+    "true": "Eczema",
+    "predicted": "Insect Bite",
+    "confidence": 0.414
+   },
+   {
+    "file": "-1423317161050712636.png",
+    "true": "Eczema",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.396
+   },
+   {
+    "file": "-1844222098674246997.png",
+    "true": "Insect Bite",
+    "predicted": "Herpes Simplex",
+    "confidence": 0.396
+   },
+   {
+    "file": "3890153315286790905.png",
+    "true": "Eczema",
+    "predicted": "Folliculitis",
+    "confidence": 0.396
+   },
+   {
+    "file": "-1248547167575108548.png",
+    "true": "Eczema",
+    "predicted": "Urticaria",
+    "confidence": 0.395
+   },
+   {
+    "file": "-8289424844938182188.png",
+    "true": "Eczema",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.395
+   },
+   {
+    "file": "-8492996097534058599.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Eczema",
+    "confidence": 0.393
+   },
+   {
+    "file": "862461662848239408.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Eczema",
+    "confidence": 0.39
+   },
+   {
+    "file": "1040533114460273199.png",
+    "true": "Insect Bite",
+    "predicted": "Folliculitis",
+    "confidence": 0.388
+   },
+   {
+    "file": "-6499484265229283257.png",
+    "true": "Eczema",
+    "predicted": "Urticaria",
+    "confidence": 0.386
+   },
+   {
+    "file": "-1628413175243738425.png",
+    "true": "Insect Bite",
+    "predicted": "Herpes Simplex",
+    "confidence": 0.385
+   },
+   {
+    "file": "-5432546180216775741.png",
+    "true": "Eczema",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.382
+   },
+   {
+    "file": "-8145244033534164482.png",
+    "true": "Folliculitis",
+    "predicted": "Herpes Simplex",
+    "confidence": 0.378
+   },
+   {
+    "file": "-632494631052015096.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Insect Bite",
+    "confidence": 0.377
+   },
+   {
+    "file": "2932220252440884552.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Tinea",
+    "confidence": 0.377
+   },
+   {
+    "file": "6375220005198018647.png",
+    "true": "Allergic Contact Dermatitis",
+    "predicted": "Tinea",
+    "confidence": 0.373
+   },
+   {
+    "file": "1316859390205134500.png",
+    "true": "Urticaria",
+    "predicted": "Insect Bite",
+    "confidence": 0.372
+   },
+   {
+    "file": "7779758798320382398.png",
+    "true": "Urticaria",
+    "predicted": "Allergic Contact Dermatitis",
+    "confidence": 0.371
+   }
+  ],
+  "warnings": [
+   "Class 'Acne' has fewer than 20 test images; its metrics are unreliable.",
+   "Class 'Herpes Simplex' has fewer than 20 test images; its metrics are unreliable.",
+   "Class 'Herpes Zoster' has fewer than 20 test images; its metrics are unreliable.",
+   "Class 'Pigmented purpuric eruption' has fewer than 20 test images; its metrics are unreliable.",
+   "Class 'Psoriasis' has fewer than 20 test images; its metrics are unreliable.",
+   "Class 'Tinea' has fewer than 20 test images; its metrics are unreliable."
+  ],
+  "ece_uncalibrated": 0.201,
+  "temperature": 2.15,
+  "selective_prediction": [
+   {
+    "threshold": 0.0,
+    "coverage": 1.0,
+    "accuracy_on_accepted": 0.34
+   },
+   {
+    "threshold": 0.4,
+    "coverage": 0.163,
+    "accuracy_on_accepted": 0.5
+   },
+   {
+    "threshold": 0.5,
+    "coverage": 0.071,
+    "accuracy_on_accepted": 0.586
+   },
+   {
+    "threshold": 0.6,
+    "coverage": 0.039,
+    "accuracy_on_accepted": 0.625
+   },
+   {
+    "threshold": 0.7,
+    "coverage": 0.012,
+    "accuracy_on_accepted": 0.6
+   },
+   {
+    "threshold": 0.8,
+    "coverage": 0.01,
+    "accuracy_on_accepted": 0.5
+   },
+   {
+    "threshold": 0.9,
+    "coverage": 0.0,
+    "accuracy_on_accepted": null
+   }
+  ],
+  "by_source": {
+   "scin": {
+    "n": 406,
+    "accuracy": 0.34,
+    "balanced_accuracy": 0.377,
+    "reliable": true
+   }
+  },
+  "by_identifier_known": {
+   "patient/lesion id known": {
+    "n": 406,
+    "accuracy": 0.34,
+    "balanced_accuracy": 0.377,
+    "reliable": true
+   }
+  },
+  "case_level": {
+   "n": 193,
+   "accuracy": 0.394,
+   "macro_f1": 0.41,
+   "balanced_accuracy": 0.437,
+   "macro_f1_ci95": [
+    0.316,
+    0.484
+   ],
+   "ece": 0.121,
+   "subgroups_by_fitzpatrick": {
+    "1-2": {
+     "n": 86,
+     "accuracy": 0.36,
+     "balanced_accuracy": 0.373,
+     "reliable": true
+    },
+    "3": {
+     "n": 61,
+     "accuracy": 0.426,
+     "balanced_accuracy": 0.499,
+     "reliable": true
+    },
+    "4-6": {
+     "n": 39,
+     "accuracy": 0.436,
+     "balanced_accuracy": 0.553,
+     "reliable": false
+    },
+    "NA": {
+     "n": 7,
+     "accuracy": 0.286,
+     "balanced_accuracy": null,
+     "reliable": false
+    }
+   },
+   "unit": "case (logits of its photographs averaged)"
+  },
+  "robustness": {
+   "blur": {
+    "macro_f1": 0.216,
+    "balanced_accuracy": 0.233,
+    "mean_confidence": 0.324
+   },
+   "dark": {
+    "macro_f1": 0.354,
+    "balanced_accuracy": 0.367,
+    "mean_confidence": 0.312
+   },
+   "jpeg20": {
+    "macro_f1": 0.226,
+    "balanced_accuracy": 0.261,
+    "mean_confidence": 0.342
+   },
+   "rotate90": {
+    "macro_f1": 0.36,
+    "balanced_accuracy": 0.388,
+    "mean_confidence": 0.313
+   }
+  },
+  "ood": {
+   "n": 19,
+   "source": "non-skin natural images (scikit-image sample set)",
+   "mean_confidence": 0.426,
+   "in_distribution_mean_confidence": 0.314,
+   "fraction_above_threshold": {
+    "0.5": 0.211,
+    "0.7": 0.105,
+    "0.9": 0.0
+   },
+   "in_distribution_fraction_above_threshold": {
+    "0.5": 0.071,
+    "0.7": 0.012,
+    "0.9": 0.0
+   },
+   "auroc_confidence_separates_in_vs_out": 0.259
+  },
+  "robustness_reference": {
+   "subset_n": 300,
+   "clean": {
+    "macro_f1": 0.365,
+    "balanced_accuracy": 0.402
+   },
+   "note": "the perturbations were applied to a fixed random subset of the test set; compare them with these clean figures on the same images, not with the whole-test-set figures"
+  }
+ },
+ "training_seconds": 1031,
+ "artifact_path": "data/models/skin_condition_research/e0ce44b3a7894fac916e7d659f1efbe4.npz",
+ "artifact_sha256": "200619304c195d2300fb10922559a2afde2b8d0a760977f4ef3da711fc40b932",
+ "code_revision": "src-49eb1d7ee9c4b2de",
+ "dataset_license": {
+  "dataset": "scin",
+  "version": 1,
+  "spdx": "LicenseRef-SCIN-Data-Use-License",
+  "official_license_name": "SCIN Data Use License (worldwide, royalty-free, irrevocable; attribution; no re-identification)",
+  "terms_snapshot_hash": "00693f4716ffbe935b0f2299010889d4a5eb2d5082f63fdf5aa40a9301b98179",
+  "source": "https://github.com/google-research-datasets/scin",
+  "attribution": "Cite Ward et al. 2024 (SCIN). Keep the licence notice with any redistribution."
+ },
+ "dataset_licenses": [
+  {
+   "dataset": "scin",
+   "version": 1,
+   "spdx": "LicenseRef-SCIN-Data-Use-License",
+   "official_license_name": "SCIN Data Use License (worldwide, royalty-free, irrevocable; attribution; no re-identification)",
+   "terms_snapshot_hash": "00693f4716ffbe935b0f2299010889d4a5eb2d5082f63fdf5aa40a9301b98179",
+   "source": "https://github.com/google-research-datasets/scin",
+   "attribution": "Cite Ward et al. 2024 (SCIN). Keep the licence notice with any redistribution."
+  }
+ ],
+ "intended_use": "Research only. Not clinically validated. Not offered to patients.",
+ "approval": null,
+ "evidence_class": "public_research_dataset",
+ "log": [
+  "20:36:13 features dinov2_s14 2816/2842 (5.54 img/s, 509s)",
+  "20:36:17 features dinov2_s14 2842/2842 (5.54 img/s, 513s)",
+  "20:36:32 features resnet18_in1k 256/2842 (18.82 img/s, 14s)",
+  "20:36:47 features resnet18_in1k 512/2842 (17.57 img/s, 29s)",
+  "20:37:03 features resnet18_in1k 768/2842 (17.17 img/s, 45s)",
+  "20:37:20 features resnet18_in1k 1024/2842 (16.55 img/s, 62s)",
+  "20:37:37 features resnet18_in1k 1280/2842 (16.14 img/s, 79s)",
+  "20:37:52 features resnet18_in1k 1536/2842 (16.26 img/s, 94s)",
+  "20:38:08 features resnet18_in1k 1792/2842 (16.35 img/s, 110s)",
+  "20:38:22 features resnet18_in1k 2048/2842 (16.46 img/s, 124s)",
+  "20:38:38 features resnet18_in1k 2304/2842 (16.45 img/s, 140s)",
+  "20:38:53 features resnet18_in1k 2560/2842 (16.51 img/s, 155s)",
+  "20:39:09 features resnet18_in1k 2816/2842 (16.49 img/s, 171s)",
+  "20:39:11 features resnet18_in1k 2842/2842 (16.44 img/s, 173s)",
+  "20:39:11 near-duplicates of a training image removed before evaluation: {'val': 0, 'test': 0}",
+  "20:39:12 feature kind cls, C=0.1: val macro-F1 0.290",
+  "20:39:13 feature kind cls+mean, C=0.1: val macro-F1 0.306",
+  "20:39:14 feature kind cls+mean, C=0.003: val macro-F1 0.284",
+  "20:39:14 feature kind cls+mean, C=0.01: val macro-F1 0.287",
+  "20:39:15 feature kind cls+mean, C=0.03: val macro-F1 0.315",
+  "20:39:16 feature kind cls+mean, C=0.3: val macro-F1 0.293",
+  "20:39:17 feature kind cls+mean, C=1.0: val macro-F1 0.276",
+  "20:39:20 baseline majority_class: macro-F1 0.04",
+  "20:39:20 baseline dinov2_knn_cosine: macro-F1 0.223",
+  "20:39:20 baseline resnet18_frozen_features_logreg: macro-F1 0.206"
+ ],
+ "limitations": [
+  "Closed set of common conditions with no 'other' class.",
+  "Labels are dermatologist opinions from photographs (leading condition weight >= 0.5), not biopsy results.",
+  "Volunteers in the United States; self-selected; photographs of varying quality."
+ ],
+ "serving": {
+  "quality_gate": "skin_closeup",
+  "warnings": [
+   "Trained on smartphone photographs from US volunteers (SCIN); labels are dermatologist opinions from photographs, not biopsy results. The model has no 'other' class and will name one of its classes for any skin image.",
+   "Research only: not a diagnosis and never shown to patients."
+  ]
+ },
+ "resources": {
+  "hardware": {
+   "cpu": "Intel64 Family 6 Model 61 Stepping 4, GenuineIntel",
+   "logical_cpus": 4,
+   "ram_total_mb": 8488,
+   "gpu": "none"
+  },
+  "device": "cpu",
+  "autotune": {
+   "device": "cpu",
+   "free_ram_mb_at_start": 2241,
+   "cpu_logical": 4,
+   "chosen": {
+    "threads": 4,
+    "batch": 16,
+    "images_per_s": 6.52
+   },
+   "measured": [
+    {
+     "threads": 2,
+     "batch": 8,
+     "images_per_s": 5.74
+    },
+    {
+     "threads": 2,
+     "batch": 16,
+     "images_per_s": 6.09
+    },
+    {
+     "threads": 3,
+     "batch": 8,
+     "images_per_s": 5.01
+    },
+    {
+     "threads": 3,
+     "batch": 16,
+     "images_per_s": 5.15
+    },
+    {
+     "threads": 4,
+     "batch": 8,
+     "images_per_s": 5.28
+    },
+    {
+     "threads": 4,
+     "batch": 16,
+     "images_per_s": 6.52
+    }
+   ],
+   "image_size": 224,
+   "precision": "fp32 (mixed precision is only used on CUDA)"
+  },
+  "stage_seconds": {
+   "image_cache": 81.0,
+   "dinov2_features": 638.6,
+   "resnet18_features": 812.1,
+   "leakage_audit": 812.7,
+   "head": 819.3,
+   "baselines": 821.8,
+   "test_metrics": 822.8,
+   "robustness_ood": 1031.0,
+   "external": 1031.0
+  },
+  "peak_working_set_mb": 1200,
+  "artifact_bytes": 48814,
+  "backbone_bytes": 88240510,
+  "precision": "fp32 (mixed precision is only used on CUDA)",
+  "feature_store": "data/features (not in Git)"
+ },
+ "pipeline": {
+  "version": "featuretrain-1.0.0",
+  "run_id": "e36adfdf358045409b9e39c795067346",
+  "config_sha256": "30b04bd1ffaec317e176a7876ebc3846fa3c00e8edb490490b7e83c16848a244"
+ },
+ "gates": [
+  {
+   "gate": "licence_gate_passed",
+   "passed": true,
+   "detail": "licence LicenseRef-SCIN-Data-Use-License with evidence hash"
+  },
+  {
+   "gate": "min_test_images",
+   "passed": true,
+   "detail": "test n=406 (need >= 200)"
+  },
+  {
+   "gate": "no_near_duplicates_in_test",
+   "passed": true,
+   "detail": "near-duplicates test/train: 0"
+  },
+  {
+   "gate": "beat_baselines_macro_f1",
+   "passed": true,
+   "detail": "macro-F1 0.347 vs best baseline 0.223"
+  },
+  {
+   "gate": "improvement_supported_by_ci",
+   "passed": true,
+   "detail": "95% CI lower bound 0.287 must exceed the best baseline 0.223"
+  },
+  {
+   "gate": "max_ece_calibrated",
+   "passed": true,
+   "detail": "ECE 0.041 (limit 0.15)"
+  },
+  {
+   "gate": "robustness_report_present",
+   "passed": true,
+   "detail": "robustness table present"
+  },
+  {
+   "gate": "subgroup_report_present",
+   "passed": true,
+   "detail": "Fitzpatrick subgroup table present"
+  },
+  {
+   "gate": "dark_skin_evaluated",
+   "passed": true,
+   "detail": "Fitzpatrick 4-6 test images: 85 (need >= 50)"
+  },
+  {
+   "gate": "ood_detection",
+   "passed": false,
+   "detail": "confidence separates lesion from non-lesion images with AUROC 0.259 (need >= 0.9)"
+  }
+ ],
+ "lifecycle_state": "experimental"
+}

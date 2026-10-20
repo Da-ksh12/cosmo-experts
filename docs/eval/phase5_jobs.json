@@ -1,0 +1,563 @@
+{
+ "schema": "phase5-jobs-1",
+ "exported_at": "2026-10-20T22:09:53+0530",
+ "datasets": [
+  {
+   "dataset": "pad-ufes-20",
+   "name": "PAD-UFES-20",
+   "decision": "approved",
+   "licence": "CC BY 4.0 (claimed; verify)",
+   "verified_spdx": "CC-BY-4.0",
+   "import_status": "not_imported",
+   "versions": [
+    {
+     "version": 1,
+     "images": 2263,
+     "subjects": null,
+     "complete": null,
+     "class_distribution": {},
+     "fitzpatrick": {},
+     "note": null
+    },
+    {
+     "version": 2,
+     "images": 2271,
+     "subjects": null,
+     "complete": null,
+     "class_distribution": {},
+     "fitzpatrick": {},
+     "note": null
+    }
+   ]
+  },
+  {
+   "dataset": "isic-dermoscopy",
+   "name": "ISIC Archive: dermoscopic images (CC-0 and CC-BY contributor licences only)",
+   "decision": "approved",
+   "licence": "Per image: CC-0 or CC-BY (contributor licence), version of CC-BY not stated by ISIC",
+   "verified_spdx": "LicenseRef-ISIC-Contributor-CC0-or-CC-BY",
+   "import_status": "imported",
+   "versions": [
+    {
+     "version": 1,
+     "images": 11974,
+     "subjects": 6601,
+     "complete": true,
+     "class_distribution": {
+      "NV": 3500,
+      "MEL": 3203,
+      "BKL": 1849,
+      "BCC": 1810,
+      "SCC": 948,
+      "AK": 486,
+      "VASC": 91,
+      "DF": 87
+     },
+     "fitzpatrick": {
+      "I-II": 868,
+      "III": 190,
+      "IV-VI": 20,
+      "not recorded": 10896
+     },
+     "note": null
+    }
+   ]
+  },
+  {
+   "dataset": "isic-clinical",
+   "name": "ISIC Archive: clinical photographs (CC-0 and CC-BY; PAD-UFES-20's own images excluded)",
+   "decision": "approved",
+   "licence": "Per image: CC-0 or CC-BY (contributor licence), version of CC-BY not stated by ISIC",
+   "verified_spdx": "LicenseRef-ISIC-Contributor-CC0-or-CC-BY",
+   "import_status": "imported",
+   "versions": [
+    {
+     "version": 1,
+     "images": 56,
+     "subjects": 43,
+     "complete": false,
+     "class_distribution": {
+      "NEV": 35,
+      "MEL": 21
+     },
+     "fitzpatrick": {
+      "I-II": 17,
+      "IV-VI": 4,
+      "not recorded": 35
+     },
+     "note": "Superseded: this version came from a query that wrongly required image_manipulation to be present (56 of ~4,000 images). Marked incomplete so no training run can use it."
+    },
+    {
+     "version": 2,
+     "images": 474,
+     "subjects": 372,
+     "complete": true,
+     "class_distribution": {
+      "BCC": 154,
+      "MEL": 123,
+      "NEV": 88,
+      "SCC": 71,
+      "SEK": 21,
+      "ACK": 17
+     },
+     "fitzpatrick": {
+      "I-II": 300,
+      "III": 25,
+      "IV-VI": 4,
+      "not recorded": 145
+     },
+     "note": null
+    }
+   ]
+  },
+  {
+   "dataset": "scin",
+   "name": "SCIN (Skin Condition Image Network)",
+   "decision": "approved",
+   "licence": "SCIN Data Use License (worldwide, royalty-free, irrevocable; attribution; no re-identification)",
+   "verified_spdx": "LicenseRef-SCIN-Data-Use-License",
+   "import_status": "imported",
+   "versions": [
+    {
+     "version": 1,
+     "images": 2842,
+     "subjects": 1353,
+     "complete": true,
+     "class_distribution": {
+      "Eczema": 802,
+      "Allergic Contact Dermatitis": 488,
+      "Urticaria": 368,
+      "Insect Bite": 314,
+      "Folliculitis": 215,
+      "Tinea": 134,
+      "Psoriasis": 129,
+      "Herpes Zoster": 107,
+      "Acne": 98,
+      "Herpes Simplex": 96,
+      "Pigmented purpuric eruption": 91
+     },
+     "fitzpatrick": {
+      "I-II": 1201,
+      "III": 925,
+      "IV-VI": 595,
+      "not recorded": 121
+     },
+     "note": null
+    }
+   ]
+  },
+  {
+   "dataset": "derm12345",
+   "name": "DERM12345 (dermatoscopic images, 40 subclasses)",
+   "decision": "approved",
+   "licence": "CC BY 4.0",
+   "verified_spdx": "CC-BY-4.0",
+   "import_status": "imported",
+   "versions": [
+    {
+     "version": 1,
+     "images": 4821,
+     "subjects": 1236,
+     "complete": true,
+     "class_distribution": {
+      "NV": 2500,
+      "BKL": 675,
+      "BCC": 423,
+      "MEL": 400,
+      "SCC": 303,
+      "VASC": 282,
+      "DF": 180,
+      "AK": 58
+     },
+     "fitzpatrick": {
+      "not recorded": 4821
+     },
+     "note": null
+    }
+   ]
+  },
+  {
+   "dataset": "isic-archive",
+   "name": "ISIC Archive",
+   "decision": "rejected",
+   "licence": "Mixed per image: CC-0, CC-BY and CC-BY-NC",
+   "verified_spdx": "mixed",
+   "import_status": "not_imported",
+   "versions": []
+  },
+  {
+   "dataset": "ham10000",
+   "name": "HAM10000",
+   "decision": "rejected",
+   "licence": "CC BY-NC 4.0 (stated by the original publisher, Harvard Dataverse)",
+   "verified_spdx": "CC-BY-NC-4.0",
+   "import_status": "not_imported",
+   "versions": []
+  },
+  {
+   "dataset": "fitzpatrick17k",
+   "name": "Fitzpatrick 17k",
+   "decision": "rejected",
+   "licence": "CC BY-NC-SA 3.0; image rights remain with the source websites",
+   "verified_spdx": "CC-BY-NC-SA-3.0",
+   "import_status": "not_imported",
+   "versions": []
+  },
+  {
+   "dataset": "ddi",
+   "name": "Diverse Dermatology Images (DDI)",
+   "decision": "rejected",
+   "licence": "Non-commercial research use under Stanford AIMI data use terms; commercial use needs a separate licence",
+   "verified_spdx": "Stanford-AIMI-noncommercial",
+   "import_status": "not_imported",
+   "versions": []
+  },
+  {
+   "dataset": "acne04",
+   "name": "ACNE04 (acne severity)",
+   "decision": "rejected",
+   "licence": "No licence stated in the authors' repository",
+   "verified_spdx": "none",
+   "import_status": "not_imported",
+   "versions": []
+  }
+ ],
+ "tasks": [
+  {
+   "task": "acne_features",
+   "can_train_today": false,
+   "blockers": [
+    "No compatible dataset has passed the licence gate (official terms verified, evidence recorded, approved by an administrator): acne04: An administrator has not approved this dataset for the project. It was reviewed and rejected: No licence file or statement; the face images' consent and reuse terms are undocumented; author-provided download links. Written permission from the authors would be needed."
+   ],
+   "models": []
+  },
+  {
+   "task": "pigmentation",
+   "can_train_today": false,
+   "blockers": [
+    "No catalogued dataset is compatible with this task (none identified listed as candidates)."
+   ],
+   "models": []
+  },
+  {
+   "task": "redness_irritation",
+   "can_train_today": false,
+   "blockers": [
+    "No catalogued dataset is compatible with this task (none identified listed as candidates)."
+   ],
+   "models": []
+  },
+  {
+   "task": "dryness_scaling",
+   "can_train_today": false,
+   "blockers": [
+    "No catalogued dataset is compatible with this task (none identified listed as candidates)."
+   ],
+   "models": []
+  },
+  {
+   "task": "texture_scarring",
+   "can_train_today": false,
+   "blockers": [
+    "No catalogued dataset is compatible with this task (none identified listed as candidates)."
+   ],
+   "models": []
+  },
+  {
+   "task": "hair_thinning",
+   "can_train_today": false,
+   "blockers": [
+    "No catalogued dataset is compatible with this task (none identified listed as candidates)."
+   ],
+   "models": []
+  },
+  {
+   "task": "scalp_findings",
+   "can_train_today": false,
+   "blockers": [
+    "No catalogued dataset is compatible with this task (none identified listed as candidates)."
+   ],
+   "models": []
+  },
+  {
+   "task": "lesion_classification_research",
+   "can_train_today": true,
+   "blockers": [],
+   "models": [
+    "c128eb967c3f481bb25e8d9adbb71a43",
+    "0f7e066f6b734e1092e17218fb6e1881"
+   ]
+  },
+  {
+   "task": "dermoscopy_lesion_research",
+   "can_train_today": true,
+   "blockers": [],
+   "models": [
+    "bab527c0778f497abc4366b4c421bebd",
+    "0e29da33555a4a7b94399a3084e1da94"
+   ]
+  },
+  {
+   "task": "skin_condition_research",
+   "can_train_today": true,
+   "blockers": [],
+   "models": [
+    "e0ce44b3a7894fac916e7d659f1efbe4"
+   ]
+  }
+ ],
+ "runs": [
+  {
+   "run_id": "92239063161f48dfb092163f37141822",
+   "experiment": "clinical-pad-only",
+   "task": "lesion_classification_research",
+   "status": "done",
+   "started_at": 1792505802.3684242,
+   "finished_at": 1792507122.097134,
+   "seconds": 1320,
+   "model_id": "c128eb967c3f481bb25e8d9adbb71a43",
+   "error": null,
+   "device": "cpu",
+   "config_sha256": "3d13b99d8c80500f39cc30288a69cb3af9ed51182996f04d8e4d28281240932c"
+  },
+  {
+   "run_id": "0ff772fd0cb94200a9a1264e0415b412",
+   "experiment": "clinical-pad-isic",
+   "task": "lesion_classification_research",
+   "status": "done",
+   "started_at": 1792507619.9176042,
+   "finished_at": 1792508135.9807725,
+   "seconds": 516,
+   "model_id": "0f7e066f6b734e1092e17218fb6e1881",
+   "error": null,
+   "device": "cpu",
+   "config_sha256": "1bfdd8b7a1cab32f5c04249dc6a3b7330b9b24551111454bc56e1b99e6c4fe1a"
+  },
+  {
+   "run_id": "e36adfdf358045409b9e39c795067346",
+   "experiment": "skin-condition-scin",
+   "task": "skin_condition_research",
+   "status": "done",
+   "started_at": 1792508148.0859885,
+   "finished_at": 1792509170.7581031,
+   "seconds": 1023,
+   "model_id": "e0ce44b3a7894fac916e7d659f1efbe4",
+   "error": null,
+   "device": "cpu",
+   "config_sha256": "30b04bd1ffaec317e176a7876ebc3846fa3c00e8edb490490b7e83c16848a244"
+  },
+  {
+   "run_id": "ecbb813d79da485b951881532c3fee1d",
+   "experiment": "derm-isic",
+   "task": "dermoscopy_lesion_research",
+   "status": "done",
+   "started_at": 1792509184.040991,
+   "finished_at": 1792514053.1078537,
+   "seconds": 4869,
+   "model_id": "bab527c0778f497abc4366b4c421bebd",
+   "error": null,
+   "device": "cpu",
+   "config_sha256": "0ca7e6d648523301a47cf31388f31337dd688a37fe901891569fa0be62612063"
+  },
+  {
+   "run_id": "a7cbadb73d6e4ba6bc81c0792ecfa362",
+   "experiment": "derm-isic-derm12345",
+   "task": "dermoscopy_lesion_research",
+   "status": "done",
+   "started_at": 1792514070.8718317,
+   "finished_at": 1792514364.7993824,
+   "seconds": 294,
+   "model_id": "0e29da33555a4a7b94399a3084e1da94",
+   "error": null,
+   "device": "cpu",
+   "config_sha256": "32cf604e1a1adbf9a1c466efcd8314cdcf05823dd0abce54d72bcdc89ce398c8"
+  }
+ ],
+ "models": [
+  {
+   "model_id": "c128eb967c3f481bb25e8d9adbb71a43",
+   "experiment": "clinical-pad-only",
+   "task": "lesion_classification_research",
+   "lifecycle_state": "experimental",
+   "registry_status": "research_only",
+   "classes": [
+    "ACK",
+    "BCC",
+    "MEL",
+    "NEV",
+    "SCC",
+    "SEK"
+   ],
+   "test_n": 325,
+   "macro_f1": 0.558,
+   "macro_f1_ci95": [
+    0.471,
+    0.63
+   ],
+   "balanced_accuracy": 0.576,
+   "accuracy": 0.615,
+   "ece": 0.035,
+   "best_baseline_macro_f1": 0.508,
+   "gates_passed": "7/11",
+   "failed_gates": [
+    "improvement_supported_by_ci",
+    "critical_class_sensitivity",
+    "dark_skin_evaluated",
+    "ood_detection"
+   ],
+   "artifact_sha256": "fad05a260f1250c3062ee2c36e5f78ed0d72229672934574f893a701a4d8b4f7",
+   "training_seconds": 1332,
+   "external": {}
+  },
+  {
+   "model_id": "0f7e066f6b734e1092e17218fb6e1881",
+   "experiment": "clinical-pad-isic",
+   "task": "lesion_classification_research",
+   "lifecycle_state": "experimental",
+   "registry_status": "research_only",
+   "classes": [
+    "ACK",
+    "BCC",
+    "MEL",
+    "NEV",
+    "SCC",
+    "SEK"
+   ],
+   "test_n": 374,
+   "macro_f1": 0.559,
+   "macro_f1_ci95": [
+    0.496,
+    0.614
+   ],
+   "balanced_accuracy": 0.578,
+   "accuracy": 0.61,
+   "ece": 0.064,
+   "best_baseline_macro_f1": 0.476,
+   "gates_passed": "8/11",
+   "failed_gates": [
+    "critical_class_sensitivity",
+    "dark_skin_evaluated",
+    "ood_detection"
+   ],
+   "artifact_sha256": "81a9c43f409ca492f52ca977431a6af69493525c5f031f942739912a840b705c",
+   "training_seconds": 530,
+   "external": {}
+  },
+  {
+   "model_id": "e0ce44b3a7894fac916e7d659f1efbe4",
+   "experiment": "skin-condition-scin",
+   "task": "skin_condition_research",
+   "lifecycle_state": "experimental",
+   "registry_status": "research_only",
+   "classes": [
+    "Acne",
+    "Allergic Contact Dermatitis",
+    "Eczema",
+    "Folliculitis",
+    "Herpes Simplex",
+    "Herpes Zoster",
+    "Insect Bite",
+    "Pigmented purpuric eruption",
+    "Psoriasis",
+    "Tinea",
+    "Urticaria"
+   ],
+   "test_n": 406,
+   "macro_f1": 0.347,
+   "macro_f1_ci95": [
+    0.287,
+    0.395
+   ],
+   "balanced_accuracy": 0.377,
+   "accuracy": 0.34,
+   "ece": 0.041,
+   "best_baseline_macro_f1": 0.223,
+   "gates_passed": "9/10",
+   "failed_gates": [
+    "ood_detection"
+   ],
+   "artifact_sha256": "200619304c195d2300fb10922559a2afde2b8d0a760977f4ef3da711fc40b932",
+   "training_seconds": 1031,
+   "external": {}
+  },
+  {
+   "model_id": "bab527c0778f497abc4366b4c421bebd",
+   "experiment": "derm-isic",
+   "task": "dermoscopy_lesion_research",
+   "lifecycle_state": "experimental",
+   "registry_status": "research_only",
+   "classes": [
+    "AK",
+    "BCC",
+    "BKL",
+    "DF",
+    "MEL",
+    "NV",
+    "SCC",
+    "VASC"
+   ],
+   "test_n": 1343,
+   "macro_f1": 0.404,
+   "macro_f1_ci95": [
+    0.368,
+    0.437
+   ],
+   "balanced_accuracy": 0.501,
+   "accuracy": 0.517,
+   "ece": 0.026,
+   "best_baseline_macro_f1": 0.344,
+   "gates_passed": "8/11",
+   "failed_gates": [
+    "critical_class_sensitivity",
+    "dark_skin_evaluated",
+    "ood_detection"
+   ],
+   "artifact_sha256": "911654d065a336eebe3fa39b3fe567c7e4bbd055c89ec51aa6f62f21a59892e3",
+   "training_seconds": 4879,
+   "external": {
+    "derm12345": {
+     "n": 4061,
+     "macro_f1": 0.405,
+     "balanced_accuracy": 0.482
+    }
+   }
+  },
+  {
+   "model_id": "0e29da33555a4a7b94399a3084e1da94",
+   "experiment": "derm-isic-derm12345",
+   "task": "dermoscopy_lesion_research",
+   "lifecycle_state": "experimental",
+   "registry_status": "research_only",
+   "classes": [
+    "AK",
+    "BCC",
+    "BKL",
+    "DF",
+    "MEL",
+    "NV",
+    "SCC",
+    "VASC"
+   ],
+   "test_n": 2053,
+   "macro_f1": 0.472,
+   "macro_f1_ci95": [
+    0.444,
+    0.497
+   ],
+   "balanced_accuracy": 0.534,
+   "accuracy": 0.586,
+   "ece": 0.047,
+   "best_baseline_macro_f1": 0.405,
+   "gates_passed": "8/11",
+   "failed_gates": [
+    "critical_class_sensitivity",
+    "dark_skin_evaluated",
+    "ood_detection"
+   ],
+   "artifact_sha256": "f9e6e22ce9ee3645c57f710ece4b5d6f87e2d924007c8729d2a55546d885945f",
+   "training_seconds": 306,
+   "external": {}
+  }
+ ],
+ "note": "No model here is approved or active; every model is experimental research output on synthetic-label-free public data, not clinically validated."
+}

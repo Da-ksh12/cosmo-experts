@@ -1,0 +1,54 @@
+{
+ "checked_at": "2026-10-20T22:11:32+0530",
+ "results": [
+  {
+   "experiment": "clinical-pad-isic",
+   "model": "0f7e066f6b734e1092e17218fb6e1881",
+   "images_checked": 60,
+   "file_types": {
+    ".png": 55,
+    ".jpg": 5
+   },
+   "top1_agreement": "60/60",
+   "max_abs_probability_difference": 5e-05,
+   "note": "evaluation path = cached features (PIL decode) + saved head; serving path = raw file (OpenCV decode) through serving.predict; probabilities are rounded to 4 decimals by serving",
+   "seconds": 27
+  },
+  {
+   "experiment": "skin-condition-scin",
+   "model": "e0ce44b3a7894fac916e7d659f1efbe4",
+   "images_checked": 60,
+   "file_types": {
+    ".png": 60
+   },
+   "top1_agreement": "60/60",
+   "max_abs_probability_difference": 5e-05,
+   "note": "evaluation path = cached features (PIL decode) + saved head; serving path = raw file (OpenCV decode) through serving.predict; probabilities are rounded to 4 decimals by serving",
+   "seconds": 19
+  },
+  {
+   "experiment": "derm-isic",
+   "model": "bab527c0778f497abc4366b4c421bebd",
+   "images_checked": 60,
+   "file_types": {
+    ".jpg": 60
+   },
+   "top1_agreement": "60/60",
+   "max_abs_probability_difference": 5e-05,
+   "note": "evaluation path = cached features (PIL decode) + saved head; serving path = raw file (OpenCV decode) through serving.predict; probabilities are rounded to 4 decimals by serving",
+   "seconds": 12
+  },
+  {
+   "experiment": "derm-isic-derm12345",
+   "model": "0e29da33555a4a7b94399a3084e1da94",
+   "images_checked": 60,
+   "file_types": {
+    ".jpg": 60
+   },
+   "top1_agreement": "60/60",
+   "max_abs_probability_difference": 5e-05,
+   "note": "evaluation path = cached features (PIL decode) + saved head; serving path = raw file (OpenCV decode) through serving.predict; probabilities are rounded to 4 decimals by serving",
+   "seconds": 15
+  }
+ ]
+}
