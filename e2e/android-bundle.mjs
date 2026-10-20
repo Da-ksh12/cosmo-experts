@@ -2,7 +2,7 @@
 // http://localhost inside the Android WebView, so this exercises the same code, the same cross-origin calls (CORS, bearer token, uploads) and the same screens; it does NOT
 // exercise Android itself (no WebView, no permissions dialogs, no APK install): that needs a device or an emulator.
 //
-// Prerequisites: node scripts/build-android.mjs   (creates frontend/out-android)
+// Prerequisites: node scripts/build-android.mjs --no-local   (creates frontend/out-android with no server chosen; run from frontend/)
 //                a backend on COSMO_API (default http://127.0.0.1:8000) started with COSMO_CORS=http://localhost:4173 and demo accounts whose password is in
 //                COSMO_TEST_PASSWORD_FILE (or COSMO_TEST_PASSWORD)
 // Run:           node e2e/android-bundle.mjs
@@ -157,6 +157,41 @@ try {
   await page.getByText(/can't reach the server/i).first().waitFor({ timeout: 30000 });
   r.ok(await page.locator("button[type=submit]").isDisabled(), "an unreachable server is reported on the sign-in screen and sign-in is disabled");
   await shot("12-unreachable");
+
+  // 9. preview mode (no server at all): the real screens with nothing invented, clearly labelled, and not a single API request
+  const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const p2 = await ctx2.newPage();
+  const apiCalls = [];
+  const errors2 = [];
+  p2.on("request", (q) => { if (/\/api\//.test(q.url())) apiCalls.push(q.url()); });
+  p2.on("pageerror", (e) => errors2.push(String(e).slice(0, 300)));
+  await p2.goto(ORIGIN + "/");
+  await p2.getByRole("button", { name: "Look around in preview mode" }).click();
+  await p2.getByText(/PREVIEW · no server is connected/).waitFor({ timeout: 15000 });
+  await p2.locator('nav[aria-label="Primary"]').waitFor({ timeout: 15000 });
+  r.ok(true, "preview mode: the real home screen opens with a visible PREVIEW banner and no server");
+  await p2.screenshot({ path: path.join(SHOTS, "13-preview-home.png") });
+  await p2.getByRole("link", { name: "Ask AI" }).click();
+  await p2.locator("#q").waitFor({ timeout: 15000 });
+  await p2.locator("#q").fill("Is this mole dangerous?");
+  await p2.getByRole("button", { name: "Send question" }).click();
+  await p2.getByText(/Not sent\./).waitFor({ timeout: 15000 });
+  const previewText = await p2.locator("main").innerText();
+  r.ok(/Preview mode/.test(previewText) && (await p2.locator('section[aria-label="Conversation"] .card').count()) === 0, "preview mode: a question is refused honestly ('Not sent', preview message) and no answer is produced");
+  await p2.screenshot({ path: path.join(SHOTS, "14-preview-ask.png") });
+  await p2.getByRole("link", { name: "Reports" }).first().click();
+  await p2.waitForURL(/\/reports\/?$/, { timeout: 15000 });
+  await p2.waitForLoadState("networkidle").catch(() => {});
+  r.ok(/report/i.test(await p2.locator("main").innerText()), "preview mode: the reports screen shows its empty state, not example data");
+  await p2.goto(ORIGIN + "/settings/");
+  await p2.getByText("Preview mode: no server connected").waitFor({ timeout: 15000 });
+  r.ok(true, "preview mode: Settings says there is no server connection");
+  r.ok(apiCalls.length === 0, "preview mode made no API request at all", apiCalls);
+  await p2.getByRole("button", { name: "Connect to a server" }).click();
+  await p2.waitForURL(/\/login\/?$/, { timeout: 15000 });
+  r.ok((await p2.getByText(/PREVIEW · no server is connected/).count()) === 0, "leaving preview returns to the sign-in screen and removes the banner");
+  r.ok(errors2.length === 0, "no uncaught script errors in preview mode", errors2);
+  await ctx2.close();
 
   r.ok(errors.length === 0, "no uncaught script errors during the whole run", errors);
 } catch (e) {

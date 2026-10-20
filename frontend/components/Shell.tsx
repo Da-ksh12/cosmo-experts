@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { api, getRawSession, signOutEverywhere, subscribeSession, User } from "@/lib/api";
+import { isPreview } from "@/lib/preview";
 import { PhotoFlowProvider } from "@/lib/photoFlow";
 import { BrandLogo, Dialog, ToastProvider } from "@/components/ui";
 
@@ -89,6 +90,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       <ToastProvider>
         <PhotoFlowProvider>
           <OfflineBanner />
+          {user && isPreview() && (
+            <div role="status" className="sticky top-0 z-50 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gold-soft px-4 pb-2 text-center text-sm font-semibold text-[#86622a]" style={{ paddingTop: "calc(.5rem + env(safe-area-inset-top))" }}>
+              <span>PREVIEW · no server is connected · nothing is saved, sent or analysed</span>
+              <button type="button" className="underline" onClick={() => { void signOutEverywhere(); router.replace("/login"); }}>Connect to a server</button>
+            </div>)}
           {user && (
             <header className={`sticky top-0 z-30 border-b border-line bg-white/85 pt-[env(safe-area-inset-top)] backdrop-blur ${patient && path !== "/" ? "hidden md:block" : ""}`}>
               <div className="mx-auto flex max-w-[1040px] items-center gap-3 px-[18px] py-2.5 md:gap-6 md:px-7">

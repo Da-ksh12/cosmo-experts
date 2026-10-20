@@ -1,0 +1,127 @@
+{
+  "suite": "android-bundle",
+  "when": "2026-10-20T18:02:19.982Z",
+  "passed": 27,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "first start with no server: shows 'Connect to your clinic' instead of a login form"
+    },
+    {
+      "pass": true,
+      "check": "no demo account list is offered before a server is chosen"
+    },
+    {
+      "pass": true,
+      "check": "http://example.com (a server on the internet) is refused: https is required"
+    },
+    {
+      "pass": true,
+      "check": "a malformed address is refused with a plain message"
+    },
+    {
+      "pass": true,
+      "check": "the server address is tested against the real backend (health endpoint, CORS allowed)"
+    },
+    {
+      "pass": true,
+      "check": "the app offers patient and doctor sign-in, not the administrator console",
+      "detail": [
+        "Patient (Demo One)",
+        "Patient (Demo Two)",
+        "Doctor"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "a wrong password is rejected by the real backend with a visible error"
+    },
+    {
+      "pass": true,
+      "check": "signed in through the bundle against the real backend; the patient bottom navigation is shown"
+    },
+    {
+      "pass": true,
+      "check": "suggested questions are shown"
+    },
+    {
+      "pass": true,
+      "check": "the question went to the real backend (POST /api/conversations/{id}/messages -> 200)",
+      "detail": 200
+    },
+    {
+      "pass": true,
+      "check": "an assistant answer (or an honest abstention) from the backend is displayed",
+      "detail": "I couldn't find anything in your documents or the clinic's approved information that answers this. I would rather not guess. You can ask the clinic team to revi"
+    },
+    {
+      "pass": true,
+      "check": "when the backend call fails the question is marked 'Not sent' and no answer is invented",
+      "detail": 1
+    },
+    {
+      "pass": true,
+      "check": "'Try again' resends the question and the backend answers"
+    },
+    {
+      "pass": true,
+      "check": "reports screen loads from the backend"
+    },
+    {
+      "pass": true,
+      "check": "history screen loads from the backend"
+    },
+    {
+      "pass": true,
+      "check": "the single report page (/reports/view/?id=...) renders and reports an unknown id without crashing"
+    },
+    {
+      "pass": true,
+      "check": "settings shows the server host and a live 'Connected' status"
+    },
+    {
+      "pass": true,
+      "check": "offline: a banner says so and the failed send names the server it could not reach"
+    },
+    {
+      "pass": true,
+      "check": "an unreachable server is reported on the sign-in screen and sign-in is disabled"
+    },
+    {
+      "pass": true,
+      "check": "preview mode: the real home screen opens with a visible PREVIEW banner and no server"
+    },
+    {
+      "pass": true,
+      "check": "preview mode: a question is refused honestly ('Not sent', preview message) and no answer is produced"
+    },
+    {
+      "pass": true,
+      "check": "preview mode: the reports screen shows its empty state, not example data"
+    },
+    {
+      "pass": true,
+      "check": "preview mode: Settings says there is no server connection"
+    },
+    {
+      "pass": true,
+      "check": "preview mode made no API request at all",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "leaving preview returns to the sign-in screen and removes the banner"
+    },
+    {
+      "pass": true,
+      "check": "no uncaught script errors in preview mode",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "no uncaught script errors during the whole run",
+      "detail": []
+    }
+  ]
+}

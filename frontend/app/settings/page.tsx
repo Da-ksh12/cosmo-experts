@@ -8,6 +8,7 @@ import ServerSettings from "@/components/ServerSettings";
 import { ScreenBar, useUser } from "@/components/Shell";
 import { Note, PageHeading, Pill } from "@/components/ui";
 import { signOutEverywhere } from "@/lib/api";
+import { isPreview } from "@/lib/preview";
 import { APP_VERSION, checkServer, getApiBase, IS_APP, onApiBaseChange, serverLabel } from "@/lib/config";
 
 type Conn = { state: "checking" | "ok" | "bad"; message: string };
@@ -21,7 +22,7 @@ export default function Settings() {
   useEffect(() => onApiBaseChange(() => setRev((n) => n + 1)), []);
 
   useEffect(() => {
-    if (!IS_APP) return;
+    if (!IS_APP || isPreview()) return;
     let live = true;
     checkServer(getApiBase()).then((r) => { if (live) setLink({ state: r.ok ? "ok" : "bad", message: r.message }); });
     return () => { live = false; };
@@ -47,9 +48,10 @@ export default function Settings() {
           <p className="text-sm text-muted">This app reads and saves your information on a secure Cosmo Experts server.</p>
           <p className="break-all font-semibold">{serverLabel()}</p>
           <div role="status" aria-live="polite">
-            {link.state === "checking" && <Pill tone="info">Checking…</Pill>}
-            {link.state === "ok" && <Pill tone="good">Connected</Pill>}
-            {link.state === "bad" && <Note tone="bad">{link.message}</Note>}
+            {isPreview() && <Pill tone="warn">Preview mode: no server connected</Pill>}
+            {!isPreview() && link.state === "checking" && <Pill tone="info">Checking…</Pill>}
+            {!isPreview() && link.state === "ok" && <Pill tone="good">Connected</Pill>}
+            {!isPreview() && link.state === "bad" && <Note tone="bad">{link.message}</Note>}
           </div>
           <div className="flex flex-wrap gap-3">
             <button className="btn" onClick={() => { setLink({ state: "checking", message: "Checking…" }); setRev((n) => n + 1); }}>Test again</button>

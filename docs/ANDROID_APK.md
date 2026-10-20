@@ -41,6 +41,9 @@ against the server's health endpoint before saving.
 (`patient1`, `patient2`, `doctor1`; accounts that already exist in an old database keep their old password, which is why a fresh `-DataDir` is recommended), allows only the app's origin through CORS, listens on the
 network and prints the addresses to type into the app. Windows Firewall asks once to allow Python on private networks. Stop it with Ctrl+C. Do not expose this development backend to the internet.
 
+**Signing in.** The sign-in screen lists the demo accounts of the backend you run (`patient1`, `patient2`, `doctor1`; the administrator console is not offered). On a development backend their password is the one set by
+`COSMO_DEV_PASSWORD` when the accounts were created, or the documented development default in `README.md`; they exist only on the server, never in the app. A deployed backend signs people in with their own accounts.
+
 ## 4. Configuration values
 
 | Where | Setting | Meaning |
@@ -62,8 +65,9 @@ questions, history, delete, Hindi/Hinglish text, voice input and spoken answers 
 workspace and the agent's confirm-before-change actions. The administrator console is not offered on the app's sign-in screen.
 
 * **Safety:** the five experimental research models of Phase 5 are not part of the app and are never shown to patients; the assistant does not diagnose or prescribe and abstains when it has no approved source.
-* **Honest failures:** a request that fails is shown as failed ("Not sent", "We can't reach the server (host)", an offline banner); nothing is answered, saved or predicted on the phone's own. There is no UI-only demo mode:
-  without a server the app shows the connection screen, never invented data.
+* **Honest failures:** a request that fails is shown as failed ("Not sent", "We can't reach the server (host)", an offline banner); nothing is answered, saved or predicted on the phone's own.
+* **Preview mode (no server):** the connection screen offers "Look around in preview mode": the real screens with **empty states only**, a permanent PREVIEW banner, no network request at all, and every action that would
+  send, save, upload or analyse something refused with a plain message. It never shows an example record, answer or result. It ends with the session (banner: "Connect to a server").
 * **Security:** the app has no secrets; the only stored setting is the server address; the sign-in token lives in the WebView's session storage and is gone when the app is closed; Android backup is off; cleartext
   `http://` is refused except for the listed debug hosts; the release network configuration allows https only.
 
@@ -73,7 +77,7 @@ workspace and the agent's confirm-before-change actions. The administrator conso
 |---|---|
 | Static export of the real UI (18 routes, 2 MB) | builds; `tsc`, `eslint`, web `next build` unchanged |
 | APK build | `assembleDebug` succeeds; package `ai.cosmoexperts.app`, target SDK 36, minimum SDK 24; permissions INTERNET, CAMERA, RECORD_AUDIO, MODIFY_AUDIO_SETTINGS (camera and microphone not required) |
-| The exact bundle in a phone-sized Chromium against the **real backend** (`e2e/android-bundle.mjs`) | 20/20: server setup and validation, sign-in, a real assistant answer, a failed send with retry, offline banner, settings, unreachable server |
+| The exact bundle in a phone-sized Chromium against the **real backend** (`e2e/android-bundle.mjs`, built with `node scripts/build-android.mjs --no-local`) | 27/27: server setup and validation, sign-in, a real assistant answer, a failed send with retry, offline banner, settings, unreachable server, preview mode (labelled, empty, zero API requests) |
 | Installation and launch on an Android device or emulator | **not tested**: no device was connected, and this computer's emulator has no hardware acceleration (virtualization is off) |
 | Camera, microphone, file picker, back button, keyboard and system bars inside the Android WebView | **not tested** (they need a device); they use Capacitor's standard handling and the web code that passed in Chromium |
 

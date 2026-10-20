@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, Server, WifiOff } from "lucide-react";
+import { Eye, LogIn, Server, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,6 +8,7 @@ import ServerSettings from "@/components/ServerSettings";
 import { BrandLogo, Leaf, Note } from "@/components/ui";
 import { ApiError, api, getSession, post, refreshSession, setSession, User } from "@/lib/api";
 import { getApiBase, IS_APP, onApiBaseChange, serverLabel } from "@/lib/config";
+import { setPreview } from "@/lib/preview";
 
 const DEMO = [
   { id: "patient1", label: "Patient (Demo One)" },
@@ -33,6 +34,7 @@ export default function Login() {
   const [rev, setRev] = useState(0);
   useEffect(() => onApiBaseChange(() => setRev((n) => n + 1)), []);
   const needsServer = IS_APP && !getApiBase();
+  const startPreview = () => { setPreview(true); setSession({ token: "preview", user: { id: "preview", name: "Preview visitor", role: "patient" } }); router.replace("/"); };
 
   useEffect(() => {
     if (IS_APP && !getApiBase()) return;                     // no server chosen yet: nothing to ask
@@ -78,6 +80,8 @@ export default function Login() {
           <h1 className="!text-3xl">Connect to your clinic</h1>
           <p className="text-muted">This app needs the address of your Cosmo Experts server before you can sign in. Your clinic or IT team can give it to you.</p>
           <button className="btn btn-primary w-full !py-3" type="button" onClick={() => setShowServer(true)}><Server className="h-5 w-5" aria-hidden /> Set the server address</button>
+          <button className="btn w-full !py-3" type="button" onClick={startPreview}><Eye className="h-5 w-5" aria-hidden /> Look around in preview mode</button>
+          <p className="text-center text-xs text-muted">Preview shows the screens only. Nothing is saved, sent or analysed, and no answers or results are produced.</p>
         </div>
       ) : (
       <form onSubmit={go} className="card rise-2 space-y-4">
@@ -88,6 +92,7 @@ export default function Login() {
             <span className="mt-2 flex flex-wrap gap-3">
               <button type="button" className="font-semibold underline" onClick={() => setRev((n) => n + 1)}>Try again</button>
               {IS_APP && <button type="button" className="font-semibold underline" onClick={() => setShowServer(true)}>Change server</button>}
+              {IS_APP && <button type="button" className="font-semibold underline" onClick={startPreview}>Preview mode</button>}
             </span>
           </Note>)}
         {cfg && !sb && !offline && <Note tone="info">Local development mode: demo accounts only. Production uses Supabase Auth.</Note>}

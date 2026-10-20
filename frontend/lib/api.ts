@@ -1,6 +1,7 @@
 "use client";
 
 import { apiUrl, IS_APP, serverLabel } from "@/lib/config";
+import { isPreview, PREVIEW_MESSAGE, previewBody, setPreview } from "@/lib/preview";
 
 export type User = { id: string; name: string; role: "patient" | "doctor" | "admin" };
 
@@ -92,13 +93,21 @@ export function refreshSession(): Promise<boolean> {
 
 export async function signOutEverywhere(): Promise<void> {
   const s = getSession();
+  const wasPreview = isPreview();
+  setPreview(false);
   setSession(null);
+  if (wasPreview) return;                                  // a preview has no server session to end
   try {
     await fetchTimed(apiUrl("/api/auth/logout"), { method: "POST", headers: { ...CSRF, ...(s ? { Authorization: `Bearer ${s.token}` } : {}) }, credentials: IS_APP ? "omit" : "same-origin" }, 15_000);
   } catch { /* offline: the local session is already gone */ }
 }
 
 async function request(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
+  if (isPreview()) {                                       // preview mode: no network at all; empty neutral bodies or an honest refusal (lib/preview.ts)
+    const body = previewBody(path, (init.method ?? "GET").toUpperCase());
+    if (body === undefined) throw new ApiError(0, PREVIEW_MESSAGE);
+    return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
   const s = getSession();
   const headers = new Headers(init.headers);
   if (s) headers.set("Authorization", `Bearer ${s.token}`);
@@ -170,6 +179,7 @@ export const DOC_TYPE_LABEL: Record<string, string> = {
 /** Multipart upload with real progress (fetch cannot report upload progress). */
 export function uploadWithProgress<T = unknown>(path: string, form: FormData, onProgress: (fraction: number) => void): Promise<T> {
   return new Promise((resolve, reject) => {
+    if (isPreview()) { reject(new ApiError(0, PREVIEW_MESSAGE)); return; }
     const s = getSession();
     const xhr = new XMLHttpRequest();
     xhr.open("POST", apiUrl(path));

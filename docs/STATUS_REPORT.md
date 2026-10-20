@@ -332,7 +332,7 @@ cd e2e && node phase3-ui.mjs && node p11-a11y.mjs
 - [x] Backend and web front end pass their automated suites (section 6)
 - [x] Patient, clinician and administrator permissions enforced on the server and tested
 - [x] Research models cannot reach patients (serving is admin-only, gated, checksummed)
-- [x] **Packaging decision:** Capacitor around a static export of the real Next.js UI; a debug APK builds (`node frontend/scripts/build-android.mjs --apk`, [ANDROID_APK.md](ANDROID_APK.md)); the exact bundle passes `e2e/android-bundle.mjs` (20/20) in a phone-sized browser against the real backend. **Not yet verified: installation and launch on an Android device or emulator**
+- [x] **Packaging decision:** Capacitor around a static export of the real Next.js UI; a debug APK builds (`node frontend/scripts/build-android.mjs --apk`, [ANDROID_APK.md](ANDROID_APK.md)); the exact bundle passes `e2e/android-bundle.mjs` (27/27) in a phone-sized browser against the real backend. **Not yet verified: installation and launch on an Android device or emulator**
 - [ ] Real-device camera and microphone tests on target Android versions
 - [ ] Screen-reader pass (TalkBack) on the packaged app
 - [ ] Supabase sign-in in the UI, or an agreed alternative, with token storage reviewed for a mobile shell (the app uses the bearer-token sign-in of local mode with the token in session storage; Supabase refresh cookies and password-reset links are not wired for the app)

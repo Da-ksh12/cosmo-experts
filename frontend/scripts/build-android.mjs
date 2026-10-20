@@ -2,6 +2,7 @@
 //
 //   node scripts/build-android.mjs            export + sync only
 //   node scripts/build-android.mjs --apk      ... and build android/app/build/outputs/apk/debug/*.apk with Gradle
+//   node scripts/build-android.mjs --no-local ignore android.config.local.json (for the bundle check in e2e/android-bundle.mjs)
 //
 // Settings: android.config.json (defaults) overridden by android.config.local.json (yours, ignored by Git). Nothing secret belongs there: it holds only a server address,
 // the hosts a DEBUG build may reach over plain http, and the app name. Needs JAVA_HOME (JDK 21) and ANDROID_HOME for --apk.
@@ -14,7 +15,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const androidDir = path.resolve(root, "..", "android");
 const win = process.platform === "win32";
 const read = (f) => (fs.existsSync(path.join(root, f)) ? JSON.parse(fs.readFileSync(path.join(root, f), "utf8")) : {});
-const cfg = { devCleartextHosts: ["10.0.2.2", "localhost"], apiBase: "", ...read("android.config.json"), ...read("android.config.local.json") };
+const noLocal = process.argv.includes("--no-local");          // ignore android.config.local.json (used by the bundle check, which must start with no server chosen)
+const cfg = { devCleartextHosts: ["10.0.2.2", "localhost"], apiBase: "", ...read("android.config.json"), ...(noLocal ? {} : read("android.config.local.json")) };
 const wantApk = process.argv.includes("--apk");
 
 function run(cmd, args, opts = {}) {
