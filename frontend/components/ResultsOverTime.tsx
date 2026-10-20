@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Note, fmtDate } from "@/components/ui";
 import { api } from "@/lib/api";
+import { reportHref } from "@/lib/links";
 
 type Point = { document_id: string; doc_date: string | null; value: string; unit: string; ref_range: string; source_page: number };
 type Series = { name: string; comparable: boolean; conversion_performed: boolean; reason?: string; note?: string; points: Point[];
@@ -37,7 +38,7 @@ export default function ResultsOverTime() {
               <table><thead><tr><th>Report date</th><th>Printed value</th><th>Printed range</th><th>Source</th></tr></thead><tbody>
                 {s.points.map((p) => (
                   <tr key={p.document_id}><td>{p.doc_date ? fmtDate(Date.parse(p.doc_date) / 1000) : "No date found"}</td><td>{p.value} {p.unit}</td><td>{p.ref_range || "Not printed"}</td>
-                    <td><Link className="underline" href={`/reports/${p.document_id}`}>Page {p.source_page}</Link></td></tr>))}
+                    <td><Link className="underline" href={reportHref(p.document_id)}>Page {p.source_page}</Link></td></tr>))}
               </tbody></table></div>
             {s.observed_change && <p className="text-sm">First {s.observed_change.first} {s.observed_change.unit}, latest {s.observed_change.last} {s.observed_change.unit} ({s.observed_change.direction} than the first).</p>}
           </div>);

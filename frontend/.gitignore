@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /out/
+/out-android/
 
 # production
 /build
@@ -39,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android packaging: personal settings (server address, development hosts) stay local
+android.config.local.json

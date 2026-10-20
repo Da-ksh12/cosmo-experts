@@ -1,0 +1,8 @@
+{
+  "appId": "ai.cosmoexperts.app",
+  "appName": "Cosmo Experts AI",
+  "apiBase": "",
+  "androidScheme": "http",
+  "devCleartextHosts": ["10.0.2.2", "localhost"],
+  "note": "apiBase: https address of a Cosmo Experts server, or empty to enter it in the app. devCleartextHosts: hosts a DEBUG build may reach over plain http (never the release build); add your computer's address in android.config.local.json. androidScheme http lets the app talk to those hosts without a mixed-content block; use https for a release build. No secrets belong in this file."
+}

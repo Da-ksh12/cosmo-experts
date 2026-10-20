@@ -9,6 +9,7 @@ import { ScreenBar } from "@/components/Shell";
 import { AuthImage, ConfirmDialog, EmptyState, ErrorState, LoadingState, Note, PageHeading, Pill as Badge, fmtBytes, fmtDate, useToast } from "@/components/ui";
 import { api, CATEGORY_LABEL, del, DOC_TYPE_LABEL } from "@/lib/api";
 import { runUploadJob, STATUS_TEXT, JobStatus } from "@/lib/jobs";
+import { reportHref } from "@/lib/links";
 
 type Doc = { id: string; filename: string; doc_type: string; user_category: string; doc_date: string; page_count: number; size_bytes: number; mime: string; review_status: string; error: string; created_at: number };
 type Job = { id: number; file: File; category: string; progress: number; status: "uploading" | "error"; error?: string; phase?: JobStatus };
@@ -109,7 +110,7 @@ export default function Reports() {
           : docs.length === 0 ? <EmptyState icon={<FileText className="h-7 w-7" />} title="No reports yet">Upload your first report above and we&apos;ll explain it in plain language.</EmptyState>
           : docs.map((d) => (
             <article key={d.id} className="card flex items-center gap-3 !p-3">
-              <Link href={`/reports/${d.id}`} className="flex min-w-0 flex-1 items-center gap-3 no-underline" aria-label={`Open explanation of ${d.filename}`}>
+              <Link href={reportHref(d.id)} className="flex min-w-0 flex-1 items-center gap-3 no-underline" aria-label={`Open explanation of ${d.filename}`}>
                 <AuthImage src={`/api/documents/${d.id}/thumbnail`} alt="" className="h-20 w-16 shrink-0 rounded-xl border border-line" fallback={<FileText className="h-6 w-6" />} />
                 <span className="min-w-0"><span className="block truncate font-semibold">{d.filename}</span>
                   <span className="block text-sm text-muted">{fmtDate(d.doc_date ? Date.parse(d.doc_date) / 1000 : d.created_at)} · {fmtBytes(d.size_bytes)} · {d.page_count} page{d.page_count === 1 ? "" : "s"}</span>
@@ -125,7 +126,7 @@ export default function Reports() {
       <ResultsOverTime />
 
       <Note tone="info">Files are stored privately on the clinic&apos;s system and are visible only to you and your care team. You can delete a document at any time.</Note>
-      {latest && <Link href={`/reports/${latest.id}`} className="btn btn-primary w-full !py-3">Continue to my report summary <ArrowRight className="h-5 w-5" aria-hidden /></Link>}
+      {latest && <Link href={reportHref(latest.id)} className="btn btn-primary w-full !py-3">Continue to my report summary <ArrowRight className="h-5 w-5" aria-hidden /></Link>}
 
       {preview && <DocumentPreview id={preview.id} name={preview.filename} mime={preview.mime} onClose={() => setPreview(null)} />}
       {confirmDel && <ConfirmDialog title="Delete this document?" message={`"${confirmDel.filename}" and everything read from it will be permanently deleted.`} confirmLabel="Delete" danger onConfirm={() => remove(confirmDel)} onCancel={() => setConfirmDel(null)} />}

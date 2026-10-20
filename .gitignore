@@ -15,6 +15,7 @@ e2e/node_modules/
 e2e/package-lock.json.bak
 docs/*.log
 docs/runs/p11_screens/
+docs/runs/android_screens/
 backend/content/urgent_policy.approved.json
 *.pt
 *.safetensors

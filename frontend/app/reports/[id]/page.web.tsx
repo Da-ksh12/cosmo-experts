@@ -2,7 +2,7 @@
 
 import { AlertTriangle, BarChart3, Check, ChevronDown, ExternalLink, FileText, FlagTriangleRight, Globe, Lightbulb, MessageCircle, MessagesSquare, ScrollText } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import AudioPlayer from "@/components/AudioPlayer";
 import DocumentPreview from "@/components/DocumentPreview";
@@ -30,7 +30,9 @@ function flagInfo(f: Field): { tone: "good" | "warn" | "info"; label: string } {
 }
 
 export default function ReportPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id?: string }>();
+  const search = useSearchParams();
+  const id = params?.id ?? search.get("id") ?? "";            // /reports/<id> on the web; /reports/view/?id=<id> in the Android bundle (one static page)
   const toast = useToast();
   const [d, setD] = useState<Detail | null>(null);
   const [ex, setEx] = useState<Explanation | null>(null);

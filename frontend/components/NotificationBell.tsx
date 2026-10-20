@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Dialog, fmtDateTime } from "@/components/ui";
 import { api, post } from "@/lib/api";
+import { appHref } from "@/lib/links";
 
 type Item = { id: string; kind: string; title: string; body: string; link: string; created_at: number; read_at: number | null };
 type Inbox = { unread: number; items: Item[] };
@@ -37,7 +38,7 @@ export default function NotificationBell() {
             <ul className="space-y-2">
               {box.items.map((n) => (
                 <li key={n.id}>
-                  <Link href={n.link || "/"} onClick={() => visit(n)} className={`block rounded-2xl border p-3 ${n.read_at ? "border-line bg-white" : "border-teal bg-teal-soft"}`}>
+                  <Link href={appHref(n.link || "/")} onClick={() => visit(n)} className={`block rounded-2xl border p-3 ${n.read_at ? "border-line bg-white" : "border-teal bg-teal-soft"}`}>
                     <span className="block font-semibold">{n.title}{!n.read_at && <span className="sr-only"> (unread)</span>}</span>
                     {n.body && <span className={`block text-sm ${n.read_at ? "text-muted" : "text-teal-dark"}`}>{n.body}</span>}
                     <span className={`block text-xs ${n.read_at ? "text-muted" : "text-teal-dark"}`}>{fmtDateTime(n.created_at)}</span>

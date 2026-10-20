@@ -2,7 +2,7 @@
 
 import ConsentGate, { ConsentStatus } from "@/components/ConsentGate";
 import NotificationBell from "@/components/NotificationBell";
-import { ClipboardList, Camera, History, Home, LogOut, MessageCircle, FileText, ChevronLeft, ShieldCheck } from "lucide-react";
+import { ClipboardList, Camera, History, Home, LogOut, MessageCircle, FileText, ChevronLeft, Settings, ShieldCheck, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
@@ -12,6 +12,15 @@ import { BrandLogo, Dialog, ToastProvider } from "@/components/ui";
 
 const Ctx = createContext<User | null>(null);
 export const useUser = () => useContext(Ctx);
+
+const subscribeOnline = (cb: () => void) => { window.addEventListener("online", cb); window.addEventListener("offline", cb); return () => { window.removeEventListener("online", cb); window.removeEventListener("offline", cb); }; };
+/** Says so, at the top of every screen, when the phone has no connection: nothing can be sent or loaded until it is back. */
+function OfflineBanner() {
+  const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
+  if (online) return null;
+  return <div role="status" className="sticky top-0 z-50 flex items-center justify-center gap-2 bg-[var(--warn-bg)] px-4 pb-2 text-center text-sm font-semibold text-[var(--warn-ink)]" style={{ paddingTop: "calc(.5rem + env(safe-area-inset-top))" }}>
+    <WifiOff className="h-4 w-4 shrink-0" aria-hidden /> You are offline. Nothing can be sent or loaded until you reconnect.</div>;
+}
 
 const PATIENT_NAV = [
   { href: "/", label: "Home", Icon: Home },
@@ -48,7 +57,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const raw = useSyncExternalStore(subscribeSession, getRawSession, () => null);
   const ready = useSyncExternalStore(() => () => {}, () => true, () => false);
   const user = useMemo<User | null>(() => { try { return raw ? (JSON.parse(raw).user as User) : null; } catch { return null; } }, [raw]);
-  const path = usePathname();
+  const rawPath = usePathname() ?? "/";
+  const path = rawPath.length > 1 ? rawPath.replace(/\/+$/, "") : rawPath;       // the static Android export uses trailing slashes (/login/); every rule below is written without them
   const router = useRouter();
   const [menu, setMenu] = useState(false);
   const [consentFor, setConsentFor] = useState<{ uid: string; status: ConsentStatus } | null>(null);
@@ -78,8 +88,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={user}>
       <ToastProvider>
         <PhotoFlowProvider>
+          <OfflineBanner />
           {user && (
-            <header className={`sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur ${patient && path !== "/" ? "hidden md:block" : ""}`}>
+            <header className={`sticky top-0 z-30 border-b border-line bg-white/85 pt-[env(safe-area-inset-top)] backdrop-blur ${patient && path !== "/" ? "hidden md:block" : ""}`}>
               <div className="mx-auto flex max-w-[1040px] items-center gap-3 px-[18px] py-2.5 md:gap-6 md:px-7">
                 <Link href={patient ? "/" : "/clinic"} aria-label="Cosmo Experts home" className="min-w-0"><BrandLogo compact={!patient} /></Link>
                 <nav aria-label="Main" className="hidden flex-1 items-center gap-1 md:flex">
@@ -94,7 +105,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               </div>
             </header>
           )}
-          <main id="main" className="page">{blocked ? null : consent?.required ? <ConsentGate status={consent} onDone={(status) => uid && setConsentFor({ uid, status })} /> : children}</main>
+          <main id="main" className={`page ${!user || (patient && path !== "/") ? "page-top" : ""}`}>{blocked ? null : consent?.required ? <ConsentGate status={consent} onDone={(status) => uid && setConsentFor({ uid, status })} /> : children}</main>
           {patient && (
             <nav aria-label="Primary" className="bottom-nav grid grid-cols-[repeat(5,minmax(0,1fr))] items-center md:hidden">
               {PATIENT_NAV.map(({ href, label, Icon, fab }) => (
@@ -108,6 +119,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <Dialog title="Your account" onClose={() => setMenu(false)}>
               <p className="mb-1 font-semibold">{user.name}</p>
               <p className="mb-5 text-sm capitalize text-muted">{user.role}</p>
+              <Link href="/settings" className="btn mb-3 w-full" onClick={() => setMenu(false)}><Settings className="h-5 w-5" aria-hidden /> Settings</Link>
               {patient && <Link href="/privacy" className="btn mb-3 w-full" onClick={() => setMenu(false)}><ShieldCheck className="h-5 w-5" aria-hidden /> Privacy and consent</Link>}
               {patient && <Link href="/care" className="btn mb-3 w-full" onClick={() => setMenu(false)}><ClipboardList className="h-5 w-5" aria-hidden /> Doctor review &amp; care plan</Link>}
               <button className="btn btn-primary w-full" onClick={signOut}><LogOut className="h-5 w-5" aria-hidden /> Sign out</button>

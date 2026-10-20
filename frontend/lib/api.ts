@@ -1,5 +1,7 @@
 "use client";
 
+import { apiUrl, IS_APP, serverLabel } from "@/lib/config";
+
 export type User = { id: string; name: string; role: "patient" | "doctor" | "admin" };
 
 const KEY = "cosmo.session";
@@ -57,13 +59,26 @@ function messageFrom(detail: unknown, fallback: string): string {
 }
 
 const CSRF = { "X-Requested-With": "cosmo-web" };
+const TIMEOUT_MS = 90_000;      // an answer from the assistant can take a while on a small server; beyond this the request is abandoned and the person is told so
+const OFFLINE = () => IS_APP ? `We can't reach the server (${serverLabel()}). Check your internet connection, or the server address in Settings.` : "We can't reach the server right now. Please check your connection and try again.";
+
+/** fetch() with a time limit that also honours a caller's own abort signal. A timeout is reported as a timeout, not as "offline". */
+async function fetchTimed(url: string, init: RequestInit, ms = TIMEOUT_MS): Promise<Response> {
+  const ctl = new AbortController();
+  const outer = init.signal;
+  const onAbort = () => ctl.abort(outer?.reason);
+  if (outer?.aborted) ctl.abort(outer.reason); else outer?.addEventListener("abort", onAbort);
+  const timer = setTimeout(() => ctl.abort(new DOMException("The server took too long to answer.", "TimeoutError")), ms);
+  try { return await fetch(url, { ...init, signal: ctl.signal }); }
+  finally { clearTimeout(timer); outer?.removeEventListener("abort", onAbort); }
+}
 let refreshing: Promise<boolean> | null = null;
 
 /** Exchange the httpOnly refresh cookie for a new access token (Supabase mode). One call at a time: concurrent 401s share it. Never exposes the refresh token to script. */
 export function refreshSession(): Promise<boolean> {
   refreshing ??= (async () => {
     try {
-      const res = await fetch("/api/auth/refresh", { method: "POST", headers: CSRF, credentials: "same-origin" });
+      const res = await fetchTimed(apiUrl("/api/auth/refresh"), { method: "POST", headers: CSRF, credentials: IS_APP ? "omit" : "same-origin" }, 15_000);
       if (!res.ok) return false;
       const r = (await res.json()) as Session;
       setSession({ token: r.token, user: r.user });
@@ -79,7 +94,7 @@ export async function signOutEverywhere(): Promise<void> {
   const s = getSession();
   setSession(null);
   try {
-    await fetch("/api/auth/logout", { method: "POST", headers: { ...CSRF, ...(s ? { Authorization: `Bearer ${s.token}` } : {}) }, credentials: "same-origin" });
+    await fetchTimed(apiUrl("/api/auth/logout"), { method: "POST", headers: { ...CSRF, ...(s ? { Authorization: `Bearer ${s.token}` } : {}) }, credentials: IS_APP ? "omit" : "same-origin" }, 15_000);
   } catch { /* offline: the local session is already gone */ }
 }
 
@@ -90,9 +105,11 @@ async function request(path: string, init: RequestInit = {}, retried = false): P
   if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   let res: Response;
   try {
-    res = await fetch(path, { ...init, headers });
-  } catch {
-    throw new ApiError(0, "We can't reach the server right now. Please check your connection and try again.");
+    res = await fetchTimed(apiUrl(path), { ...init, headers });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "TimeoutError") throw new ApiError(0, "The server took too long to answer. Please try again in a moment.");
+    if (e instanceof DOMException && e.name === "AbortError") throw new ApiError(0, "Cancelled.");
+    throw new ApiError(0, OFFLINE());
   }
   if (res.status === 401 && s) {
     if (!retried && !path.startsWith("/api/auth/") && (await refreshSession())) return request(path, init, true);
@@ -155,10 +172,12 @@ export function uploadWithProgress<T = unknown>(path: string, form: FormData, on
   return new Promise((resolve, reject) => {
     const s = getSession();
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", path);
+    xhr.open("POST", apiUrl(path));
+    xhr.timeout = 300_000;
     if (s) xhr.setRequestHeader("Authorization", `Bearer ${s.token}`);
     xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
-    xhr.onerror = () => reject(new ApiError(0, "We can't reach the server right now. Please check your connection and try again."));
+    xhr.onerror = () => reject(new ApiError(0, OFFLINE()));
+    xhr.ontimeout = () => reject(new ApiError(0, "The upload took too long and was stopped. Please try again on a stronger connection."));
     xhr.onload = () => {
       let body: { detail?: unknown } & Record<string, unknown> = {};
       try { body = JSON.parse(xhr.responseText); } catch { /* non-JSON */ }

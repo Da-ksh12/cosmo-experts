@@ -10,10 +10,14 @@ import { ScreenBar } from "@/components/Shell";
 import VoiceInput from "@/components/VoiceInput";
 import { ConfirmDialog, Dialog, Note, PageHeading, StatusBadge, fmtDateTime, useToast } from "@/components/ui";
 import { api, del, post } from "@/lib/api";
+import { reportHref } from "@/lib/links";
 
 type Source = { kind: string; document_id?: string; page?: number; excerpt?: string; title?: string; quote_id?: string };
-type Msg = { role: "patient" | "assistant"; content: string; sources?: Source[]; status?: string; abstained?: boolean; notice?: string };
+type Msg = { role: "patient" | "assistant"; content: string; sources?: Source[]; status?: string; abstained?: boolean; notice?: string; failed?: string };
 type Conv = { id: string; created_at: number; preview: string };
+
+// Shown when the server has no report-based suggestions yet. They are only questions to ask: whatever the assistant answers (or declines to answer) comes from the real server.
+const STARTERS = ["Explain my latest report in simple words", "How do I take a clear photo of my skin for my doctor?", "What does \"outside the printed range\" mean on a lab result?", "What should I ask my doctor at my next visit?"];
 
 const MODES = [
   { Icon: MessageCircle, title: "Ask Anything", sub: "Get clear answers", key: "ask", href: "" },
@@ -48,15 +52,22 @@ function Chat() {
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, busy]);
 
   const send = useCallback(async (q: string, id = cid) => {
-    if (!q.trim() || !id) return;
+    if (!q.trim()) return;
     setBusy(true); setText("");
+    if (input.current) input.current.style.height = "auto";
     setMsgs((m) => [...m, { role: "patient", content: q }]);
     try {
-      const r = await post<{ answer: string; sources: Source[]; status: string; abstained: boolean; notice?: string }>(`/api/conversations/${id}/messages`, { text: q });
+      let conv = id;
+      if (!conv) { conv = (await post<{ id: string }>("/api/conversations")).id; setCid(conv); }          // the conversation could not be created earlier (no connection): try again now
+      const r = await post<{ answer: string; sources: Source[]; status: string; abstained: boolean; notice?: string }>(`/api/conversations/${conv}/messages`, { text: q });
       setMsgs((m) => [...m, { role: "assistant", content: r.answer, sources: r.sources, status: r.status, abstained: r.abstained, notice: r.notice }]);
-    } catch (e) { toast(e instanceof Error ? e.message : "Something went wrong. Please try again.", "bad"); }
+    } catch (e) {
+      const why = e instanceof Error ? e.message : "Something went wrong. Please try again.";
+      setMsgs((m) => m.map((x, i) => (i === m.length - 1 && x.role === "patient" ? { ...x, failed: why } : x)));      // the question stays visible and is marked NOT sent (announced to screen readers); nothing pretends to have been answered
+    }
     finally { setBusy(false); }
-  }, [cid, toast]);
+  }, [cid]);
+  const retry = (i: number) => { const q = msgs[i]?.content; if (!q) return; setMsgs((m) => m.filter((_, j) => j !== i)); void send(q); };
 
   const qp = params.get("q");
   useEffect(() => { if (qp && cid && !sent.current) { sent.current = true; void send(qp, cid); } }, [qp, cid, send]);
@@ -99,7 +110,8 @@ function Chat() {
       <section className="space-y-4" aria-live="polite" aria-label="Conversation">
         {msgs.map((m, i) => m.role === "patient" ? (
           <div key={i} className="rise ml-auto flex max-w-[88%] items-end gap-2 sm:max-w-[70%]">
-            <div className="rounded-[22px] rounded-br-md bg-teal px-4 py-3 text-white"><p className="whitespace-pre-wrap">{m.content}</p></div>
+            <div className="min-w-0"><div className={`rounded-[22px] rounded-br-md px-4 py-3 text-white ${m.failed ? "bg-[var(--bad-ink)]" : "bg-teal"}`}><p className="whitespace-pre-wrap">{m.content}</p></div>
+              {m.failed && <p className="mt-1 text-right text-xs text-[var(--bad-ink)]" role="alert">Not sent. {m.failed} <button type="button" className="font-semibold underline" onClick={() => retry(i)} disabled={busy}>Try again</button></p>}</div>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-soft text-gold"><UserRound className="h-5 w-5" aria-hidden /></span>
           </div>
         ) : (
@@ -109,7 +121,7 @@ function Chat() {
               <p className="whitespace-pre-wrap">{m.content}</p>
               {m.sources && m.sources.length > 0 && (
                 <div className="flex flex-wrap gap-2">{m.sources.map((s, j) => s.kind === "document" ? (
-                  <Link key={j} href={`/reports/${s.document_id}`} className="badge note-info no-underline"><FileText className="h-3.5 w-3.5" aria-hidden /> Your report · page {s.page}</Link>)
+                  <Link key={j} href={reportHref(s.document_id)} className="badge note-info no-underline"><FileText className="h-3.5 w-3.5" aria-hidden /> Your report · page {s.page}</Link>)
                   : s.kind === "knowledge_base" ? <span key={j} className="badge note-gold">Clinic-approved: {s.title}</span>
                   : <Link key={j} href="/quote" className="badge note-info no-underline">Your approved quotation</Link>)}</div>)}
               {m.notice && <Note tone="warn">{m.notice}</Note>}
@@ -118,11 +130,11 @@ function Chat() {
             </div>
           </div>))}
         {busy && <div className="flex items-center gap-2 text-muted" role="status"><Sparkles className="spin h-5 w-5" aria-hidden /> Looking through your documents…</div>}
-        <div ref={end} />
+        <div ref={end} aria-hidden style={{ scrollMarginBottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 230px)" }} />      {/* keeps the newest message clear of the sticky composer */}
       </section>
 
       <div className="flex flex-wrap gap-2" aria-label="Quick actions">
-        {firstDoc && <Link href={`/reports/${firstDoc.document_id}`} className="chip"><FileText className="h-4 w-4" aria-hidden /> View Report</Link>}
+        {firstDoc && <Link href={reportHref(firstDoc.document_id)} className="chip"><FileText className="h-4 w-4" aria-hidden /> View Report</Link>}
         <button className="chip" onClick={() => send("What questions should I ask my doctor?")}><Stethoscope className="h-4 w-4" aria-hidden /> Questions for my doctor</button>
         <Link href="/care" className="chip"><Stethoscope className="h-4 w-4" aria-hidden /> Doctor Review</Link>
       </div>
@@ -131,14 +143,15 @@ function Chat() {
 
       <section id="suggested" aria-label="Suggested questions" className="space-y-2">
         <h3 className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-gold" aria-hidden /> Suggested Questions</h3>
-        {suggest.length === 0 ? <p className="text-sm text-muted">Upload a report to get suggestions based on it.</p>
-          : <div className="grid gap-2 sm:grid-cols-3">{suggest.map((s) => <button key={s} className="card !rounded-2xl !p-3 text-left text-sm" onClick={() => send(s)}>{s}</button>)}</div>}
+        {suggest.length === 0 && <p className="text-sm text-muted">General starters. Upload a report to get questions based on it.</p>}
+        <div className="grid gap-2 sm:grid-cols-3">{(suggest.length ? suggest : STARTERS).map((s) => <button key={s} className="card !rounded-2xl !p-3 text-left text-sm" disabled={busy} onClick={() => send(s)}>{s}</button>)}</div>
       </section>
 
-      <form onSubmit={(e) => { e.preventDefault(); void send(text); }} className="card sticky z-20 space-y-3 !p-3" style={{ bottom: "calc(var(--nav-h) + 8px)" }}>
+      <form onSubmit={(e) => { e.preventDefault(); void send(text); }} className="card sticky z-20 space-y-2 !p-3" style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 8px)" }}>
         <label htmlFor="q" className="sr-only">Your question</label>
-        <textarea id="q" ref={input} className="input !rounded-2xl" rows={2} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(text); } }} placeholder="Type your question in English, Hindi or Hinglish…" />
+        <textarea id="q" ref={input} className="input !rounded-2xl" rows={1} maxLength={1000} value={text}
+            onChange={(e) => { setText(e.target.value); const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 132)}px`; }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(text); } }} placeholder="Ask in English, Hindi or Hinglish…" />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <VoiceInput trigger={voiceTrig} onText={(t, note) => { setText(t); setVoiceNote(note ?? "Please check the words and correct them if needed before sending."); input.current?.focus(); }} onState={(s, m) => { if (s === "error") setVoiceNote(m ?? ""); else if (s !== "idle") setVoiceNote(""); }} />
           <button className="btn btn-primary shrink-0" type="submit" disabled={busy || !text.trim()} aria-label="Send question"><Send className="h-5 w-5" aria-hidden /> Send</button>

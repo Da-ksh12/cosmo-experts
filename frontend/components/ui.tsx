@@ -172,7 +172,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div className="fixed left-1/2 z-[60] flex w-[min(92vw,420px)] -translate-x-1/2 flex-col gap-2" style={{ bottom: "calc(var(--nav-h) + 16px)" }} aria-live="polite">
+      <div className="fixed left-1/2 z-[60] flex w-[min(92vw,420px)] -translate-x-1/2 flex-col gap-2" style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)" }} aria-live="polite">
         {items.map((t) => <div key={t.id} className={`pop note ${t.tone === "bad" ? "note-bad" : t.tone === "info" ? "note-info" : "note-good"} shadow-lg`}>{t.text}</div>)}
       </div>
     </ToastCtx.Provider>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Note, Pill } from "@/components/ui";
 import { ApiError, post } from "@/lib/api";
+import { reportHref } from "@/lib/links";
 
 type Citation = { kind: string; document_id?: string; page?: number; title?: string; excerpt?: string; item?: string };
 type Proposed = { id: string; tool: string; summary: string; state: string };
@@ -67,7 +68,7 @@ export default function AgentActions() {
           <p className="whitespace-pre-wrap">{reply.answer}</p>
           {reply.sources.length > 0 && (
             <div className="flex flex-wrap gap-2">{reply.sources.map((s, i) => s.kind === "document" && s.document_id
-              ? <Link key={i} href={`/reports/${s.document_id}`} className="badge note-info no-underline"><FileText className="h-3.5 w-3.5" aria-hidden /> Your {s.item === "medication" ? "prescription" : "report"} · page {s.page}</Link>
+              ? <Link key={i} href={reportHref(s.document_id)} className="badge note-info no-underline"><FileText className="h-3.5 w-3.5" aria-hidden /> Your {s.item === "medication" ? "prescription" : "report"} · page {s.page}</Link>
               : <span key={i} className="badge note-gold">Clinic-approved: {s.title}</span>)}</div>)}
 
           {reply.actions.map((a) => {

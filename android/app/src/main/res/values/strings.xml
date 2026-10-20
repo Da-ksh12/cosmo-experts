@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cosmo Experts AI</string>
+    <string name="title_activity_main">Cosmo Experts AI</string>
+    <string name="package_name">ai.cosmoexperts.app</string>
+    <string name="custom_url_scheme">ai.cosmoexperts.app</string>
+</resources>

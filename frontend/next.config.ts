@@ -1,9 +1,14 @@
 import type { NextConfig } from "next";
 
 const API = process.env.COSMO_API_URL ?? "http://127.0.0.1:8000";
+const ANDROID = process.env.NEXT_PUBLIC_TARGET === "android";
 
-const nextConfig: NextConfig = {
-  // Same-origin proxy: the browser never needs the backend URL, and no secret ever reaches the client.
+// One source tree, two builds.
+//  * Web (default): a server build. The browser calls /api on its own origin and this proxy forwards it, so the browser never needs the backend URL and no secret reaches the client.
+//  * Android (NEXT_PUBLIC_TARGET=android, see scripts/build-android.mjs): a static export that Capacitor bundles into the app. It has no server, so it calls an explicit API address
+//    (lib/config.ts). Files named page.web.tsx are pages only in the web build (the per-report page cannot be exported; the app uses /reports/view/?id=...).
+const web: NextConfig = {
+  pageExtensions: ["tsx", "ts", "jsx", "js", "web.tsx"],
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API}/api/:path*` }];
   },
@@ -19,4 +24,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const android: NextConfig = {
+  output: "export",
+  distDir: "out-android",
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+
+export default ANDROID ? android : web;

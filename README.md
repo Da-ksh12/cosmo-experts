@@ -18,6 +18,10 @@ cd frontend && npm install && npm run build && npm run start     # http://localh
 Demo accounts (local mode only): `patient1`, `patient2`, `doctor1`, `admin1`, password `cosmo-dev`
 (override with `COSMO_DEV_PASSWORD`). Set `COSMO_SECRET` for anything beyond local use.
 
+## Android app
+
+`cd frontend && node scripts/build-android.mjs --apk` builds an installable debug APK of the real UI (needs JDK 21 and the Android SDK); it connects to a backend whose address you choose in the app. See `docs/ANDROID_APK.md`.
+
 ## Tests
 
 * `cd backend && .venv\Scripts\python -m pytest -q tests` — 27 tests: image checks, document pipeline,

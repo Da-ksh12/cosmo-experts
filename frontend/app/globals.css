@@ -133,6 +133,9 @@ details > summary::-webkit-details-marker { display: none; }
 /* ───────── Layout ───────── */
 .page { max-width: 1040px; margin: 0 auto; padding: 20px 18px calc(var(--nav-h) + 36px + env(safe-area-inset-bottom)); }
 @media (min-width: 768px) { .page { padding: 32px 28px 64px; } }
+/* screens without the sticky header (mobile sub-screens, sign-in): keep content clear of the status bar when the app draws edge to edge */
+.page-top { padding-top: calc(20px + env(safe-area-inset-top)); }
+@media (min-width: 768px) { .page-top { padding-top: 32px; } }
 
 .bottom-nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; height: calc(var(--nav-h) + env(safe-area-inset-bottom));

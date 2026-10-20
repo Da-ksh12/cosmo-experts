@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ScreenBar } from "@/components/Shell";
 import { AuthImage, EmptyState, ErrorState, LoadingState, Note, PageHeading, Pill, StatusBadge, fmtDate } from "@/components/ui";
 import { api, DOC_TYPE_LABEL } from "@/lib/api";
+import { reportHref } from "@/lib/links";
 
 type Stage = { title: string; detail: string; status: "planned" | "in_progress" | "done"; done_at?: number | null };
 type Care = {
@@ -61,7 +62,7 @@ export default function CarePage() {
                   <Link href="/history?kind=photos" className="text-sm font-semibold text-teal">View all ({c.photos.length})</Link></section>
                 <section className="card space-y-3" aria-label="Your reports"><h3>Your Reports</h3>
                   {c.documents.length === 0 ? <p className="text-sm text-muted">No reports on file.</p> : <ul className="space-y-2">{c.documents.slice(0, 3).map((d) => (
-                    <li key={d.id}><Link href={`/reports/${d.id}`} className="flex items-center gap-3 no-underline"><AuthImage src={`/api/documents/${d.id}/thumbnail`} alt="" className="h-12 w-10 rounded-lg border border-line" fallback={<FileText className="h-4 w-4" />} />
+                    <li key={d.id}><Link href={reportHref(d.id)} className="flex items-center gap-3 no-underline"><AuthImage src={`/api/documents/${d.id}/thumbnail`} alt="" className="h-12 w-10 rounded-lg border border-line" fallback={<FileText className="h-4 w-4" />} />
                       <span className="min-w-0"><span className="block truncate text-sm font-semibold">{d.filename}</span><span className="text-xs text-muted">{DOC_TYPE_LABEL[d.doc_type]} · {fmtDate(d.created_at)}</span></span></Link></li>))}</ul>}
                   <Link href="/history?kind=reports" className="text-sm font-semibold text-teal">View all ({c.documents.length})</Link></section>
               </div>
