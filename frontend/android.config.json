@@ -1,8 +1,10 @@
 {
   "appId": "ai.cosmoexperts.app",
   "appName": "Cosmo Experts AI",
+  "versionName": "0.2.0-standalone",
+  "versionCode": 2,
   "apiBase": "",
-  "androidScheme": "http",
-  "devCleartextHosts": ["10.0.2.2", "localhost"],
-  "note": "apiBase: https address of a Cosmo Experts server, or empty to enter it in the app. devCleartextHosts: hosts a DEBUG build may reach over plain http (never the release build); add your computer's address in android.config.local.json. androidScheme http lets the app talk to those hosts without a mixed-content block; use https for a release build. No secrets belong in this file."
+  "androidScheme": "https",
+  "devCleartextHosts": [],
+  "note": "apiBase is the ONE production server address (https only); empty means the app opens and asks for it. A standalone build refuses any development address (localhost, loopback, 10.0.2.2, private network, plain http): for a backend on your own computer use  node scripts/build-android.mjs --dev-server <host>  instead. Prefer COSMO_API_BASE or android.config.local.json (ignored by Git) for the address. No secrets belong in this file."
 }

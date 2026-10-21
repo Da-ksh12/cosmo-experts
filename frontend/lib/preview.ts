@@ -18,7 +18,7 @@ export function setPreview(on: boolean) {
 
 export const PREVIEW_MESSAGE = "Preview mode: no server is connected, so this can't be done. Connect to your clinic's server in Settings to use it.";
 
-const EMPTY_LISTS = [/^\/api\/history(\?.*)?$/, /^\/api\/documents(\/compare)?$/, /^\/api\/assistant\/suggestions$/, /^\/api\/conversations$/];
+const EMPTY_LISTS = [/^\/api\/history(\?.*)?$/, /^\/api\/documents(\/compare)?$/, /^\/api\/assistant\/suggestions$/, /^\/api\/conversations$/, /^\/api\/price-items$/, /^\/api\/quotes$/];
 
 /** The body a screen gets for a request in preview mode, or undefined when the request cannot be served (the caller then fails it with PREVIEW_MESSAGE). */
 export function previewBody(path: string, method: string): unknown | undefined {
@@ -29,6 +29,7 @@ export function previewBody(path: string, method: string): unknown | undefined {
   if (path === "/api/consent/history") return { events: [] };
   if (path === "/api/care-plan") return { plan: null, doctor: null, photos: [], documents: [], awaiting_review: false };
   if (path === "/api/notifications") return { unread: 0, items: [] };
+  if (path === "/api/quote-config") return { tax_percent: 0, payment_options: [], inclusions: [], terms: "" };       // neutral: no price, tax or term is invented
   if (path === "/api/speech/status") return { stt: { available: false } };
   return undefined;
 }

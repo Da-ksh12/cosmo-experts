@@ -5,6 +5,10 @@ base {
     archivesName = 'cosmo-experts-ai'
 }
 
+// the version comes from frontend/android.config.json through scripts/build-android.mjs (-PcosmoVersionCode / -PcosmoVersionName)
+def cosmoVersionCode = Integer.parseInt((project.findProperty("cosmoVersionCode") ?: "2").toString())
+def cosmoVersionName = (project.findProperty("cosmoVersionName") ?: "0.2.0-standalone").toString()
+
 android {
     namespace = "ai.cosmoexperts.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -12,8 +16,8 @@ android {
         applicationId "ai.cosmoexperts.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.1.0-demo"
+        versionCode cosmoVersionCode
+        versionName cosmoVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

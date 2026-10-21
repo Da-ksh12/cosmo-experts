@@ -78,24 +78,27 @@ export default function Login() {
       {needsServer ? (
         <div className="card rise-2 space-y-4">
           <h1 className="!text-3xl">Connect to your clinic</h1>
-          <p className="text-muted">This app needs the address of your Cosmo Experts server before you can sign in. Your clinic or IT team can give it to you.</p>
+          <p className="text-muted">This app needs the online address of your clinic&apos;s Cosmo Experts server before you can sign in. Your clinic or IT team can give it to you.</p>
+          <p className="rounded-2xl bg-sage p-3 text-sm text-teal-dark">The screens are saved in this app and open without a connection. Signing in, your reports and the AI assistant need the server.</p>
           <button className="btn btn-primary w-full !py-3" type="button" onClick={() => setShowServer(true)}><Server className="h-5 w-5" aria-hidden /> Set the server address</button>
           <button className="btn w-full !py-3" type="button" onClick={startPreview}><Eye className="h-5 w-5" aria-hidden /> Look around in preview mode</button>
           <p className="text-center text-xs text-muted">Preview shows the screens only. Nothing is saved, sent or analysed, and no answers or results are produced.</p>
         </div>
+      ) : offline ? (
+        <div className="card rise-2 space-y-4" role="alert">
+          <WifiOff className="h-9 w-9 text-teal" aria-hidden />
+          <h1 className="!text-3xl">We can&apos;t reach your clinic</h1>
+          <p className="text-muted">{offline}</p>
+          {IS_APP && <p className="break-all text-sm"><span className="font-semibold">Server:</span> {serverLabel()}</p>}
+          <p className="rounded-2xl bg-sage p-3 text-sm text-teal-dark">The app itself works without a connection. Signing in, your reports and the AI assistant need the server to be reachable.</p>
+          <button className="btn btn-primary w-full !py-3" type="button" onClick={() => setRev((n) => n + 1)}>Try again</button>
+          {IS_APP && <button className="btn w-full !py-3" type="button" onClick={() => setShowServer(true)}><Server className="h-5 w-5" aria-hidden /> Change server</button>}
+          {IS_APP && <button className="btn w-full !py-3" type="button" onClick={startPreview}><Eye className="h-5 w-5" aria-hidden /> Look around in preview mode</button>}
+        </div>
       ) : (
       <form onSubmit={go} className="card rise-2 space-y-4">
         <h1 className="!text-3xl">Welcome back</h1>
-        {offline && (
-          <Note tone="bad">
-            <span className="flex items-start gap-2"><WifiOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> <span>{offline}</span></span>
-            <span className="mt-2 flex flex-wrap gap-3">
-              <button type="button" className="font-semibold underline" onClick={() => setRev((n) => n + 1)}>Try again</button>
-              {IS_APP && <button type="button" className="font-semibold underline" onClick={() => setShowServer(true)}>Change server</button>}
-              {IS_APP && <button type="button" className="font-semibold underline" onClick={startPreview}>Preview mode</button>}
-            </span>
-          </Note>)}
-        {cfg && !sb && !offline && <Note tone="info">Local development mode: demo accounts only. Production uses Supabase Auth.</Note>}
+        {cfg && !sb && <Note tone="info">Local development mode: demo accounts only. Production uses Supabase Auth.</Note>}
         {sb ? (
           <label className="block font-semibold">Email
             <input className="input mt-1 font-normal" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required /></label>
@@ -106,7 +109,7 @@ export default function Login() {
         <label className="block font-semibold">Password
           <input className="input mt-1 font-normal" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required /></label>
         {err && <Note tone="bad">{err}</Note>}
-        <button className="btn btn-primary w-full !py-3" type="submit" disabled={busy || !cfg || !!offline}><LogIn className="h-5 w-5" aria-hidden /> {busy ? "Signing in…" : "Sign in"}</button>
+        <button className="btn btn-primary w-full !py-3" type="submit" disabled={busy || !cfg}><LogIn className="h-5 w-5" aria-hidden /> {busy ? "Signing in…" : "Sign in"}</button>
         {sb && (
           <p className="text-center text-sm">
             <Link href="/forgot-password" className="font-semibold text-teal-dark underline">Forgot your password?</Link>

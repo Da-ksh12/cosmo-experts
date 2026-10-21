@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Android 8.1 and later: dark status-bar and navigation-bar icons on the ivory screens, navigation bar in the same ivory. (From Android 15 the app draws edge to edge and these two colours are
+         ignored; the page background shows through and the SystemBars setting in capacitor.config.ts chooses the icon colour.) -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/cosmo_ivory</item>
+        <item name="android:navigationBarColor">@color/cosmo_ivory</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

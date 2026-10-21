@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { AlertTriangle, CheckCircle2, Info, Loader2, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, Loader2, WifiOff, X, XCircle } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { blob, STATUS_LABEL } from "@/lib/api";
 
@@ -85,7 +85,19 @@ export function Note({ tone = "info", children, className = "" }: { tone?: keyof
 export function LoadingState({ label = "Loading…" }: { label?: string }) {
   return <div role="status" className="flex items-center justify-center gap-3 py-16 text-muted"><Loader2 className="spin h-5 w-5" aria-hidden />{label}</div>;
 }
+const CONNECTION_MESSAGE = /can't reach the server|took too long|no internet|offline|could not connect/i;
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  if (CONNECTION_MESSAGE.test(message)) {          // no connection or server down: say so calmly, say what still works, and offer a retry
+    return (
+      <div className="card space-y-2 text-center" role="alert">
+        <WifiOff className="mx-auto h-9 w-9 text-teal" aria-hidden />
+        <h3 className="!text-lg">We can&apos;t connect right now</h3>
+        <p className="text-muted">{message}</p>
+        <p className="text-xs text-muted">The screens are saved in the app. Your information and the assistant come from your clinic&apos;s server and will be back as soon as the connection is.</p>
+        {onRetry && <button className="btn btn-primary mt-2" onClick={onRetry}>Try again</button>}
+      </div>
+    );
+  }
   return (
     <div className="card text-center" role="alert">
       <XCircle className="mx-auto mb-2 h-8 w-8 text-[var(--bad-ink)]" aria-hidden />

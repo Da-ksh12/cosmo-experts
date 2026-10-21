@@ -2,7 +2,8 @@
 // http://localhost inside the Android WebView, so this exercises the same code, the same cross-origin calls (CORS, bearer token, uploads) and the same screens; it does NOT
 // exercise Android itself (no WebView, no permissions dialogs, no APK install): that needs a device or an emulator.
 //
-// Prerequisites: node scripts/build-android.mjs --no-local   (creates frontend/out-android with no server chosen; run from frontend/)
+// Prerequisites: node scripts/build-android.mjs --dev-server 127.0.0.1 --no-local   (a DEVELOPMENT bundle: it may talk plain http to 127.0.0.1; run from frontend/. The standalone bundle is
+//                  checked by e2e/android-standalone.mjs instead.)
 //                a backend on COSMO_API (default http://127.0.0.1:8000) started with COSMO_CORS=http://localhost:4173 and demo accounts whose password is in
 //                COSMO_TEST_PASSWORD_FILE (or COSMO_TEST_PASSWORD)
 // Run:           node e2e/android-bundle.mjs
@@ -115,8 +116,10 @@ try {
   await shot("07-ask-failed");
   await page.unroute("**/api/conversations/*/messages");
   const retried = page.waitForResponse((x) => /\/messages$/.test(x.url()) && x.request().method() === "POST", { timeout: 180000 });
-  await page.getByRole("button", { name: "Try again" }).click();
-  r.ok((await retried).status() === 200, "'Try again' resends the question and the backend answers");
+  r.ok(await page.getByText(/Can't reach the server \(127\.0\.0\.1:8000\)\./).first().isVisible(), "a failed call also raises the 'Can't reach the server' banner with its own Try again");
+  await page.getByLabel("Conversation", { exact: true }).getByRole("button", { name: "Try again" }).click();
+  r.ok((await retried).status() === 200, "'Try again' on the question resends it and the backend answers");
+  r.ok((await page.getByText(/Can't reach the server \(127\.0\.0\.1:8000\)\./).count()) === 0, "once the server answers again the banner goes away");
   await page.waitForFunction(() => document.querySelectorAll('section[aria-label="Conversation"] .card').length >= 2, null, { timeout: 60000 });
 
   // 5. other patient screens render from real data and offer their empty states
@@ -155,7 +158,7 @@ try {
   await page.evaluate(() => { sessionStorage.clear(); localStorage.setItem("cosmo.apiBase", "http://127.0.0.1:9"); });
   await page.goto(ORIGIN + "/login/");
   await page.getByText(/can't reach the server/i).first().waitFor({ timeout: 30000 });
-  r.ok(await page.locator("button[type=submit]").isDisabled(), "an unreachable server is reported on the sign-in screen and sign-in is disabled");
+  r.ok((await page.locator("button[type=submit]").count()) === 0 && (await page.getByRole("button", { name: "Try again" }).isVisible()), "an unreachable server is reported on the sign-in screen with Try again, and there is no sign-in form to submit");
   await shot("12-unreachable");
 
   // 9. preview mode (no server at all): the real screens with nothing invented, clearly labelled, and not a single API request

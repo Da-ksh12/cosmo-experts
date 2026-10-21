@@ -8,6 +8,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { api, getRawSession, signOutEverywhere, subscribeSession, User } from "@/lib/api";
 import { isPreview } from "@/lib/preview";
+import { checkServer, getApiBase, serverLabel } from "@/lib/config";
+import { connection } from "@/lib/connection";
+import NativeInit from "@/components/NativeInit";
 import { PhotoFlowProvider } from "@/lib/photoFlow";
 import { BrandLogo, Dialog, ToastProvider } from "@/components/ui";
 
@@ -15,12 +18,31 @@ const Ctx = createContext<User | null>(null);
 export const useUser = () => useContext(Ctx);
 
 const subscribeOnline = (cb: () => void) => { window.addEventListener("online", cb); window.addEventListener("offline", cb); return () => { window.removeEventListener("online", cb); window.removeEventListener("offline", cb); }; };
-/** Says so, at the top of every screen, when the phone has no connection: nothing can be sent or loaded until it is back. */
-function OfflineBanner() {
+/** The status banners at the top of every screen, stacked in one sticky block so they never overlap:
+ *  - no connection at all: nothing can be sent or loaded until it is back;
+ *  - online but the server did not answer: say so and offer a retry (a successful retry reloads the current screen's data); the sign-in screens show this state themselves;
+ *  - preview mode: always labelled, with a way out. */
+function TopBanners({ showServer, preview, onRetried, onExitPreview }: { showServer: boolean; preview: boolean; onRetried: () => void; onExitPreview: () => void }) {
+  const down = useSyncExternalStore(connection.subscribe, connection.isDown, () => false);
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
-  if (online) return null;
-  return <div role="status" className="sticky top-0 z-50 flex items-center justify-center gap-2 bg-[var(--warn-bg)] px-4 pb-2 text-center text-sm font-semibold text-[var(--warn-ink)]" style={{ paddingTop: "calc(.5rem + env(safe-area-inset-top))" }}>
-    <WifiOff className="h-4 w-4 shrink-0" aria-hidden /> You are offline. Nothing can be sent or loaded until you reconnect.</div>;
+  const [busy, setBusy] = useState(false);
+  const retry = async () => {
+    setBusy(true);
+    const r = await checkServer(getApiBase());
+    setBusy(false);
+    if (r.ok) { connection.markUp(); onRetried(); }
+  };
+  const row = "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 text-center text-sm font-semibold";
+  const items = [
+    !online && <div key="offline" role="status" className={`${row} bg-[var(--warn-bg)] text-[var(--warn-ink)]`}><span className="inline-flex items-center gap-2"><WifiOff className="h-4 w-4 shrink-0" aria-hidden /> You are offline. Nothing can be sent or loaded until you reconnect.</span></div>,
+    online && showServer && down && <div key="server" role="status" className={`${row} bg-[var(--bad-bg)] text-[var(--bad-ink)]`}>
+      <span className="inline-flex items-center gap-2"><WifiOff className="h-4 w-4 shrink-0" aria-hidden /> Can&apos;t reach the server ({serverLabel()}).</span>
+      <button type="button" className="underline" onClick={retry} disabled={busy}>{busy ? "Checking…" : "Try again"}</button></div>,
+    preview && <div key="preview" role="status" className={`${row} bg-gold-soft text-[#86622a]`}><span>PREVIEW · no server is connected · nothing is saved, sent or analysed</span>
+      <button type="button" className="underline" onClick={onExitPreview}>Connect to a server</button></div>,
+  ].filter(Boolean);
+  if (!items.length) return null;
+  return <div className="sticky top-0 z-50 bg-ivory shadow-sm" style={{ paddingTop: "env(safe-area-inset-top)" }}>{items}</div>;
 }
 
 const PATIENT_NAV = [
@@ -62,6 +84,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const path = rawPath.length > 1 ? rawPath.replace(/\/+$/, "") : rawPath;       // the static Android export uses trailing slashes (/login/); every rule below is written without them
   const router = useRouter();
   const [menu, setMenu] = useState(false);
+  const [reload, setReload] = useState(0);                 // bumping this remounts the current screen so it loads its data again after a successful retry
   const [consentFor, setConsentFor] = useState<{ uid: string; status: ConsentStatus } | null>(null);
 
   useEffect(() => {
@@ -89,12 +112,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={user}>
       <ToastProvider>
         <PhotoFlowProvider>
-          <OfflineBanner />
-          {user && isPreview() && (
-            <div role="status" className="sticky top-0 z-50 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gold-soft px-4 pb-2 text-center text-sm font-semibold text-[#86622a]" style={{ paddingTop: "calc(.5rem + env(safe-area-inset-top))" }}>
-              <span>PREVIEW · no server is connected · nothing is saved, sent or analysed</span>
-              <button type="button" className="underline" onClick={() => { void signOutEverywhere(); router.replace("/login"); }}>Connect to a server</button>
-            </div>)}
+          <TopBanners showServer={!PUBLIC.includes(path)} preview={!!user && isPreview()} onRetried={() => setReload((n) => n + 1)} onExitPreview={() => { void signOutEverywhere(); router.replace("/login"); }} />
+          <NativeInit />
           {user && (
             <header className={`sticky top-0 z-30 border-b border-line bg-white/85 pt-[env(safe-area-inset-top)] backdrop-blur ${patient && path !== "/" ? "hidden md:block" : ""}`}>
               <div className="mx-auto flex max-w-[1040px] items-center gap-3 px-[18px] py-2.5 md:gap-6 md:px-7">
@@ -111,7 +130,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               </div>
             </header>
           )}
-          <main id="main" className={`page ${!user || (patient && path !== "/") ? "page-top" : ""}`}>{blocked ? null : consent?.required ? <ConsentGate status={consent} onDone={(status) => uid && setConsentFor({ uid, status })} /> : children}</main>
+          <main id="main" key={reload} className={`page ${!user || (patient && path !== "/") ? "page-top" : ""}`}>{blocked ? null : consent?.required ? <ConsentGate status={consent} onDone={(status) => uid && setConsentFor({ uid, status })} /> : children}</main>
           {patient && (
             <nav aria-label="Primary" className="bottom-nav grid grid-cols-[repeat(5,minmax(0,1fr))] items-center md:hidden">
               {PATIENT_NAV.map(({ href, label, Icon, fab }) => (

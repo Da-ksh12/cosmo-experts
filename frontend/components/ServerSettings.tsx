@@ -30,7 +30,7 @@ export default function ServerSettings({ onClose, onSaved }: { onClose: () => vo
   return (
     <Dialog title="Server connection" onClose={onClose}>
       <div className="space-y-4">
-        <p className="text-sm text-muted">Cosmo Experts AI works with a secure server run by your clinic or your IT team. Enter its address, for example <span className="font-semibold">https://care.your-clinic.com</span>.</p>
+        <p className="text-sm text-muted">Cosmo Experts AI works with a secure server run by your clinic or your IT team. Enter its address, for example <span className="font-semibold">https://api.example.com</span>.</p>
         <label className="block font-semibold" htmlFor="server-url">Server address
           <input id="server-url" className="input mt-1 font-normal" type="url" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off"
             placeholder="https://" value={text} onChange={(e) => { setText(e.target.value); setCheck({ kind: "idle" }); }} />

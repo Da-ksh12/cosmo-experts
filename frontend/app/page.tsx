@@ -3,9 +3,9 @@
 import { ArrowRight, Bot, ClipboardCheck, FileText, Flower2, Image as ImageIcon, ScanFace, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { AuthImage, Dialog, EmptyState, Leaf, Pill, fmtDate, useToast } from "@/components/ui";
+import { AuthImage, Dialog, EmptyState, ErrorState, Leaf, Pill, fmtDate } from "@/components/ui";
 import { useUser } from "@/components/Shell";
 import { usePhotoFlow, Region } from "@/lib/photoFlow";
 
@@ -26,12 +26,13 @@ function greeting() {
 export default function HomePage() {
   const user = useUser();
   const router = useRouter();
-  const toast = useToast();
   const { setRegion } = usePhotoFlow();
   const [items, setItems] = useState<HistoryItem[] | null>(null);
+  const [loadErr, setLoadErr] = useState("");
   const [guide, setGuide] = useState(false);
 
-  useEffect(() => { api<HistoryItem[]>("/api/history").then(setItems).catch(() => { setItems([]); toast("We couldn't load your recent activity.", "bad"); }); }, [toast]);
+  const load = useCallback(() => { api<HistoryItem[]>("/api/history").then((x) => { setLoadErr(""); setItems(x); }).catch((e) => setLoadErr(e instanceof Error ? e.message : "We couldn't load your recent activity.")); }, []);
+  useEffect(load, [load]);
 
   const pick = (region: Region | "report" | "ask") => {
     setGuide(false);
@@ -68,7 +69,8 @@ export default function HomePage() {
 
       <section aria-label="Recent activity" className="space-y-3">
         <div className="flex items-center justify-between"><h2>Recent Activity</h2><Link href="/history" className="font-semibold text-teal">View all</Link></div>
-        {items === null ? <div className="grid gap-3 sm:grid-cols-2"><div className="h-24 animate-pulse rounded-3xl bg-line" /><div className="h-24 animate-pulse rounded-3xl bg-line" /></div>
+        {loadErr && items === null ? <ErrorState message={loadErr} onRetry={() => { setLoadErr(""); load(); }} />
+          : items === null ? <div className="grid gap-3 sm:grid-cols-2"><div className="h-24 animate-pulse rounded-3xl bg-line" /><div className="h-24 animate-pulse rounded-3xl bg-line" /></div>
           : items.length === 0 ? <EmptyState icon={<Sparkles className="h-7 w-7" />} title="Nothing here yet">Your photos, reports and quotations will appear here after you add them.</EmptyState>
           : <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">{items.slice(0, 4).map((it) => (
             <Link key={`${it.kind}${it.id}`} href={it.link} className="card flex min-w-0 items-center gap-3 !p-3">

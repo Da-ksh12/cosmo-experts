@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 // Settings come from android.config.json (committed defaults, no secrets) overridden by android.config.local.json (personal, ignored by Git).
 const read = (file: string): Record<string, unknown> => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {});
-const c = { appId: "ai.cosmoexperts.app", appName: "Cosmo Experts AI", androidScheme: "http", ...read("android.config.json"), ...read("android.config.local.json") } as {
+const c = { appId: "ai.cosmoexperts.app", appName: "Cosmo Experts AI", androidScheme: "https", ...read("android.config.json"), ...read("android.config.local.json") } as {
   appId: string; appName: string; androidScheme: "http" | "https";
 };
 
@@ -19,9 +19,9 @@ const config: CapacitorConfig = {
     allowMixedContent: false,                  // an https page never talks to http, and the http scheme below never loads https content insecurely
   },
   server: {
-    // The app is served from http://localhost inside the WebView. That lets a debug build reach a development backend on the local network over plain http (Android still blocks
-    // every host that is not listed in the debug network-security config) without a mixed-content block. For a release build against an https server, set "androidScheme": "https".
-    androidScheme: c.androidScheme,
+    // The app's screens are served from the APK itself at https://localhost (an internal address that never touches the network), so it opens with no server running anywhere.
+    // scripts/build-android.mjs sets COSMO_ANDROID_SCHEME=http only for a --dev-server development build, so that build can reach its development host without a mixed-content block.
+    androidScheme: (process.env.COSMO_ANDROID_SCHEME as "http" | "https" | undefined) ?? c.androidScheme,
   },
   plugins: {
     SplashScreen: { launchAutoHide: true, launchShowDuration: 1200, launchFadeOutDuration: 250, backgroundColor: IVORY, showSpinner: false, androidScaleType: "CENTER_INSIDE" },

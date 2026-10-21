@@ -1,0 +1,167 @@
+{
+  "suite": "android-standalone",
+  "when": "2026-10-20T19:23:54.358Z",
+  "passed": 32,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "cold start with no server and no internet: the app opens (not blank) and says what works without a connection"
+    },
+    {
+      "pass": true,
+      "check": "the cold start made no request to anything outside the app",
+      "detail": [
+        "https://api.cosmo-demo.example/api/v1/health/live",
+        "https://api.cosmo-demo.example/api/auth/config",
+        "https://api.cosmo-demo.example/api/auth/config"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "a standalone build refuses http://192.168.1.20:8000"
+    },
+    {
+      "pass": true,
+      "check": "a standalone build refuses https://192.168.1.20"
+    },
+    {
+      "pass": true,
+      "check": "a standalone build refuses https://localhost:8000"
+    },
+    {
+      "pass": true,
+      "check": "a standalone build refuses https://10.0.2.2"
+    },
+    {
+      "pass": true,
+      "check": "a standalone build refuses http://api.example.com"
+    },
+    {
+      "pass": true,
+      "check": "a standalone build refuses https://127.0.0.1"
+    },
+    {
+      "pass": true,
+      "check": "refusing those addresses made no network request",
+      "detail": [
+        "https://api.cosmo-demo.example/api/v1/health/live",
+        "https://api.cosmo-demo.example/api/auth/config",
+        "https://api.cosmo-demo.example/api/auth/config"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "an unreachable https server is reported as not connected by the connection test"
+    },
+    {
+      "pass": true,
+      "check": "an unreachable server shows a clear 'We can't reach your clinic' state that names the server and what still works"
+    },
+    {
+      "pass": true,
+      "check": "that state offers Try again, Change server and Preview mode and no pretend sign-in form"
+    },
+    {
+      "pass": true,
+      "check": "Try again re-checks the server and, with it still down, stays in the same clear state (no blank screen, no endless spinner)"
+    },
+    {
+      "pass": true,
+      "check": "a development address left in the phone's storage is ignored and erased"
+    },
+    {
+      "pass": true,
+      "check": "no request ever went to a development address",
+      "detail": [
+        "https://api.cosmo-demo.example/api/v1/health/live",
+        "https://api.cosmo-demo.example/api/auth/config",
+        "https://api.cosmo-demo.example/api/auth/config"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "preview: Home opens with content (no blank screen, no endless spinner)",
+      "detail": "Good morning, Preview\n\nHow can we help you today?\n\nShare a photo, upload your reports or ask a question. We explain what"
+    },
+    {
+      "pass": true,
+      "check": "preview: Photo capture opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\nStep 1 of 3\n\nPHOTO CAPTURE\n\nTake a Clear Photo\n\nFollow the simple gui"
+    },
+    {
+      "pass": true,
+      "check": "preview: Reports opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nUPLOAD REPORTS\n\nShare Your Reports\n\nUpload lab reports, prescription"
+    },
+    {
+      "pass": true,
+      "check": "preview: Report page opens with content (no blank screen, no endless spinner)",
+      "detail": "Preview mode: no server is connected, so this can't be done. Connect to your clinic's server in Settings to use it.\n\nTry"
+    },
+    {
+      "pass": true,
+      "check": "preview: Ask AI opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nAI CONSULTATION\n\nLet's Understand Together\n\nAsk about your reports i"
+    },
+    {
+      "pass": true,
+      "check": "preview: History opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR JOURNEY\n\nHistory & Reports\n\nYour past reviews, photos, reports "
+    },
+    {
+      "pass": true,
+      "check": "preview: Care plan opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nDOCTOR REVIEW\n\nExpert Review & Care Plan\n\nYour care plan will appear"
+    },
+    {
+      "pass": true,
+      "check": "preview: Quotation opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR CARE PLAN\n\nTreatment Quotation Builder\n\nChoose items from the c"
+    },
+    {
+      "pass": true,
+      "check": "preview: Privacy and consent opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR INFORMATION\n\nPrivacy and consent\n\nWhat you agreed to, and when."
+    },
+    {
+      "pass": true,
+      "check": "preview: Settings opens with content (no blank screen, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR ACCOUNT\n\nSettings\n\nYour profile, your connection, your privacy."
+    },
+    {
+      "pass": true,
+      "check": "the whole tour made no request to anything but the one address typed in earlier",
+      "detail": [
+        "https://api.cosmo-demo.example/api/v1/health/live",
+        "https://api.cosmo-demo.example/api/auth/config",
+        "https://api.cosmo-demo.example/api/auth/config"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "photo flow in preview: choose, adjust, check works up to the server step, which says plainly that nothing can be analysed without a server"
+    },
+    {
+      "pass": true,
+      "check": "report upload in preview fails honestly (nothing is read, saved or sent)"
+    },
+    {
+      "pass": true,
+      "check": "airplane mode: the app reopens at /ask/ and shows a clear offline banner"
+    },
+    {
+      "pass": true,
+      "check": "airplane mode: a reload (relaunch) still opens the screen from the app's own files"
+    },
+    {
+      "pass": true,
+      "check": "relaunch: the app returns to the sign-in side (preview and session end with the app) without any pretend login"
+    },
+    {
+      "pass": true,
+      "check": "no uncaught script errors during the whole run",
+      "detail": []
+    }
+  ]
+}

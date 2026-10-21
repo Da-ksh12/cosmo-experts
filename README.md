@@ -20,7 +20,8 @@ Demo accounts (local mode only): `patient1`, `patient2`, `doctor1`, `admin1`, pa
 
 ## Android app
 
-`cd frontend && node scripts/build-android.mjs --apk` builds an installable debug APK of the real UI (needs JDK 21 and the Android SDK); it connects to a backend whose address you choose in the app. See `docs/ANDROID_APK.md`.
+`cd frontend && node scripts/build-android.mjs --apk` builds a **standalone** debug APK of the real UI (needs JDK 21 and the Android SDK): the screens are inside the app and it needs no development server. Sign-in, data and the AI assistant use one https server
+address (`COSMO_API_BASE=https://...` at build time, or entered in the app); until a backend is deployed the app opens and says so. See `docs/ANDROID_APK.md`.
 
 ## Tests
 

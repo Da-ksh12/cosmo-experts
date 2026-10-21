@@ -1,7 +1,7 @@
 {
   "suite": "android-bundle",
-  "when": "2026-10-20T18:02:19.982Z",
-  "passed": 27,
+  "when": "2026-10-20T19:18:22.002Z",
+  "passed": 29,
   "failed": 0,
   "rows": [
     {
@@ -62,7 +62,15 @@
     },
     {
       "pass": true,
-      "check": "'Try again' resends the question and the backend answers"
+      "check": "a failed call also raises the 'Can't reach the server' banner with its own Try again"
+    },
+    {
+      "pass": true,
+      "check": "'Try again' on the question resends it and the backend answers"
+    },
+    {
+      "pass": true,
+      "check": "once the server answers again the banner goes away"
     },
     {
       "pass": true,
@@ -86,7 +94,7 @@
     },
     {
       "pass": true,
-      "check": "an unreachable server is reported on the sign-in screen and sign-in is disabled"
+      "check": "an unreachable server is reported on the sign-in screen with Try again, and there is no sign-in form to submit"
     },
     {
       "pass": true,

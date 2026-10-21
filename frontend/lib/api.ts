@@ -1,6 +1,7 @@
 "use client";
 
 import { apiUrl, IS_APP, serverLabel } from "@/lib/config";
+import { connection } from "@/lib/connection";
 import { isPreview, PREVIEW_MESSAGE, previewBody, setPreview } from "@/lib/preview";
 
 export type User = { id: string; name: string; role: "patient" | "doctor" | "admin" };
@@ -116,10 +117,12 @@ async function request(path: string, init: RequestInit = {}, retried = false): P
   try {
     res = await fetchTimed(apiUrl(path), { ...init, headers });
   } catch (e) {
-    if (e instanceof DOMException && e.name === "TimeoutError") throw new ApiError(0, "The server took too long to answer. Please try again in a moment.");
+    if (e instanceof DOMException && e.name === "TimeoutError") { connection.markDown("timeout"); throw new ApiError(0, "The server took too long to answer. Please try again in a moment."); }
     if (e instanceof DOMException && e.name === "AbortError") throw new ApiError(0, "Cancelled.");
+    connection.markDown("unreachable");
     throw new ApiError(0, OFFLINE());
   }
+  connection.markUp();                                     // the server answered (even if with an error): it is reachable
   if (res.status === 401 && s) {
     if (!retried && !path.startsWith("/api/auth/") && (await refreshSession())) return request(path, init, true);
     setSession(null); // Shell observes the session store and redirects to /login
@@ -186,9 +189,10 @@ export function uploadWithProgress<T = unknown>(path: string, form: FormData, on
     xhr.timeout = 300_000;
     if (s) xhr.setRequestHeader("Authorization", `Bearer ${s.token}`);
     xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
-    xhr.onerror = () => reject(new ApiError(0, OFFLINE()));
-    xhr.ontimeout = () => reject(new ApiError(0, "The upload took too long and was stopped. Please try again on a stronger connection."));
+    xhr.onerror = () => { connection.markDown("unreachable"); reject(new ApiError(0, OFFLINE())); };
+    xhr.ontimeout = () => { connection.markDown("timeout"); reject(new ApiError(0, "The upload took too long and was stopped. Please try again on a stronger connection.")); };
     xhr.onload = () => {
+      connection.markUp();
       let body: { detail?: unknown } & Record<string, unknown> = {};
       try { body = JSON.parse(xhr.responseText); } catch { /* non-JSON */ }
       if (xhr.status >= 200 && xhr.status < 300) { onProgress(1); resolve(body as T); }

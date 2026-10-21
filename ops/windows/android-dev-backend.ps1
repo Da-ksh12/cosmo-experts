@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-  Starts the Cosmo Experts backend so the Android app (on a phone on the same Wi-Fi, or in the Android emulator) can reach it. DEVELOPMENT AND DEMO ONLY.
+  Starts the Cosmo Experts backend on this computer for a DEVELOPMENT build of the Android app (built with  node frontend\scripts\build-android.mjs --dev-server <this computer's address or 10.0.2.2> --apk).
+  The standalone app given to clients does not use this and does not need this computer: it talks to one deployed https server (docs\ANDROID_APK.md). DEVELOPMENT ONLY.
 
 .DESCRIPTION
   * listens on every network interface, port 8000 (change with -Port)
