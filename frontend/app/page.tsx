@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ClipboardCheck, FileText, Flower2, Image as ImageIcon, ScanFace, Sparkles, User } from "lucide-react";
+import { ArrowRight, CalendarPlus, ClipboardCheck, FileText, Flower2, Image as ImageIcon, MessageCircle, ScanFace, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -16,6 +16,8 @@ const ACTIONS = [
   { href: "/photo?region=hair_scalp", Icon: Flower2, title: "Hair & Scalp", sub: "Share a clear hair or scalp photo" },
   { href: "/photo?region=body", Icon: User, title: "Body Analysis", sub: "Photograph another skin area" },
   { href: "/reports", Icon: FileText, title: "Upload Reports", sub: "Lab reports, prescriptions, notes" },
+  { href: "/ask", Icon: MessageCircle, title: "Skin Guide", sub: "Ask about skin, skincare, a photo or a report" },
+  { href: "/book", Icon: CalendarPlus, title: "Book", sub: "Request a dermatologist appointment" },
 ];
 
 function greeting() {
@@ -34,10 +36,11 @@ export default function HomePage() {
   const load = useCallback(() => { api<HistoryItem[]>("/api/history").then((x) => { setLoadErr(""); setItems(x); }).catch((e) => setLoadErr(e instanceof Error ? e.message : "We couldn't load your recent activity.")); }, []);
   useEffect(load, [load]);
 
-  const pick = (region: Region | "report" | "ask") => {
+  const pick = (region: Region | "report" | "ask" | "book") => {
     setGuide(false);
     if (region === "report") router.push("/reports");
     else if (region === "ask") router.push("/ask");
+    else if (region === "book") router.push("/book");
     else { setRegion(region); router.push(`/photo?region=${region}`); }
   };
 
@@ -50,7 +53,7 @@ export default function HomePage() {
         <p className="mt-3 max-w-lg text-muted">Share a photo, upload your reports or ask a question. We explain what your information says, and a doctor makes every medical decision.</p>
       </header>
 
-      <section aria-label="Start here" className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 md:grid-cols-4">
+      <section aria-label="Start here" className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 md:grid-cols-3">
         {ACTIONS.map(({ href, Icon, title, sub }, i) => (
           <Link key={href} href={href} className={`card flex min-h-[172px] flex-col justify-start gap-2.5 rise-${Math.min(i + 1, 3)}`}>
             <span className="grid h-20 place-items-center rounded-2xl bg-gradient-to-br from-sage to-gold-soft text-teal"><Icon className="h-10 w-10" strokeWidth={1.4} aria-hidden /></span>
@@ -87,7 +90,7 @@ export default function HomePage() {
         <Dialog title="What would you like to share?" onClose={() => setGuide(false)}>
           <p className="mb-4 text-muted">This only picks where to start. It is not a medical assessment.</p>
           <div className="grid gap-2">
-            {([["face", "A concern on my face or skin"], ["hair_scalp", "A hair or scalp concern"], ["body", "A concern on another part of my body"], ["report", "I have medical reports to upload"], ["ask", "I have a question about my reports"]] as const).map(([k, label]) => (
+            {([["face", "A concern on my face or skin"], ["hair_scalp", "A hair or scalp concern"], ["body", "A concern on another part of my body"], ["report", "I have medical reports to upload"], ["ask", "I have a question about my skin, skincare or reports"], ["book", "I would like to book an appointment"]] as const).map(([k, label]) => (
               <button key={k} className="btn justify-start !rounded-2xl !py-3 text-left" onClick={() => pick(k)}>{label}</button>))}
           </div>
         </Dialog>

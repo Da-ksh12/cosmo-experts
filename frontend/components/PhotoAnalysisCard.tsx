@@ -1,16 +1,17 @@
 "use client";
 
-import { AlertTriangle, Camera, Check, ChevronRight, Crosshair, FileText, Info, Loader2, RefreshCw, ShieldCheck, Sparkles, Stethoscope, X } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarPlus, Camera, Check, ChevronRight, Crosshair, FileText, Info, Loader2, RefreshCw, ShieldCheck, Sparkles, Stethoscope, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ImageViewer, { FocusRequest, Marker } from "@/components/ImageViewer";
-import { AuthImage, Details, fmtDate, LocalImage } from "@/components/ui";
+import { AuthImage, Details, fmtDate, LocalImage, Note } from "@/components/ui";
 import { analysisStore, Pending } from "@/lib/analysisStore";
-import { Analysis, cancelAnalysis, Intent, nextNonce, Observation, TERMINAL, useAnalysis } from "@/lib/photoAnalysis";
+import { Analysis, cancelAnalysis, Guidance, Intent, nextNonce, Observation, TERMINAL, useAnalysis } from "@/lib/photoAnalysis";
 import { useBlobUrl } from "@/lib/useBlobUrl";
 
-export type AskRequest = { text: string; intent: Intent; analysisId: string; observationId?: string };
+/** A question about a photo assessment. `intent` is set for the questions about the photo check itself; a general question the assessment links to (a library topic) has none. */
+export type AskRequest = { text: string; intent?: Intent; analysisId: string; observationId?: string };
 export type FocusInfo = { analysisId: string; observationId: string | null; label?: string | null } | null;
 export type Highlight = { analysisId: string; observationIds: string[]; nonce: number } | null;
 
@@ -100,6 +101,38 @@ function ObservationDetail({ o, a, onView, onAsk, onClose }: { o: Observation; a
   );
 }
 
+/** What the person can do with this assessment: whether a clinician should look and why (never a reassurance), what the visible features may relate to (only from an approved model; empty today),
+ *  the topics the library explains in general, and what would make the next answer more useful. Every line comes from the server's guidance block; the app adds nothing. */
+function GuidanceBlock({ a, g, onAsk }: { a: Analysis; g: Guidance; onAsk: (q: AskRequest) => void }) {
+  const adv = g.clinician_advice;
+  const tone = adv.level === "urgent" ? "warn" : adv.level === "prompt" ? "gold" : "info";
+  const topics = g.knowledge.filter((k) => k.ask);
+  return (
+    <section aria-label="Guidance" className="space-y-3" data-guidance={g.basis}>
+      {g.may_explain.length > 0 && (
+        <div className="space-y-1">
+          <h4 className="font-semibold text-teal-dark">What the visible features may relate to</h4>
+          <ul className="list-disc space-y-1 pl-5">{g.may_explain.map((t) => <li key={t}>{t}</li>)}</ul>
+          <p className="text-xs text-muted">From an approved analysis model. A clinician confirms what it means.</p>
+        </div>)}
+      <Note tone={tone}>
+        <p data-clinician-advice={adv.level ?? "none"}>{adv.reason}</p>
+        {adv.level && <Link href={adv.level === "urgent" ? "/book?urgency=urgent" : "/book"} className="btn btn-sm mt-2 no-underline"><CalendarPlus className="h-4 w-4" aria-hidden /> Book an appointment</Link>}
+      </Note>
+      {topics.length > 0 && (
+        <div className="space-y-1.5">
+          <h4 className="font-semibold text-teal-dark">Learn more</h4>
+          <div className="flex flex-wrap gap-2">{topics.map((k) => <button key={k.article_id} type="button" className="chip !whitespace-normal text-left" data-knowledge={k.topic} onClick={() => onAsk({ text: k.ask!, analysisId: a.id })}><BookOpen className="h-4 w-4 shrink-0" aria-hidden /> {k.title}</button>)}</div>
+        </div>)}
+      {g.history.length > 0 && (
+        <Details title="What would make my answers more useful">
+          <p className="mb-2 text-sm text-muted">Telling me (or your dermatologist) these helps. You can answer in the message box.</p>
+          <ul className="list-disc space-y-1 pl-5 text-sm">{g.history.map((t) => <li key={t}>{t}</li>)}</ul>
+        </Details>)}
+    </section>
+  );
+}
+
 function Assessment({ a, preview, selected, onSelect, focus, onAsk }: { a: Analysis; preview: string | null; selected: string | null; onSelect: (id: string | null) => void; focus: FocusRequest | null; onAsk: (q: AskRequest) => void }) {
   const [annotations, setAnnotations] = useState(true);
   const [full, setFull] = useState(false);
@@ -181,6 +214,8 @@ function Assessment({ a, preview, selected, onSelect, focus, onAsk }: { a: Analy
           <h4 className="font-semibold text-teal-dark">What this may mean</h4>
           <ul className="list-disc space-y-1 pl-5">{a.sections.meaning.map((t) => <li key={t}>{t}</li>)}</ul>
         </section>)}
+
+      {a.guidance && <GuidanceBlock a={a} g={a.guidance} onAsk={onAsk} />}
 
       <Details title="What this photo and this check cannot tell you">
         <ul className="list-disc space-y-1 pl-5 text-sm">{a.sections.cannot.map((t) => <li key={t}>{t}</li>)}</ul>

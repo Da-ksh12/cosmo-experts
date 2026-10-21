@@ -2,6 +2,9 @@
 
 import { BadgeCheck, Check, ClipboardList, Flag, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import AppointmentQueue from "@/components/clinic/AppointmentQueue";
+import ClinicProfileForm from "@/components/clinic/ClinicProfileForm";
+import DermLibraryPanel from "@/components/clinic/DermLibraryPanel";
 import { AuthImage, Details, Dialog, EmptyState, Note, Pill, StatusBadge, fmtDateTime, useToast } from "@/components/ui";
 import { useUser } from "@/components/Shell";
 import { api, DOC_TYPE_LABEL, patch, post, put } from "@/lib/api";
@@ -77,6 +80,8 @@ export default function Clinic() {
   return (
     <div className="space-y-8">
       <div><p className="eyebrow mb-1">Clinic workspace</p><h1>Review &amp; care plans</h1><p className="mt-1 text-muted">Software output is shown beside its source. Only a signed-in doctor can approve clinical content.</p></div>
+
+      <AppointmentQueue />
 
       <section className="space-y-3"><h2>Patient submissions</h2>
         {!sub?.documents.length ? <EmptyState icon={<ClipboardList className="h-7 w-7" />} title="No submissions yet" /> : (
@@ -191,8 +196,13 @@ export default function Clinic() {
           <button className="btn" onClick={() => act(() => put("/api/clinic/quote-config", cfg), "Settings saved.")}>Save settings</button></div>
       </section>
 
+      <section className="space-y-3"><h2>Clinic details and booking</h2>
+        <ClinicProfileForm />
+      </section>
+
       <section className="space-y-3"><h2>Clinically reviewed knowledge base</h2>
-        <p className="text-sm text-muted">The assistant only uses articles a doctor has approved.</p>
+        <p className="text-sm text-muted">The assistant answers from articles a doctor has approved. Skin-library articles that are not approved yet are shown to patients only with a label saying they are not reviewed (and not at all in production unless you allow it).</p>
+        <DermLibraryPanel />
         {kb.map((a) => <div key={a.id} className="card flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><strong>{a.title}</strong>{a.content_origin === "ai_draft" && a.review_status !== "approved" && <span className="ml-2 text-xs text-muted">software-drafted, not yet reviewed</span>}<p className="text-sm">{a.body}</p></div>
           <div className="flex items-center gap-2"><StatusBadge status={a.usable_by_assistant ? "approved_for_defined_use" : "research_only"} label={a.usable_by_assistant ? "Approved" : a.review_overdue ? "Review overdue" : a.review_status === "approved" ? "Approval out of date" : "Draft"} />{isDoctor && <button className="btn btn-sm" onClick={() => setRev({ ...a, ok: false, src: "" })} aria-label={`Review article ${a.title}`}>{a.usable_by_assistant ? "View" : "Review"}</button>}</div></div>)}
         <div className="card space-y-2"><input className="input" placeholder="Title" value={nk.title} onChange={(e) => setNk({ ...nk, title: e.target.value })} aria-label="Article title" />

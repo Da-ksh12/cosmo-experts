@@ -19,8 +19,14 @@ export type Observation = {
 };
 export type NextStep = { id: string; kind: "retake" | "add_photo" | "clinician" | "summary" | "reports" | "info"; label: string; detail: string; route: string | null };
 export type Question = { id: string; text: string; intent: Intent; observation_id: string | null };
+/** Contract 1.1 (additive; older servers do not send it): the distinctions a person needs, each from a real source. `may_explain` is filled only from an approved model's findings and is empty today. */
+export type Guidance = {
+  basis: "photo_quality_only" | "model_findings"; visible: string[]; may_explain: string[]; cannot_establish: string[]; history: string[];
+  clinician_advice: { recommended: boolean; level: "routine" | "prompt" | "urgent" | null; reason: string };
+  knowledge: { topic: string; article_id: string; title: string; tier: "approved" | "reference"; ask?: string }[];
+};
 export type Analysis = {
-  api_version: "photo-analysis/1"; id: string; conversation_id: string | null; message_id: string | null; index: number; status: Status; stage: string | null; error: string | null;
+  api_version: "photo-analysis/1"; contract_minor?: number; guidance?: Guidance | null; id: string; conversation_id: string | null; message_id: string | null; index: number; status: Status; stage: string | null; error: string | null;
   created_at: number; finished_at: number | null;
   image: { id: string | null; kept: boolean; url: string | null; thumb_url: string | null; width: number | null; height: number | null; region: string; region_label: string; taken_at: number | null } | null;
   transform: { width: number; height: number; exif_orientation: number | null; server_modified: false } | null;
@@ -49,6 +55,8 @@ export function parseAnalysis(raw: unknown): Analysis {
     observations: arr<Observation>(a.observations).map((o) => ({ ...o, evidence: arr(o.evidence), limitations: arr(o.limitations), geometry: o.geometry && validGeometry(o.geometry) ? o.geometry : null })),
     sections: { observe: arr(s.observe), areas: arr(s.areas), meaning: arr(s.meaning), cannot: arr(s.cannot), next_steps: arr(s.next_steps), questions: arr(s.questions) },
     provenance: arr(a.provenance), capabilities: arr(a.capabilities), disclaimers: arr(a.disclaimers),
+    guidance: a.guidance && typeof a.guidance === "object" && a.guidance.clinician_advice ? { ...a.guidance, visible: arr(a.guidance.visible), may_explain: arr(a.guidance.may_explain), cannot_establish: arr(a.guidance.cannot_establish),
+      history: arr(a.guidance.history), knowledge: arr(a.guidance.knowledge) } : null,
   };
 }
 
