@@ -3,6 +3,7 @@
 The Android app is the real Cosmo Experts web UI (the Next.js app in `frontend/`) packaged with Capacitor. **It does not need the development computer.** The screens, styles, routing and the app shell are
 inside the APK; it opens from its icon with no `npm run dev`, no server on a PC and, for the screens themselves, no internet. Data, sign-in and AI answers come from **one explicit https server address** (the
 production API base URL); until a backend is deployed and that address is set, the app opens, shows its screens and a labelled preview, and says plainly that sign-in needs the server.
+**To use the whole app before anything is deployed, start the demo server on this computer (section 5a): one command gives the app a real backend over a secure https address.**
 
 ```
 frontend/ (Next.js)  --static export-->  frontend/out-android  --Capacitor sync-->  android/ (Gradle)  --assembleDebug-->  cosmo-experts-ai-debug.apk
@@ -58,9 +59,39 @@ adb logcat -d -s Capacitor:V Capacitor/Console:V chromium:E AndroidRuntime:E    
 Without a cable: copy the file to the phone and open it (Android asks once to allow installing from that source). To test the independence yourself: stop the PC server, switch the phone to airplane mode, open the app from its icon, and walk
 through the screens with "Look around in preview mode".
 
-## 5. What the backend deployment must provide
+## 5. A server to talk to: a demo today, a real deployment later
 
-Nothing is deployed yet, so no API address is configured, and none has been invented. To make sign-in, uploads and the AI conversation work:
+The app is only the screens. Sign-in, reports, photos and the AI conversation are done by the backend, so a running backend with an https address is needed before anything beyond the preview works.
+
+### 5a. Demo today: this computer plus a secure tunnel (about two minutes, nothing to deploy)
+
+```
+powershell -ExecutionPolicy Bypass -File "F:\Cosmo Experts\ops\windows\start-cosmo-demo.ps1"
+```
+
+The first run downloads Cloudflare's tunnel program once (a pinned release whose SHA-256 is checked, into `F:\tools\cloudflared`), asks you to choose a demo password (at least 10 characters), creates a fresh demo database in
+`F:\cosmo-demo-data`, starts the real backend on `127.0.0.1:8010`, opens a random `https://<four-words>.trycloudflare.com` address to it, checks that address from the internet side, prints it and copies it to the clipboard.
+Keep the window open. In the installed app: **Set the server address** (first screen) or Settings > Server connection, paste the address, Save, then sign in as `patient1`, `patient2` or `doctor1` with the demo password.
+Press Ctrl+C to stop; the address then stops working. To start over, stop it and delete `F:\cosmo-demo-data`. Options: `-Port`, `-DataDir`, `-Cloudflared <path to cloudflared.exe>`.
+
+What this is, plainly: the computer must stay on, awake and online, and **the address is new every time you start it** (type the new one into the app); Cloudflare gives quick tunnels no uptime promise; the data is demo data on this computer.
+It is a way to see and test the whole app, not a deployment, and not for real patients.
+
+What to expect on an empty demo database (this is the app being honest, not broken): the assistant answers only from the patient's own reports and from content a doctor has approved, so before any report exists it says it has nothing to go on.
+Upload a report (Reports), and the suggested questions become "What does my Ferritin result say?" and similar, answered with the source line quoted. The quotation screen says "No price list yet" and the assistant has no general
+content until a signed-in doctor (`doctor1`, clinic workspace) publishes the price list and approves reviewed content. Nothing is pre-filled with invented data.
+
+If something goes wrong: the script stops everything and says why. "The app says it can't reach your clinic" means the address changed, the computer slept, or the window was closed: run the script again and paste the new address.
+(This computer's own DNS may remember a failed lookup of a brand-new address for a while; the script therefore checks the address through Cloudflare's DNS-over-HTTPS instead, and phones are not affected.)
+
+What protects it: the backend listens on 127.0.0.1 only; a fresh random session-signing secret is created for every start and kept in memory (the repository's built-in development secret is never used: a token forged with it is
+refused); the documented development password is refused and the demo administrator account is switched off; cross-origin calls are allowed only from the app's own origin `https://localhost`; the demo database is separate from your
+development one and holds no research models; no Supabase or other cloud setting is read; nothing secret is in the app. The consent screen is not enforced in this local mode (its legal text needs the clinic's approval first,
+`docs/PRIVACY_AND_CONSENT.md`).
+
+### 5b. A real deployment: what the backend must provide
+
+Nothing is deployed yet, so no API address is configured in the app, and none has been invented. To make sign-in, uploads and the AI conversation work for everyone, without this computer:
 
 1. **A public https address** for the FastAPI backend (a domain with a certificate from a public authority, for example behind Caddy as in `ops/Caddyfile`). Plain http and addresses on a private network are refused by the app.
 2. **The production configuration of the backend** (`docs/PRODUCTION_CONFIGURATION.md`, enforced at start-up by `app/prod_checks.py`): `COSMO_SECRET` (random, 32+ characters), `COSMO_AUTH=supabase` with `SUPABASE_URL`, the anon key and the
@@ -85,7 +116,9 @@ For a backend on your own computer: `node scripts\build-android.mjs --dev-server
 | `e2e/android-standalone.mjs` (the exact bundle, no backend, no internet, phone-sized Chromium) | 32/32: cold start, refuses every development address, unreachable-server state with Try again / Change server / Preview, stale development address erased, all patient screens in preview with content, upload flows fail honestly, airplane mode and reload, relaunch, zero requests outside the app |
 | `e2e/android-bundle.mjs` (development bundle against the real backend) | 29/29: server setup, sign-in, a real assistant answer, failed send with retry and banner, offline, settings, preview |
 | Installation and launch on an Android device or emulator, Android logs, physical-device camera, airplane mode on a phone | **not done**: no device was connected, and this computer cannot run the emulator (hardware virtualization is off; two boot attempts did not start the guest) |
-| Calls to a deployed https backend | **not testable**: none exists yet |
+| `e2e/android-live.mjs`: the exact APK bundle (served at `https://localhost`) against the real backend over a public https tunnel (section 5a), in a phone-sized Chromium | 27/27: the server address pasted without `https://` and tested, CORS from the app's origin, the development password refused, sign-in, an assistant answer that quotes an uploaded report with its source, photo check (queued job, "Photo accepted"), PDF report read and shown on `/reports/view/?id=`, history, care plan, quotation, privacy and settings from the server, sign-out, clinician sign-in with the patient's photos downloaded, zero requests outside the app and the one server |
+| Outside checks of the demo server (over the internet) | 9/9: health, CORS allowed for `https://localhost` only, patient1, patient2 and doctor1 sign in, the documented development password refused, administrator account switched off, a token forged with the built-in development secret refused |
+| Calls to a production deployment | **not testable**: none exists yet. The demo server (section 5a) is a stand-in for trying the whole app, not a deployment |
 
 ## 8. Known limitations
 

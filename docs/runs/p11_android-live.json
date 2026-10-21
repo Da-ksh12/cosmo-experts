@@ -1,0 +1,134 @@
+{
+  "suite": "android-live",
+  "when": "2026-10-21T03:58:22.620Z",
+  "passed": 27,
+  "failed": 0,
+  "rows": [
+    {
+      "pass": true,
+      "check": "cold start: the app opens from its own files and contacts nothing"
+    },
+    {
+      "pass": true,
+      "check": "Test connection reaches the real server over https and reports Connected (the browser allowed the call from the app's origin)"
+    },
+    {
+      "pass": true,
+      "check": "the app offers patient and doctor sign-in only (no administrator console)",
+      "detail": [
+        "Patient (Demo One)",
+        "Patient (Demo Two)",
+        "Doctor"
+      ]
+    },
+    {
+      "pass": true,
+      "check": "the documented development password is rejected by the real server"
+    },
+    {
+      "pass": true,
+      "check": "signed in with the demo password; the patient home and bottom navigation are shown"
+    },
+    {
+      "pass": true,
+      "check": "the home screen is filled from the real server (no error or preview state)",
+      "detail": "Good morning, Demo\n\nHow can we help you today?\n\nShare a photo, upload your reports or ask a question. We explain what your information says, and a doctor makes "
+    },
+    {
+      "pass": true,
+      "check": "the question went to the real backend and was answered (POST .../messages -> 200)"
+    },
+    {
+      "pass": true,
+      "check": "an assistant answer is displayed (on an empty demo database with no report and no approved content the honest answer is that it has nothing to go on)",
+      "detail": "I couldn't find anything in your documents or the clinic's approved information that answers this. I would rather not guess. You can ask the"
+    },
+    {
+      "pass": true,
+      "check": "photo: uploaded over https, checked by the real validator as a queued job, verdict 'Photo accepted'"
+    },
+    {
+      "pass": true,
+      "check": "the accepted photo leads to the history screen, loaded from the server",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR JOURNEY\n\nHistory & Reports\n\nYour past reviews, photos, reports and quotations in on"
+    },
+    {
+      "pass": true,
+      "check": "report: the PDF was uploaded over https and read by the real backend ('was read successfully')"
+    },
+    {
+      "pass": true,
+      "check": "the report page shows the values read from the PDF (Hemoglobin, Ferritin)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nREPORT ANALYSIS\n\nYour Report Summary\n\nA simple explanation of what your report says, in easy language.\n\nlab.pdf\n\n03 May 2024 · 1 page\n\nLab Report\nVi"
+    },
+    {
+      "pass": true,
+      "check": "after a report is read, the suggested questions are about that report (e.g. 'What does my Ferritin result say?')"
+    },
+    {
+      "pass": true,
+      "check": "the suggested question reached the real backend and was answered (200)"
+    },
+    {
+      "pass": true,
+      "check": "the answer quotes the uploaded report with its source (lab.pdf, Ferritin 8 ng/mL)",
+      "detail": "What does my Ferritin result say?\n\nHere is what I found that relates to your question:\n- Your document \"lab.pdf\" (page 1) says: \"Ferritin  8  ng/mL  15 - 150 L\"\n- Your document \"lab.pdf\" (page 1) says: \"Ferritin  8  ng/mL  15 - 150 L\"\nThis repeats what the sources say; it is not a diagnosis. Your doctor can explain what it means for you.\n\nYour report · page 1\nYour report · page 1\nClinician review required\n—\n1x"
+    },
+    {
+      "pass": true,
+      "check": "Reports: loads from the real server (content, no error state, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nUPLOAD REPORTS\n\nShare Your Reports\n\nUpload lab reports, prescription"
+    },
+    {
+      "pass": true,
+      "check": "History: loads from the real server (content, no error state, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR JOURNEY\n\nHistory & Reports\n\nYour past reviews, photos, reports "
+    },
+    {
+      "pass": true,
+      "check": "Care plan: loads from the real server (content, no error state, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nDOCTOR REVIEW\n\nExpert Review & Care Plan\n\nYour care plan will appear"
+    },
+    {
+      "pass": true,
+      "check": "Quotation: loads from the real server (content, no error state, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR CARE PLAN\n\nTreatment Quotation Builder\n\nChoose items from the c"
+    },
+    {
+      "pass": true,
+      "check": "Privacy and consent: loads from the real server (content, no error state, no endless spinner)",
+      "detail": "Back\nCosmo Experts\nSKIN | HAIR | BODY | AESTHETICS\n\nYOUR INFORMATION\n\nPrivacy and consent\n\nWhat you agreed to, and when."
+    },
+    {
+      "pass": true,
+      "check": "settings shows the server host with a live 'Connected' status"
+    },
+    {
+      "pass": true,
+      "check": "signing out ends the session (nothing left in session storage) and returns to sign-in with the server remembered"
+    },
+    {
+      "pass": true,
+      "check": "the doctor signs in and the clinic workspace loads from the real server",
+      "detail": "CLINIC WORKSPACE\n\nReview & care plans\n\nSoftware output is shown beside its source. Only a signed-in doctor can approve c"
+    },
+    {
+      "pass": true,
+      "check": "the doctor sees the patient's photo submissions: the images are downloaded over https with the sign-in token and displayed"
+    },
+    {
+      "pass": true,
+      "check": "no request ever went anywhere except the app's own files and the one server address",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "no request used a development address"
+    },
+    {
+      "pass": true,
+      "check": "no uncaught script errors during the whole run",
+      "detail": []
+    }
+  ]
+}

@@ -23,6 +23,9 @@ Demo accounts (local mode only): `patient1`, `patient2`, `doctor1`, `admin1`, pa
 `cd frontend && node scripts/build-android.mjs --apk` builds a **standalone** debug APK of the real UI (needs JDK 21 and the Android SDK): the screens are inside the app and it needs no development server. Sign-in, data and the AI assistant use one https server
 address (`COSMO_API_BASE=https://...` at build time, or entered in the app); until a backend is deployed the app opens and says so. See `docs/ANDROID_APK.md`.
 
+To try the **whole** app before anything is deployed, run `powershell -ExecutionPolicy Bypass -File ops\windows\start-cosmo-demo.ps1`: it starts the real backend on this computer (local demo accounts, a password you choose) behind a temporary secure https address
+(Cloudflare quick tunnel) that you paste into the app. Demo only: the computer must stay on and the address changes every start (`docs/ANDROID_APK.md`, section 5a).
+
 ## Tests
 
 * `cd backend && .venv\Scripts\python -m pytest -q tests` — 27 tests: image checks, document pipeline,
