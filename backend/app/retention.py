@@ -48,6 +48,7 @@ CATEGORIES = (
     Category("images", "images", "created_at", "owner_id", "Uploaded photos", deleted_flag=True),
     Category("quotes", "quotes", "created_at", "patient_id", "Quotations"),
     Category("care_plans", "care_plans", "updated_at", "patient_id", "Care plans"),
+    Category("appointment_requests", "appointment_requests", "created_at", "patient_id", "Appointment requests"),
     Category("audit", "audit", "ts", None, "Audit trail entries"),
 )
 BY_NAME = {c.name: c for c in CATEGORIES}
@@ -217,7 +218,7 @@ def _files(table, with_pages):
 
 
 PROCESSORS = {"conversations": _conversations, "notifications": _simple("notifications"), "jobs": _jobs, "agent_traces": _simple("agent_traces"), "agent_actions": _simple("agent_actions"), "documents": _files("documents", True),
-              "images": _files("images", False), "quotes": _simple("quotes"), "care_plans": _simple("care_plans")}
+              "images": _files("images", False), "quotes": _simple("quotes"), "care_plans": _simple("care_plans"), "appointment_requests": _simple("appointment_requests")}
 EXTRA_COLS = {"jobs": ", input_path", "documents": ", stored_path", "images": ", stored_path"}
 
 
@@ -323,6 +324,7 @@ def erase_patient(uid: str, actor: str | None = None) -> dict:
         db.x("DELETE FROM notifications WHERE user_id=?", (uid,))
         db.x("DELETE FROM agent_traces WHERE user_id=?", (uid,))
         db.x("DELETE FROM agent_actions WHERE user_id=?", (uid,))
+        db.x("DELETE FROM appointment_requests WHERE patient_id=?", (uid,))
     retained = {"care_plans": db.q1("SELECT COUNT(*) c FROM care_plans WHERE patient_id=?", (uid,))["c"],
                 "quotations": db.q1("SELECT COUNT(*) c FROM quotes WHERE patient_id=?", (uid,))["c"]}
     db.audit(actor or uid, "patient.data_deleted", uid, {"documents": len(docs), "photos": len(imgs), "conversations": len(convs), "retained": retained})

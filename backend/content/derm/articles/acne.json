@@ -1,0 +1,88 @@
+{
+  "id": "derm.acne",
+  "version": 1,
+  "language": "en",
+  "topic": "acne",
+  "title": "Acne and pimples",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["acne", "pimple", "pimples", "zit", "zits", "whitehead", "whiteheads", "blackhead", "blackheads", "breakout", "breakouts", "spots", "bumps", "cyst", "cystic", "nodule", "oily skin", "muhase", "muhasa", "muhaase", "pimples ke daag", "मुंहासे", "मुहांसे", "फुंसी", "फुन्सी"],
+  "summary": "Acne is a very common skin condition in which pores get blocked and inflamed. It causes spots such as blackheads, whiteheads, red bumps and sometimes deeper, painful lumps, most often on the face, chest and back. It usually responds to steady, gentle care, and a clinician can help when it does not.",
+  "sections": {
+    "what_it_is": [
+      "A pore (hair follicle) can become blocked by oil and dead skin cells. Bacteria that live on the skin can then add inflammation, which is why some spots turn red or hold pus.",
+      "Common types are blackheads and whiteheads (blocked pores), red bumps (papules), pus-filled spots (pustules) and deep, firm, painful lumps (nodules or cysts).",
+      "Acne can leave marks or scars, and it can affect how a person feels about themselves. That is a good enough reason to ask for help."
+    ],
+    "may_contribute": [
+      "Hormone changes, for example during puberty, around periods, in pregnancy and at menopause.",
+      "Family history: acne often runs in families.",
+      "Some medicines. A doctor or pharmacist can say whether a particular medicine might be involved; a prescribed medicine should not be stopped without their advice.",
+      "Greasy or heavy skin, hair and make-up products that can block pores.",
+      "Pressure or friction on the skin, such as from helmets, tight clothing or backpacks, and heat, sweat or humid weather.",
+      "Picking, squeezing or scrubbing spots does not cause acne but can make it look worse and last longer.",
+      "Dirty skin is not the cause. Blackheads look dark because of how the oil in the pore reacts to air, not because of dirt.",
+      "Stress can make acne worse but is not thought to cause it. Whether certain foods play a part is still being studied, and the evidence is mixed."
+    ],
+    "self_care": [
+      "Wash gently up to twice a day, and after sweating, with a mild cleanser applied with clean fingertips. Rinse with lukewarm water and pat dry.",
+      "Choose make-up, sunscreen, moisturiser and hair products labelled non-comedogenic or oil-free (made so they are less likely to block pores).",
+      "Take make-up off before bed.",
+      "Keep hair off the face, and wash oily hair regularly.",
+      "If acne is on the body, wear loose, breathable clothes and change out of sweaty clothes soon after exercise.",
+      "Protect the skin from the sun with shade, clothing and a broad-spectrum, water-resistant sunscreen of SPF 30 or higher that is labelled non-comedogenic.",
+      "Spot treatments with ingredients such as salicylic acid or benzoyl peroxide are sold without a prescription. A pharmacist can help choose one and explain how to start gently, because they can dry and irritate the skin.",
+      "Give a routine time. Improvement usually takes several weeks, and it is fairer to judge a treatment after about six to eight weeks than after a few days.",
+      "Keep to one routine instead of changing products every week."
+    ],
+    "avoid": [
+      "Picking, popping or squeezing spots. This can push material deeper, slow healing and raise the chance of dark marks and scars.",
+      "Scrubbing, rough washcloths or sponges, strong astringents, alcohol-based toners and harsh exfoliants. They dry and irritate the skin and can make acne worse.",
+      "Washing the face many times a day.",
+      "Sleeping in make-up, and sharing make-up, brushes or applicators.",
+      "Heavy oils, pomades or thick creams on acne-prone areas such as the forehead and temples.",
+      "Sunbeds and deliberate tanning. Tanning can make acne worse, and some acne treatments make skin more sensitive to the sun."
+    ],
+    "monitor": [
+      "Take a clear photo in the same light once a week, and note new products, stress, periods or illness. Looking at photos side by side is more reliable than checking the mirror every day, because change takes weeks.",
+      "Note whether spots are getting deeper, more painful, or leaving marks."
+    ],
+    "see_clinician": [
+      "Self-care has not helped after about six to eight weeks.",
+      "There are many spots, or spots that are deep, painful or leaving scars.",
+      "Acne is affecting mood, sleep or confidence.",
+      "Dark marks are slow to fade, or raised scars are forming. This is more likely in people with naturally darker skin after severe acne, so early advice helps.",
+      "Acne appears suddenly and severely in adulthood, or comes together with other changes in the body such as very irregular periods."
+    ],
+    "urgent": [
+      "Skin around spots that is hot, swollen, increasingly red or very painful, or any fever, can mean an infection and needs prompt assessment. Redness can be harder to see on brown and black skin, so warmth, swelling and pain matter as much as colour."
+    ],
+    "photo_limits": [
+      "A photo cannot tell blackheads from other small bumps, show how deep a spot is, or tell acne from conditions that look alike, such as rosacea, folliculitis or a reaction to a product.",
+      "Lighting, filters and camera settings change how red or dark spots look."
+    ]
+  },
+  "terms": [
+    {"term": "comedone", "plain": "a blocked pore: a blackhead (open at the surface) or a whitehead (closed)"},
+    {"term": "non-comedogenic", "plain": "made so that it is less likely to block pores"},
+    {"term": "nodule or cyst", "plain": "a deep, firm lump under the skin that is often painful"},
+    {"term": "papule and pustule", "plain": "a small red bump, and a small spot with pus"}
+  ],
+  "contraindications": [
+    "Active ingredients in spot treatments can sting or dry the skin. If pregnant, planning a pregnancy, breastfeeding, or if the skin is very sensitive or has eczema, ask a doctor or pharmacist before starting any active ingredient."
+  ],
+  "limitations": [
+    "General education, not a diagnosis. Acne-like spots can have other causes.",
+    "Advice here is general. Strength, suitability and timing of treatments need an in-person assessment."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-acne", "medlineplus-acne", "niams-acne", "aad-acne-tips", "aad-acne-habits", "aad-acne-darker-skin"],
+  "claims_to_verify": [
+    "Washing up to twice a day with a mild cleanser, and after sweating, is appropriate for the clinic's patients.",
+    "Judging an over-the-counter routine after about six to eight weeks is consistent with the clinic's practice.",
+    "The statement that sudden severe acne in adults, or acne with very irregular periods, should be discussed with a clinician is appropriate and complete.",
+    "Mentioning salicylic acid and benzoyl peroxide as products sold without a prescription is accurate for the countries the clinic serves."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

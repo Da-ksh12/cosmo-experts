@@ -1,0 +1,74 @@
+{
+  "id": "derm.pigmentation",
+  "version": 1,
+  "language": "en",
+  "topic": "pigmentation",
+  "title": "Uneven skin tone and dark patches",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["pigmentation", "hyperpigmentation", "uneven skin tone", "uneven tone", "dark patches", "dark patch", "dark spots", "dark spot", "melasma", "sun spots", "age spots", "freckles", "tanning", "tan", "blotchy", "skin lightening", "skin whitening", "fairness cream", "dark circles", "dhabbe", "daag", "kala daag", "pigmentation ke daag", "झाइयां", "झाइयाँ", "धब्बे", "पिग्मेंटेशन", "कालापन"],
+  "summary": "Skin colour comes from a pigment called melanin. Dark patches can follow acne or irritation, appear with sun exposure or hormone changes, or be linked to other conditions. Daily sun protection is the most useful first step, and a dermatologist can tell which type of patch is present.",
+  "sections": {
+    "what_it_is": [
+      "Pigmentation changes happen when the skin makes more or less melanin. Too much makes a patch darker; too little makes it lighter.",
+      "Common reasons for darker patches include sun exposure, pregnancy, skin injury or inflammation (for example a healed pimple), some medicines, and irritating skin or hair products.",
+      "Melasma is a common pattern of brown or grey-brown patches, usually on the face, which sun and hormone changes often make worse.",
+      "Some conditions cause lighter patches instead, such as vitiligo. These need a clinician's assessment."
+    ],
+    "may_contribute": [
+      "Sunlight, including the visible light that comes through windows and on cloudy days.",
+      "Hormone changes, such as pregnancy.",
+      "Inflammation or injury to the skin, including acne and itching or rubbing.",
+      "Irritating products that burn or sting.",
+      "Some medicines. A prescribed medicine should not be stopped without talking to the prescriber, who may be able to suggest another."
+    ],
+    "self_care": [
+      "Protect the skin from the sun every day, including cloudy days: shade, a wide-brimmed hat, sunglasses and a broad-spectrum, water-resistant sunscreen of SPF 30 or higher, reapplied about every two hours outdoors.",
+      "A tinted sunscreen that contains iron oxide protects against visible light, which can worsen some dark patches, especially in deeper skin tones.",
+      "Choose gentle, fragrance-free skincare, and stop any product that burns or stings, because irritation can darken patches.",
+      "Be patient. Patches usually take months to fade, and some need a dermatologist's treatment. Make-up can even out the tone in the meantime.",
+      "Some products sold without a prescription contain ingredients such as azelaic acid, vitamin C or retinoid-type ingredients that are used for dark patches. A pharmacist or dermatologist can say which suit a given skin."
+    ],
+    "avoid": [
+      "Sunbeds and sunlamps. Indoor tanning can worsen dark patches and get in the way of treatment.",
+      "Skin-lightening or fairness creams of unknown content. Some imported or unlabelled products contain mercury or hidden strong steroids, which can thin and permanently discolour the skin and harm health.",
+      "Household bleach or similar chemicals on the skin.",
+      "Rubbing, scrubbing or picking at the patches."
+    ],
+    "monitor": [
+      "Photograph the area in the same light once a month.",
+      "Note whether patches are spreading, new, or changing in colour or edge. A single spot that is changing needs a check (see the article on moles and spots)."
+    ],
+    "see_clinician": [
+      "Patches bother you or do not go away. A dermatologist can tell whether they are melasma, sun spots, marks after inflammation or something else, because other conditions can also cause uneven skin tone.",
+      "Patches are new, spreading quickly, or look different from each other.",
+      "A single dark spot or mole is changing, itchy, bleeding or has uneven colours or edges.",
+      "You would like to discuss prescription creams or in-clinic treatments."
+    ],
+    "urgent": [],
+    "photo_limits": [
+      "A photo cannot reliably tell sun spots, melasma and marks after acne apart. Lighting and colour balance change how dark a patch looks.",
+      "On darker skin, patches can look brown, grey or blue-grey."
+    ]
+  },
+  "terms": [
+    {"term": "melanin", "plain": "the natural pigment that gives skin its colour"},
+    {"term": "melasma", "plain": "brown or grey-brown patches, usually on the face, often linked to sun and hormones"}
+  ],
+  "contraindications": [
+    "Ingredients used for dark patches can irritate skin and some are not suitable in pregnancy or breastfeeding. Ask a doctor or pharmacist before starting."
+  ],
+  "limitations": [
+    "General education, not a diagnosis. The cause of a dark patch needs an in-person assessment.",
+    "Treatment times and results differ widely between people."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["medlineplus-pigmentation", "aad-melasma-self-care", "aad-fade-dark-spots", "fda-skin-lightening", "nhs-sunscreen"],
+  "claims_to_verify": [
+    "Sun exposure and hormone changes (including pregnancy) are the most common triggers of melasma, and the statement matches the clinic's view.",
+    "Visible light can worsen dark patches and a tinted, iron-oxide sunscreen is appropriate advice for the clinic's patients.",
+    "The warning about skin-lightening products with mercury or hidden steroids is accurate for the products sold in the clinic's region."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

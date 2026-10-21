@@ -1,0 +1,73 @@
+{
+  "id": "derm.ingredients",
+  "version": 1,
+  "language": "en",
+  "topic": "ingredients",
+  "title": "Common skincare products and ingredients",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["ingredients", "ingredient", "salicylic acid", "benzoyl peroxide", "retinol", "retinoid", "vitamin c", "azelaic acid", "glycolic acid", "aha", "bha", "exfoliant", "exfoliating", "serum", "niacinamide", "hyaluronic acid", "ceramide", "kojic acid", "active ingredients", "actives", "which product", "which cream", "kaun si cream", "इंग्रीडिएंट", "सीरम"],
+  "summary": "Skincare products fall into a few groups. Knowing what each group is for makes it easier to choose gently and to avoid stacking several strong ingredients that irritate the skin. This is general education about product types, not a recommendation of any product or strength.",
+  "sections": {
+    "what_it_is": [
+      "Cleansers wash off dirt, oil and make-up. Mild, fragrance-free cleansers that do not strip the skin are the usual starting point. A leave-on moisturiser can replace soap for washing.",
+      "Moisturisers and emollients hold water in the skin. Ointments are the thickest, then creams, then lotions.",
+      "Sunscreens use either mineral filters (zinc oxide, titanium dioxide) or chemical filters. Both can work. Mineral products are often suggested for sensitive skin, and tinted ones add protection against visible light.",
+      "Salicylic acid is an ingredient that helps clear blocked pores and is used for blackheads and whiteheads. It can dry or sting the skin.",
+      "Benzoyl peroxide is an acne ingredient that reduces the bacteria linked to spots. It can dry and irritate the skin, and it can bleach towels, pillowcases and hair.",
+      "Azelaic acid, vitamin C and kojic acid are used to help even out skin tone. They can sting.",
+      "Retinoids are vitamin A-type ingredients used for acne, marks and skin ageing. Milder forms are sold without a prescription in some countries and stronger ones need a prescription. They can cause dryness and peeling and can make skin more sensitive to the sun.",
+      "Exfoliating acids such as glycolic acid can smooth the skin but irritate it easily, and they can make skin more sensitive to the sun."
+    ],
+    "may_contribute": [],
+    "self_care": [
+      "Start with three basics: a gentle cleanser, a moisturiser and a sunscreen.",
+      "Add one active ingredient at a time, a couple of weeks apart, and test it on a small patch first.",
+      "Use sunscreen every day when using ingredients that make skin more sensitive to the sun.",
+      "Check what is legal and sold without a prescription in the country where you live, and ask a pharmacist before starting a new active ingredient.",
+      "Choose products with a clear label that lists the ingredients."
+    ],
+    "avoid": [
+      "Layering several strong active ingredients on the same day.",
+      "Skin-lightening or 'fairness' creams with unknown contents or no proper label. Some contain mercury or hidden steroids.",
+      "Using medicated or steroid creams left over from earlier treatments on the face or on a new rash without a clinician's advice.",
+      "Products with handmade labels, non-English labels or no label when the ingredients cannot be checked."
+    ],
+    "monitor": [
+      "Keep a list of the products in use with the date each was started, and note any stinging, redness or dryness."
+    ],
+    "see_clinician": [
+      "A product causes burning, swelling or a lasting rash.",
+      "The skin is not improving with simple over-the-counter care, or a stronger treatment is needed. A dermatologist can decide which prescription treatments suit the skin and the person."
+    ],
+    "urgent": [
+      "Swelling of the lips, tongue, face or throat, trouble breathing, or widespread hives after using a product need emergency help."
+    ],
+    "photo_limits": [
+      "A photo cannot show which product suits a skin or which ingredient caused a reaction."
+    ]
+  },
+  "terms": [
+    {"term": "active ingredient", "plain": "an ingredient meant to change the skin, such as an exfoliating acid, a retinoid or an acne ingredient, rather than just to clean or moisturise"},
+    {"term": "retinoid", "plain": "a vitamin A-type ingredient used for acne, marks and skin ageing"}
+  ],
+  "contraindications": [
+    "If pregnant, planning a pregnancy or breastfeeding, ask a doctor or pharmacist before using any active ingredient, and particularly any retinoid.",
+    "Very sensitive skin, eczema, rosacea and a history of reactions to skincare call for extra care and a patch test.",
+    "Some ingredients are not suitable for children. Ask a doctor or pharmacist."
+  ],
+  "limitations": [
+    "General education about product types. No product, brand, strength or amount is recommended here, and nothing here replaces a clinician's advice.",
+    "Which products are sold without a prescription differs between countries."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-acne", "aad-fade-dark-spots", "aad-test-products", "aad-sunscreen-faqs", "nhs-emollients", "aad-dry-skin-tips", "fda-skin-lightening", "aad-acne-darker-skin"],
+  "claims_to_verify": [
+    "Naming salicylic acid, benzoyl peroxide, azelaic acid, vitamin C, kojic acid and retinoids as product types is acceptable, and the way each is described is accurate.",
+    "The statement that milder retinoids are sold without a prescription in some countries is accurate, and the clinic's own rule for its region should replace it if different.",
+    "The pregnancy and breastfeeding caution, particularly for retinoids, matches the clinic's policy.",
+    "The warning about steroid creams left over from earlier treatments is appropriate and complete."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

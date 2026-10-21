@@ -1,0 +1,64 @@
+{
+  "id": "derm.moles-and-spots",
+  "version": 1,
+  "language": "en",
+  "topic": "moles",
+  "title": "Moles and spots that should be checked",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["mole", "moles", "skin cancer", "melanoma", "abcde", "abcdes", "changing mole", "new mole", "dark spot", "growth", "lump", "sore that wont heal", "sore that won't heal", "non healing", "bleeding mole", "itchy mole", "birthmark", "freckle changing", "til", "til badal gaya", "तिल", "मस्सा", "त्वचा का कैंसर"],
+  "summary": "Most moles are harmless, but a spot that is new, changing, bleeding or looks different from the others should be checked by a clinician. Finding skin cancer early makes it easier to treat. A photo cannot tell whether a spot is cancer; only an examination in person can.",
+  "sections": {
+    "what_it_is": [
+      "The ABCDE checks help notice changes: Asymmetry (the two halves do not match), Border (uneven, scalloped or blurred edge), Colour (more than one colour, such as tan, brown, black, red, white or blue), Diameter (often larger than about 6 millimetres, but they can be smaller), and Evolving (any change in size, shape or colour, or a spot that looks different from the others).",
+      "Other warning signs include a mole or spot that is sore, swollen, itchy, bleeding or crusty, a sore that does not heal or heals and comes back, and a dark line under a fingernail or toenail that was not caused by an injury.",
+      "Skin cancers can appear anywhere, including places that rarely see the sun. Rarer types can appear on the palms, soles, nails, eyes and genitals, so the whole skin should be looked at when checking.",
+      "A skin cancer can be painless."
+    ],
+    "may_contribute": [
+      "Sun exposure and sunburn, particularly repeated burns, and the use of sunbeds.",
+      "Many moles, fair skin, and a personal or family history of skin cancer."
+    ],
+    "self_care": [
+      "Check the whole skin regularly, using a mirror or a friend to see hard-to-reach places such as the back and scalp, and the palms, soles and nails.",
+      "Photograph moles that are worth watching, with a coin or ruler beside them for size, so that changes are easier to see.",
+      "Protect the skin from the sun with shade, clothing and a broad-spectrum sunscreen, and avoid sunbeds."
+    ],
+    "avoid": [
+      "Trying to remove, cut, burn or treat a mole or spot at home.",
+      "Waiting to see whether a changing spot settles on its own."
+    ],
+    "monitor": [
+      "Compare each mole with the earlier photos every month or two, and note any change in size, shape, colour or feel."
+    ],
+    "see_clinician": [
+      "A mole has changed in size, shape or colour.",
+      "A mole is painful, itchy, inflamed, bleeding or crusty.",
+      "A new or unusual mark has not gone away after a few weeks, including on the palms or soles.",
+      "There is a dark area under a nail that was not caused by an injury.",
+      "A spot looks different from the others on the body.",
+      "An appointment to check is a sensible step even when unsure. Being referred quickly does not mean cancer has been found."
+    ],
+    "urgent": [],
+    "photo_limits": [
+      "A photo cannot tell whether a spot is cancer, and this app does not judge moles from photos. A clinician examines the spot, often with a special magnifier, and may take a sample."
+    ]
+  },
+  "terms": [
+    {"term": "ABCDE", "plain": "five checks for a changing mole: asymmetry, border, colour, diameter and evolving"},
+    {"term": "melanoma", "plain": "a type of skin cancer that starts in the cells that make skin colour; it is easier to treat when found early"}
+  ],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a diagnosis. The ABCDE checks are prompts to get a spot examined, not a test, and a spot with none of these features can still need checking."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-melanoma-symptoms", "aad-abcdes", "medlineplus-sun-exposure"],
+  "claims_to_verify": [
+    "The statement that skin cancers can be painless is accurate and appropriately worded.",
+    "Taking photos with a coin or ruler beside a mole is acceptable advice for the clinic's patients.",
+    "The sentence that a quick referral does not mean cancer has been found is appropriate."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

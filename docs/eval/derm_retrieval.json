@@ -1,0 +1,264 @@
+{
+  "schema": "cosmo-eval-1",
+  "name": "derm_retrieval",
+  "created_at": "2026-10-21T17:35:47+0530",
+  "evidence_class": "synthetic_fixture",
+  "real_world_evidence": false,
+  "code_revision": "git-9c27f5e5b34b+dirty",
+  "config": {
+    "max_dev_false_answer_rate": 0.05,
+    "retrievers": [
+      "lexical",
+      "dense",
+      "hybrid0.5"
+    ],
+    "embedder": "st:bge-small-en-v1.5",
+    "passage_unit": "one statement with its article title"
+  },
+  "config_sha256": "f792ccd7d33cd021efd4cb2d2741c5a97b1ac8fea251ac7451b63543fb1ca290",
+  "dataset": {
+    "corpus": "content/derm (unreviewed pack)",
+    "pack_sha256": "ebd776bc2b44b740f83cd6620330efb6f7a87aa1bc4e96ef58bedf4105c74dd8",
+    "queries": {
+      "dev_in": 35,
+      "dev_out": 20,
+      "heldout_in": 35,
+      "heldout_out": 20
+    }
+  },
+  "environment": {
+    "python": "3.11.9",
+    "platform": "Windows",
+    "numpy": "2.2.6",
+    "torch": "2.14.1+cpu"
+  },
+  "notes": [
+    "Queries are hand-written by one author; the held-out set is not independent of the author or the system design.",
+    "The corpus is unreviewed text. Nothing here validates the clinical content of any article.",
+    "Thresholds were chosen on the development set only and applied once to the held-out set. The keyword router answers the easy questions before retrieval is used."
+  ],
+  "results": {
+    "lexical": {
+      "retriever_mode": "lexical",
+      "passages": 402,
+      "development": {
+        "n_in_scope": 35,
+        "n_out_of_scope": 20,
+        "hit@1": 0.686,
+        "hit@3": 0.771,
+        "AUROC_answerable_vs_not": 0.869,
+        "threshold": 0.2601,
+        "answered_in_scope": "22/35",
+        "answered_with_right_article": "17/35",
+        "correct_answer_rate": 0.486,
+        "correct_answer_rate_ci95": [
+          0.3299,
+          0.6443
+        ],
+        "out_of_scope_wrongly_answered": "1/20",
+        "false_answer_rate": 0.05,
+        "false_answer_rate_ci95": [
+          0.0089,
+          0.2361
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "What is the treatment for vitiligo?"
+        ],
+        "answered_with_wrong_article": [
+          "A new serum is stinging my skin",
+          "Can I use retinol and vitamin C together?",
+          "What is the difference between a cream, a lotion and an ointment?",
+          "When is a rash an emergency?",
+          "Why is redness harder to see in photos of darker skin?"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 35,
+        "n_out_of_scope": 20,
+        "hit@1": 0.486,
+        "hit@3": 0.771,
+        "AUROC_answerable_vs_not": 0.836,
+        "threshold": 0.2601,
+        "answered_in_scope": "25/35",
+        "answered_with_right_article": "13/35",
+        "correct_answer_rate": 0.371,
+        "correct_answer_rate_ci95": [
+          0.2317,
+          0.5366
+        ],
+        "out_of_scope_wrongly_answered": "3/20",
+        "false_answer_rate": 0.15,
+        "false_answer_rate_ci95": [
+          0.0524,
+          0.3604
+        ],
+        "wrongly_answered_near": 3,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "How much does a hair transplant cost?",
+          "How do I treat a fungal infection in my toenail?",
+          "How can I make my hair grow faster?"
+        ],
+        "answered_with_wrong_article": [
+          "How long before an acne routine starts working?",
+          "I have brown patches on both cheeks, what could they be?",
+          "What is the difference between fragrance free and unscented?",
+          "How much sunscreen should I put on my face?",
+          "What is benzoyl peroxide used for?",
+          "What common skincare mistakes make skin worse?",
+          "How do I keep track of whether my skin is improving?",
+          "How should I take photos to compare my skin over time?",
+          "When is a skin problem serious enough for a doctor?",
+          "Which skin symptoms need to be seen on the same day?",
+          "What does a skin infection look like?",
+          "Can a photo show whether I have a skin condition?"
+        ]
+      }
+    },
+    "dense": {
+      "retriever_mode": "dense",
+      "passages": 402,
+      "development": {
+        "n_in_scope": 35,
+        "n_out_of_scope": 20,
+        "hit@1": 0.714,
+        "hit@3": 0.943,
+        "AUROC_answerable_vs_not": 0.987,
+        "threshold": 0.6917,
+        "answered_in_scope": "31/35",
+        "answered_with_right_article": "25/35",
+        "correct_answer_rate": 0.714,
+        "correct_answer_rate_ci95": [
+          0.5494,
+          0.8367
+        ],
+        "out_of_scope_wrongly_answered": "1/20",
+        "false_answer_rate": 0.05,
+        "false_answer_rate_ci95": [
+          0.0089,
+          0.2361
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "Is it safe to take isotretinoin for acne?"
+        ],
+        "answered_with_wrong_article": [
+          "What kind of face wash is gentle for skin that breaks out?",
+          "My eczema has started to ooze and crust",
+          "I think I am allergic to my moisturiser, what should I do?",
+          "In what order should I apply my skincare products?",
+          "What is the difference between a cream, a lotion and an ointment?",
+          "Why is redness harder to see in photos of darker skin?"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 35,
+        "n_out_of_scope": 20,
+        "hit@1": 0.8,
+        "hit@3": 0.886,
+        "AUROC_answerable_vs_not": 0.987,
+        "threshold": 0.6917,
+        "answered_in_scope": "32/35",
+        "answered_with_right_article": "28/35",
+        "correct_answer_rate": 0.8,
+        "correct_answer_rate_ci95": [
+          0.6411,
+          0.8996
+        ],
+        "out_of_scope_wrongly_answered": "0/20",
+        "false_answer_rate": 0.0,
+        "false_answer_rate_ci95": [
+          0.0,
+          0.1611
+        ],
+        "wrongly_answered_near": 0,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [],
+        "answered_with_wrong_article": [
+          "Does sunlight make melasma darker?",
+          "Which type of moisturiser holds water in best?",
+          "Do I need sunscreen on a cloudy day?",
+          "Which skin symptoms need to be seen on the same day?"
+        ]
+      }
+    },
+    "hybrid0.5": {
+      "retriever_mode": "hybrid(0.5)",
+      "passages": 402,
+      "development": {
+        "n_in_scope": 35,
+        "n_out_of_scope": 20,
+        "hit@1": 0.686,
+        "hit@3": 0.943,
+        "AUROC_answerable_vs_not": 0.979,
+        "threshold": 0.4412,
+        "answered_in_scope": "33/35",
+        "answered_with_right_article": "24/35",
+        "correct_answer_rate": 0.686,
+        "correct_answer_rate_ci95": [
+          0.5202,
+          0.8145
+        ],
+        "out_of_scope_wrongly_answered": "1/20",
+        "false_answer_rate": 0.05,
+        "false_answer_rate_ci95": [
+          0.0089,
+          0.2361
+        ],
+        "wrongly_answered_near": 1,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "What is the treatment for vitiligo?"
+        ],
+        "answered_with_wrong_article": [
+          "What kind of face wash is gentle for skin that breaks out?",
+          "My eczema has started to ooze and crust",
+          "A new serum is stinging my skin",
+          "Can I use retinol and vitamin C together?",
+          "What is the difference between a cream, a lotion and an ointment?",
+          "How long should I wait before getting a rash checked?",
+          "What do the ABCDE signs of skin cancer mean?",
+          "Why is redness harder to see in photos of darker skin?",
+          "What lighting is best for skin photos?"
+        ]
+      },
+      "held_out": {
+        "n_in_scope": 35,
+        "n_out_of_scope": 20,
+        "hit@1": 0.771,
+        "hit@3": 0.857,
+        "AUROC_answerable_vs_not": 0.944,
+        "threshold": 0.4412,
+        "answered_in_scope": "30/35",
+        "answered_with_right_article": "25/35",
+        "correct_answer_rate": 0.714,
+        "correct_answer_rate_ci95": [
+          0.5494,
+          0.8367
+        ],
+        "out_of_scope_wrongly_answered": "2/20",
+        "false_answer_rate": 0.1,
+        "false_answer_rate_ci95": [
+          0.0279,
+          0.301
+        ],
+        "wrongly_answered_near": 2,
+        "wrongly_answered_far": 0,
+        "wrong_queries": [
+          "How do I treat a fungal infection in my toenail?",
+          "How do I treat a cold?"
+        ],
+        "answered_with_wrong_article": [
+          "I have brown patches on both cheeks, what could they be?",
+          "How should I take photos to compare my skin over time?",
+          "When is a skin problem serious enough for a doctor?",
+          "Which skin symptoms need to be seen on the same day?",
+          "What does a skin infection look like?"
+        ]
+      }
+    }
+  }
+}

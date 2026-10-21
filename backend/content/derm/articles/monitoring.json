@@ -1,0 +1,61 @@
+{
+  "id": "derm.monitoring",
+  "version": 1,
+  "language": "en",
+  "topic": "monitoring",
+  "title": "How to keep track of a skin concern and prepare for an appointment",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["monitor", "monitoring", "track", "tracking", "keep track", "progress", "photo diary", "skin diary", "before and after", "prepare for appointment", "prepare for dermatologist", "summary for dermatologist", "questions for dermatologist", "how to watch", "kaise dekhna", "प्रगति", "डायरी"],
+  "summary": "A simple record helps you and your dermatologist see whether something is changing. Dated photos in the same light and a few notes are usually enough.",
+  "sections": {
+    "what_it_is": [
+      "Skin changes slowly. Dated photos and a few notes show whether a concern is improving, staying the same or getting worse, and they help a clinician who sees the skin only once.",
+      "Photos are a record, not a diagnosis."
+    ],
+    "may_contribute": [],
+    "self_care": [
+      "Take photos of the same area in the same light (a window in daylight works well), at the same distance and angle, without filters.",
+      "Take them at regular times, for example weekly for acne and monthly for marks or patches.",
+      "For a spot or mole, place a coin or ruler next to it so the size is clear.",
+      "Write down the date a concern started, what it looked like first, and what has changed.",
+      "Note symptoms such as itch, pain, burning, bleeding or swelling, and rate them out of ten if useful.",
+      "List the products used on the area, including medicines, with the start date of each, and note any earlier reactions or allergies.",
+      "Note what seems to make it better or worse, such as heat, sweat, stress, periods, foods or new products.",
+      "Before an appointment, write down the questions that matter most and bring the product list and photos."
+    ],
+    "avoid": [
+      "Using filters or editing the photos.",
+      "Changing many things at once, which makes the record hard to read."
+    ],
+    "monitor": [
+      "Review the photos every two weeks to see the trend.",
+      "As a guide, ask for advice if acne has not improved after about six to eight weeks, or if an irritated area has not settled within a week or two of removing likely triggers."
+    ],
+    "see_clinician": [
+      "Something is getting worse, spreading, painful or bleeding.",
+      "A mole or spot is changing in size, shape or colour.",
+      "There is no improvement over the time frames above."
+    ],
+    "urgent": [
+      "Rapid spreading, a fever, severe pain or swelling of the face, lips or tongue need prompt help and should not wait for a photo record."
+    ],
+    "photo_limits": [
+      "Photos taken in different light look different even when the skin has not changed, so keep the light as consistent as possible."
+    ]
+  },
+  "terms": [],
+  "contraindications": [],
+  "limitations": [
+    "General education. A record supports an examination and does not replace one."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-melanoma-symptoms", "aad-abcdes", "aad-acne-tips"],
+  "claims_to_verify": [
+    "Placing a coin or ruler next to a spot is common practice but is not taken from the listed pages; the clinic should confirm or replace it.",
+    "The suggested photo intervals (weekly for acne, monthly for marks or patches) are practical suggestions for the clinic to confirm.",
+    "The time frames for seeking advice are consistent with the clinic's practice."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

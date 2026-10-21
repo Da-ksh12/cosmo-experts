@@ -1,0 +1,72 @@
+{
+  "id": "derm.sun-protection",
+  "version": 1,
+  "language": "en",
+  "topic": "sun-protection",
+  "title": "Sunscreen and sun protection",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["sunscreen", "sun screen", "spf", "sun protection", "sunblock", "sun block", "uv", "sunburn", "tanning", "suntan", "sun cream", "uva", "uvb", "broad spectrum", "tinted sunscreen", "mineral sunscreen", "sunscreen kaise lagaye", "sunscreen lagana", "धूप", "सनस्क्रीन", "सन स्क्रीन"],
+  "summary": "Daily sun protection is one of the most useful steps for healthy skin: it helps prevent sunburn, dark marks and skin cancer. It combines shade, clothing and a broad-spectrum sunscreen of SPF 30 or higher, applied generously and reapplied.",
+  "sections": {
+    "what_it_is": [
+      "UV rays reach the skin on cloudy and cool days as well as sunny ones, and they reflect off water, sand and concrete. They are strongest in the middle of the day.",
+      "UVB rays mainly cause burning and UVA rays mainly cause ageing. SPF mostly describes UVB protection, so a sunscreen also needs to protect against UVA. A product labelled broad spectrum does both.",
+      "A tan is not a sign of health. It shows the skin has already been damaged by UV rays.",
+      "People with darker skin have some natural protection but can still burn and develop skin cancer. Sunburn on darker skin may look like darker patches instead of redness."
+    ],
+    "may_contribute": [
+      "Visible light, including light through windows, can darken some pigmentation such as melasma. Tinted sunscreens that contain iron oxide give extra protection against it."
+    ],
+    "self_care": [
+      "Choose a broad-spectrum, water-resistant sunscreen of SPF 30 or higher. Where a UVA star rating is shown, a rating of four or five stars (or the UVA logo in a circle) shows good UVA protection.",
+      "Apply enough. As a guide for adults, about a teaspoon covers the face and about a shot glass covers the whole body. Many people use too little.",
+      "Apply before going out, and do not forget the ears, neck, temples and the back of the neck.",
+      "Reapply about every two hours when outdoors, and straight after swimming, sweating or towel drying. No sunscreen is waterproof.",
+      "Add shade, a wide-brimmed hat, close-woven clothing that covers the arms and legs, and sunglasses that block UVA and UVB.",
+      "Mineral sunscreens (zinc oxide or titanium dioxide) are often suggested for sensitive skin.",
+      "For acne-prone skin, choose a sunscreen labelled non-comedogenic.",
+      "Check the expiry date. If there is none, throw the sunscreen away after about three years, or sooner if it has been kept in the heat.",
+      "Babies under six months should be kept out of strong sun and covered with clothing and shade, because sunscreen is generally not recommended at that age."
+    ],
+    "avoid": [
+      "Sunbeds and sunlamps.",
+      "Relying on sunscreen alone. It works best together with shade and clothing.",
+      "Deliberate tanning."
+    ],
+    "monitor": [
+      "Check the skin regularly, including areas that are rarely exposed to the sun, and photograph any moles or spots so that changes are easy to see."
+    ],
+    "see_clinician": [
+      "A mole or spot is changing, bleeding, itchy or looks different from the others (see the article on moles and spots).",
+      "Sunburn is frequent or severe.",
+      "A concern about vitamin D. Sun protection and vitamin D need balancing, and a clinician or pharmacist can advise."
+    ],
+    "urgent": [],
+    "photo_limits": [
+      "A photo cannot show sun damage under the surface or tell whether a spot is harmless."
+    ]
+  },
+  "terms": [
+    {"term": "SPF", "plain": "sun protection factor: mainly how well a sunscreen protects against UVB rays that burn the skin"},
+    {"term": "broad spectrum", "plain": "protects against both UVA and UVB rays"},
+    {"term": "UV index", "plain": "a daily number for how strong the sun's UV rays are; protection is advised from 3 upwards"}
+  ],
+  "contraindications": [
+    "Sunscreen is generally not recommended for babies under six months. Ask a clinician about protection for infants."
+  ],
+  "limitations": [
+    "General education. Sunscreen reduces but does not remove the risk from UV exposure. Rules on SPF and UVA labelling differ between countries."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-sunscreen", "aad-sunscreen-faqs", "aad-how-to-apply-sunscreen", "cdc-sun-safety", "medlineplus-sun-exposure", "aad-melasma-self-care"],
+  "claims_to_verify": [
+    "SPF 30 or higher is the right minimum for the clinic's patients (the CDC and MedlinePlus pages quote SPF 15 as a minimum).",
+    "The UVA star rating applies to UK products; check which labelling applies to products sold where the clinic works.",
+    "A teaspoon for the face and a shot glass for the body is the right guide to quote.",
+    "The advice on babies under six months is appropriate.",
+    "The note on vitamin D is acceptable, or should be replaced by the clinic's own advice."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

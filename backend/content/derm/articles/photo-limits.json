@@ -1,0 +1,59 @@
+{
+  "id": "derm.photo-limits",
+  "version": 1,
+  "language": "en",
+  "topic": "photo-limits",
+  "title": "What a photo can and cannot show",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["can a photo", "what can a photo show", "what can photos show", "photo show", "photo analysis", "photo accuracy", "how accurate", "accuracy of", "limits of a photo", "limitations of photo", "skin tone", "dark skin", "darker skin", "brown skin", "black skin", "online diagnosis", "diagnose from photo", "diagnose from a photo", "from a photo", "from a picture", "photo se pata", "photo se", "फोटो से", "तस्वीर से"],
+  "summary": "A photo is useful as a record and for a clinician who cannot see the skin in person, but it shows only part of the picture. It cannot show depth, texture, warmth or tenderness, and it cannot say how long something has been there. How well a photo reflects the skin also depends on light, camera and skin tone.",
+  "sections": {
+    "what_it_is": [
+      "A photo can show the general look, colour and spread of a skin concern at one moment, and it can help show change over time.",
+      "A photo cannot show how deep a spot is, how the skin feels, whether it is warm or tender, or whether it itches. It cannot tell an infection from an inflammation, or a harmless spot from a skin cancer.",
+      "No fixed rule or app can name a skin condition reliably from a single photo, and a photo alone cannot establish vitamin deficiencies, hormone imbalances or internal disease.",
+      "Colour changes depend on skin tone. Redness can be harder to see on brown and black skin, where inflammation can look darker brown, purple or grey. Sunburn on darker skin can look like darker patches."
+    ],
+    "may_contribute": [
+      "Light: daylight from a window gives the truest colour; indoor lamps, flash and shadows change how skin looks.",
+      "Camera settings, filters, beauty modes and image compression.",
+      "Distance and angle, which change size and shape.",
+      "Make-up, sweat, oil and shine on the skin."
+    ],
+    "self_care": [
+      "Take photos in soft daylight, without flash, filters or beauty modes, with the area in focus and filling the frame.",
+      "Use the same place, light and angle each time so that photos can be compared.",
+      "Add a note about how long the concern has been there and any symptoms, because the photo cannot show these."
+    ],
+    "avoid": [
+      "Relying on a photo to decide whether something is serious.",
+      "Editing or filtering photos meant for comparison or for a clinician."
+    ],
+    "monitor": [
+      "Keep the photos with the date and a short note so that a clinician can see the history."
+    ],
+    "see_clinician": [
+      "Any concern that is painful, spreading, bleeding, changing or lasting more than a few weeks, however it looks in a photo.",
+      "Any time the photo looks fine but the skin feels very different from normal."
+    ],
+    "urgent": [],
+    "photo_limits": [
+      "Tools that analyse skin photographs are usually trained and tested on far more photos of lighter skin than of darker skin, so their results can be less reliable on darker skin. This app does not analyse skin conditions from photos at all: it checks the quality of the photo and the area that was photographed."
+    ]
+  },
+  "terms": [],
+  "contraindications": [],
+  "limitations": [
+    "General education about the limits of photographs."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-acne", "nhs-rosacea", "nhs-contact-dermatitis", "nhs-cellulitis", "nhs-meningitis-symptoms", "aad-sunscreen-faqs"],
+  "claims_to_verify": [
+    "The sentence that tools for analysing skin photographs are usually trained on far more photos of lighter skin is a general statement about the field and needs a reference or the clinic's confirmation.",
+    "The statement that a photo cannot establish vitamin deficiencies, hormone imbalances or internal disease is appropriate.",
+    "The photo-taking advice (daylight, no flash or filters) is appropriate and consistent with the clinic's own photo guide."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

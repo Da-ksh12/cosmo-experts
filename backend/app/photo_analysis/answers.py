@@ -158,6 +158,14 @@ def _capabilities(a: dict) -> dict:
 _BUILDERS = {"measurements": _measurements, "better_photo": _better_photo, "what_next": _what_next, "summary": _summary, "compare": _compare, "capabilities": _capabilities}
 
 
+def build(intent: str, a: dict, obs: dict | None = None) -> dict | None:
+    """The text, sources and highlight for one photo intent, built from the stored analysis only (before the safety review). None when the intent has no builder or needs an observation that was not given."""
+    if intent == "observation":
+        return _observation(a, obs) if obs is not None else None
+    fn = _BUILDERS.get(intent)
+    return fn(a) if fn else None
+
+
 def answer(owner: str, text: str, ctx: dict) -> dict | None:
     """The photo-aware answer, or None when the question is not about the photo (the normal assistant then answers it). Raises ContextError for an unknown analysis or observation."""
     a, obs = load(owner, ctx)

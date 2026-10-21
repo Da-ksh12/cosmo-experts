@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Literal
@@ -9,7 +10,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from .. import consent, db, retention, security
-from ..assistant import engine
+from ..assistant import compose as assistant_compose, dispatch, engine
 from ..config import MAX_UPLOAD_BYTES, UPLOAD_DIR
 from ..documents import pipeline, store
 from ..imaging import suitability
@@ -19,6 +20,7 @@ from ..services import core, explanations, notify
 from ..security import current_user, require, can_access_patient_data
 from ..speech import adapters as speech
 
+log = logging.getLogger("cosmo.assistant")
 router = APIRouter(prefix="/api")
 
 
@@ -223,7 +225,9 @@ def _conv(cid, user):
 
 
 @router.post("/conversations/{cid}/messages")
-def ask(cid: str, body: Msg, user=Depends(consent.patient_consented)):
+def ask(cid: str, body: Msg, request: Request, user=Depends(consent.patient_consented)):
+    """One message of the conversation. The dispatcher (assistant/dispatch.py) decides what the message is about and asks the part of the system that can answer it; the reply carries the
+    plain text, the sources and, where the answer is structured, a card (stored with the message, so it reappears when the conversation is reopened)."""
     _conv(cid, user)
     ctx = body.context.model_dump(exclude_none=True) if body.context else None
     refs = "[]"
@@ -235,10 +239,22 @@ def ask(cid: str, body: Msg, user=Depends(consent.patient_consented)):
             raise HTTPException(404, str(e)) from None
         refs = json.dumps([{k: v for k, v in {"kind": "photo_analysis", "analysis_id": ctx["analysis_id"], "observation_id": ctx.get("observation_id")}.items() if v is not None}])
     db.x("INSERT INTO messages VALUES(?,?,?,?,?,?)", (db.uid(), cid, "patient", body.text, refs, db.now()))
-    out = engine.answer(user["id"], cid, body.text, ctx)
-    db.x("INSERT INTO messages VALUES(?,?,?,?,?,?)", (db.uid(), cid, "assistant", out["answer"], json.dumps(out["sources"]), db.now() + 0.001))
-    db.audit(user["id"], "assistant.ask", cid, {"abstained": out["abstained"], "reason": out.get("reason")})
+    try:
+        reply = dispatch.respond(user, cid, body.text, ctx, request_id=getattr(request.state, "request_id", ""))
+    except Exception:                                                          # a bug is an honest 'could not answer', never a stack trace or a half-built card
+        log.exception("assistant could not answer (conversation %s)", cid)
+        reply = assistant_compose.failed()
+    out = reply.payload()
+    stored = list(reply.sources) + ([{"kind": "card", "card": reply.card}] if reply.card else [])
+    db.x("INSERT INTO messages VALUES(?,?,?,?,?,?)", (db.uid(), cid, "assistant", reply.text, json.dumps(stored), db.now() + 0.001))
+    db.audit(user["id"], "assistant.ask", cid, {"abstained": reply.abstained, "reason": reply.reason or None, "route": (reply.route or {}).get("kind"), "triage": (reply.route or {}).get("triage")})
     return out
+
+
+@router.get("/v1/assistant/starters")
+def assistant_starters(user=Depends(require("patient"))):
+    """The suggestions shown before the first message: each one sends a real question or opens a real screen."""
+    return {"starters": dispatch.starters(user), "intro": assistant_compose.INTRO, "library": dispatch.library_state(), "concerns": assistant_compose.concern_choices()}
 
 
 @router.get("/conversations/{cid}")

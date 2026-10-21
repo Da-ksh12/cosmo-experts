@@ -2,6 +2,7 @@
 only ever come from an APPROVED model. Synthetic photographs exercise the CODE paths; where a test needs a face it stubs the detector and says so. Nothing here measures a model."""
 import io
 import json
+import re
 import threading
 import time
 
@@ -295,8 +296,14 @@ def test_questions_about_the_photo_are_answered_from_its_own_measurements(client
 def test_a_question_about_skin_features_is_answered_honestly_and_a_medicine_question_is_still_refused(client):
     a = finish(client, "patient1", send(client, "patient1", [jpg(skin_photo(seed=71))]).json()["analyses"][0]["id"])
     r = _chat(client, "patient1", "Can you find the acne and redness on my face?", analysis_id=a["id"]).json()
-    assert "can't identify skin features" in r["answer"] and "won't guess" in r["answer"] and r["mode"] == "analysis"
-    assert all(w not in r["answer"].lower() for w in ("you have", "likely", "diagnos"))
+    # the honest answer of the assessment flow: what the check found, what no check here can find (no approved skin analysis), and a real question about what the person notices
+    assert "can't identify spots, marks, redness or conditions" in r["answer"] and "no approved skin-analysis tool" in r["answer"] and r["route"]["kind"] == "photo"
+    assert not re.search(r"\b(?:you have|this is (?:acne|eczema)|likely|probably)\b", r["answer"].lower())
+    assert "follow_ups" not in r["card"] and r["card"]["context"]["analysis_id"] == a["id"] and r["card"]["context"]["concern"] == "acne"      # the concern was named, so it is not asked again
+    assert any(x["label"].startswith("Explain acne") for x in r["card"]["actions"])                                                              # and the person can ask for the general explanation of it
+    nameless = _chat(client, "patient1", "What is this?", analysis_id=a["id"]).json()
+    assert [f["id"] for f in nameless["card"]["follow_ups"]] == ["concern"] and [c["label"] for c in nameless["card"]["follow_ups"][0]["choices"]][0] == "Pimples or bumps"
+    assert not any(o["kind"] == "skin_feature" for o in a["observations"]) and a["guidance"]["basis"] == "photo_quality_only"
     refused = _chat(client, "patient1", "Which medicine should I take for this?", analysis_id=a["id"]).json()
     assert refused["abstained"] is True and refused["reason"] == "clinical_decision"
     urgent = _chat(client, "patient1", "I have severe chest pain right now", analysis_id=a["id"]).json()

@@ -1,0 +1,67 @@
+{
+  "id": "derm.product-reactions",
+  "version": 1,
+  "language": "en",
+  "topic": "product-reactions",
+  "title": "Reactions to skincare products and how to test a new one",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["patch test", "patch testing", "allergic reaction", "allergy to cream", "reaction to product", "reaction to skincare", "new product", "new cream", "new serum", "new face wash", "new moisturiser", "new moisturizer", "new sunscreen", "new skincare", "started a new product", "after using a new", "after applying a new", "burning after cream", "stings after", "fragrance free", "fragrance-free", "unscented", "allergic", "cream se allergy", "cream laga ke jalan", "एलर्जी", "क्रीम से जलन"],
+  "summary": "Skin can react to a product the first time or after months of use. Testing a new product on a small patch and adding only one new product at a time makes it much easier to find the cause of a reaction.",
+  "sections": {
+    "what_it_is": [
+      "Some ingredients, such as retinol and glycolic acid, can cause temporary stinging or dryness, especially on sensitive skin. This is common and usually settles.",
+      "An allergic reaction is different: it can cause redness, itching, swelling or blisters, and it usually does not settle while the product is still being used.",
+      "The label words matter: fragrance-free means no fragrance ingredients were added, while unscented products can still contain ingredients that mask smell."
+    ],
+    "may_contribute": [
+      "Fragrance and essential oils.",
+      "Preservatives and other additives.",
+      "Using several new products at once, which makes the cause hard to find."
+    ],
+    "self_care": [
+      "Test a new leave-on product on a small patch, about the size of a coin, on the inner arm or inner elbow where it will not be rubbed or washed off. Use the amount normally used, once or twice a day for about seven to ten days.",
+      "For a product that is rinsed off, such as a cleanser, leave it on the test patch for about five minutes, or as long as the label says.",
+      "If there is no redness, itching or swelling after the test, the product is more likely to suit the skin on the face too, though a test cannot rule out every reaction.",
+      "If a reaction starts, wash the product off gently and stop using it. A cool compress or plain petroleum jelly can soothe the skin.",
+      "Introduce one new product at a time, a couple of weeks apart.",
+      "Keep a note of the products and ingredients that caused trouble, and look for fragrance-free labels."
+    ],
+    "avoid": [
+      "Starting several new products on the same day.",
+      "Skipping the patch test for a product with strong active ingredients."
+    ],
+    "monitor": [
+      "Photograph the test patch on day one, day three and at the end of the test."
+    ],
+    "see_clinician": [
+      "The reaction is severe, or does not improve with a cool compress or petroleum jelly.",
+      "The ingredient that causes the reaction cannot be found. A dermatologist can arrange patch testing."
+    ],
+    "urgent": [
+      "Swelling of the lips, tongue, face or throat, trouble breathing, or hives spreading over the body need emergency help."
+    ],
+    "photo_limits": [
+      "A photo cannot tell an irritation from an allergy."
+    ]
+  },
+  "terms": [
+    {"term": "patch test (at home)", "plain": "trying a product on a small area for several days to see whether it irritates the skin"},
+    {"term": "patch testing (clinic)", "plain": "a test done by a clinician to find which substances cause an allergic reaction"}
+  ],
+  "contraindications": [
+    "A home patch test is not suitable if there has ever been a severe or swelling reaction to a product or to a similar product. Ask a clinician first."
+  ],
+  "limitations": [
+    "General education, not a diagnosis. A home patch test does not rule out every reaction."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["aad-test-products", "nhs-contact-dermatitis"],
+  "claims_to_verify": [
+    "A seven to ten day home patch test of the amount normally used is appropriate for the clinic's patients.",
+    "Stating that a negative test makes suitability on the face more likely is appropriately cautious.",
+    "The statement that stinging from retinol or glycolic acid is common and usually settles is appropriate."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

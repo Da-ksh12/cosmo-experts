@@ -14,7 +14,7 @@ from tests.test_pg_backend import CTX_SECRET, pg_server  # noqa: F401  (fixtures
 
 T = "2026-10-18T10:00:00Z"
 TABLES = ["users", "settings", "documents", "doc_pages", "doc_fields", "doc_facts", "doc_medications", "images", "conversations", "messages", "price_items", "quotes", "kb_articles", "datasets",
-          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "agent_traces", "agent_actions", "model_events", "notifications", "jobs"]
+          "dataset_versions", "model_versions", "audit", "field_corrections", "care_plans", "consents", "consent_events", "legal_holds", "training_runs", "agent_traces", "agent_actions", "model_events", "notifications", "jobs", "appointment_requests"]
 
 
 def C(uid, role, admin="none"):
@@ -48,6 +48,7 @@ def rls(pg_server):
         x("insert into consent_events(id,user_id,notice_sha256,notice_status,action,at) values(?,?,'sha','approved','accepted',now())", (f"ce-{p}", p))
         x("insert into notifications(id,user_id,kind,title,dedupe_key,created_at) values(?,?,'k','t',?,now())", (f"n-{p}", p, f"k-{p}"))
         x("insert into jobs(id,owner_id,task,status,created_at) values(?,?,'t','done',now())", (f"j-{p}", p))
+        x("insert into appointment_requests(id,patient_id,reason,contact_method,status,created_at,updated_at) values(?,?,?,'app','requested',now(),now())", (f"ap-{p}", p, f"private reason of {p}"))
         x("insert into agent_traces(id,user_id,request_id,created_at,intent,provider,outcome) values(?,?,'r',now(),'ask','intents-2.0.0','answered')", (f"at-{p}", p))
         x("insert into agent_actions(id,user_id,trace_id,tool,args,args_sha256,summary,state,expires_at) values(?,?,?,'request_quote','{}','h','summary','proposed',now() + interval '15 minutes')",
           (f"aa-{p}", p, f"at-{p}"))
@@ -156,6 +157,26 @@ def test_a_patient_cannot_change_roles_accounts_or_other_privileged_data(rls):
             assert writes(be, P1, sql) == 0
         except psycopg.errors.InsufficientPrivilege:
             pass
+
+
+def test_appointment_requests_belong_to_the_patient_and_only_the_clinic_can_agree_a_time(rls):
+    be, _ = rls
+    assert ids(be, P1, "appointment_requests") == ["ap-p1"] and ids(be, P2, "appointment_requests") == ["ap-p2"]               # a patient sees only their own requests
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, P1, "insert into appointment_requests(id,patient_id,reason,contact_method,status,created_at) values('ap-forged','p2','x','app','requested',now())")
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, P1, "insert into appointment_requests(id,patient_id,reason,contact_method,status,created_at) values('ap-self','p1','x','app','confirmed',now())")   # not a confirmed request
+    assert writes(be, P1, "update appointment_requests set status='cancelled' where id='ap-p2'") == 0                          # another patient's request is invisible
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, P1, "update appointment_requests set status='confirmed', confirmed_for='tomorrow 10:00' where id='ap-p1'")   # a patient cannot confirm a time for themselves
+    assert writes(be, P1, "delete from appointment_requests where id='ap-p1'") == 0                                             # and cannot erase the record
+    assert writes(be, DOC, "update appointment_requests set status='confirmed', confirmed_for='Tuesday 4:30 pm' where id='ap-p1'") == 1   # the clinic agrees a time
+    assert ids(be, DOC, "appointment_requests") == ["ap-p1", "ap-p2"]
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        writes(be, P1, "update appointment_requests set status='cancelled' where id='ap-p1'")                                    # a confirmed request is no longer the patient's to rewrite
+    assert writes(be, P2, "update appointment_requests set status='cancelled' where id='ap-p2'") == 1                          # but an open one can be withdrawn
+    assert be.q("select count(*) c from appointment_requests", (), ADM)[0]["c"] == 0                                           # administrators read them only with the clinical flag
+    assert ids(be, ADMR, "appointment_requests") == ["ap-p1", "ap-p2"]
 
 
 def test_audit_is_append_only_and_cannot_be_forged_for_someone_else(rls):

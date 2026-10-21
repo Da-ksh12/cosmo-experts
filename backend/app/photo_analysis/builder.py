@@ -61,6 +61,15 @@ MEANING = {
 }
 
 
+SKIN_TONE_NOTE = ("Colour-based checks and general skin guidance can look different on darker skin tones: redness is harder to see, and many reference photographs show lighter skin. "
+                  "This check does not identify skin tone and has not been tested across skin tones.")
+SYSTEMIC_NOTE = "A photo of the skin cannot show vitamin levels, hormones or internal illness."
+FACE_FINDER_NOTE = "The face finder uses a skin-colour filter that was not tested across skin tones, so it may miss a face more often on darker skin."
+HISTORY_QUESTIONS = ["How long has this been there, and has it changed?", "Is there itching, pain, swelling or bleeding?", "Which products are being used on it now?", "Have there been reactions to skincare products before?"]
+FALSE_REJECTION = {"no_face", "face_too_small", "multiple_faces", "wrong_region"}
+KNOWLEDGE_ASK = {"photo-limits": "What can a photo show, and what can't it?", "when-to-see": "When should I see a doctor about a skin problem?"}
+
+
 def _pct(v: float | None) -> str:
     return f"{round(float(v) * 100):d}%" if v is not None else "n/a"
 
@@ -160,7 +169,7 @@ def _faces(rep: dict, width: int, height: int) -> list[S.Observation]:
                                  summary="The area the photo checks treated as the face. It shows where the checks looked; it is not a finding about your skin.",
                                  evidence=[S.Evidence(text=f"This face fills {_pct((box.w * box.h))} of the photo", metric="face_fraction", value=round(box.w * box.h, 3))] + (
                                      [S.Evidence(text=f"{n} faces were found", metric="faces_found", value=n)] if n > 1 else []),
-                                 geometry=box, provenance=2, limitations=["Face detection can miss or mislabel a face and was not validated on real face photographs."]))
+                                 geometry=box, provenance=2, limitations=["Face detection can miss or mislabel a face and was not validated on real face photographs.", FACE_FINDER_NOTE]))
     return out
 
 
@@ -279,6 +288,7 @@ def build(*, analysis_id: str, owner: str, out: dict, data: bytes | None, params
     if caps and not any(c.available for c in caps):
         cannot.append("Visible skin features (for example spots, redness, dryness, pigmentation or texture) are not analysed: no approved analysis exists for them yet.")
     cannot += [x for x in eng.describe("image.quality").limitations if x not in cannot]
+    cannot += [SYSTEMIC_NOTE, SKIN_TONE_NOTE]
     cannot += [w for w in rep.get("warnings", []) if w not in cannot]
     cannot = cannot[:8]
 
@@ -294,6 +304,8 @@ def build(*, analysis_id: str, owner: str, out: dict, data: bytes | None, params
         if any(o.id == "v2_obstruction" and o.tone == "attention" for o in obs) and reason not in TIPS:
             tip = TIPS["obstruction"]
         steps.append(S.NextStep(id="retake", kind="retake", label="Retake the photo", detail=tip, route=f"/photo?region={region}"))
+        if reason in FALSE_REJECTION and region == "face":
+            steps.append(S.NextStep(id="misdetected", kind="clinician", label="The check may be wrong", detail="The face finder can miss a face, particularly on darker skin. If a face is clearly in the photo, ask the clinic team to look at it instead.", route="/book"))
     steps.append(S.NextStep(id="summary", kind="summary", label="Prepare a summary for my dermatologist", detail="A short, factual summary of this photo check that you can share."))
 
     # ---- questions: only ones this analysis can actually answer
@@ -312,6 +324,23 @@ def build(*, analysis_id: str, owner: str, out: dict, data: bytes | None, params
     if kb_care and verdict == "accepted":
         qs.append(S.Question(id="q-care", text="What can I do to care for my skin?", intent="care"))
 
+    findings = [o for o in obs if o.kind == "skin_feature"]
+    knowledge_refs: list[S.KnowledgeRef] = []
+    try:
+        from ..derm import reference as derm_reference
+        for tp in ("photo-limits", "when-to-see"):
+            r = derm_reference.by_topic(tp)
+            if r is not None:
+                knowledge_refs.append(S.KnowledgeRef(topic=tp, article_id=r.article.id, title=r.article.title, tier=r.tier, ask=KNOWLEDGE_ASK.get(tp, f"Tell me about {r.article.title.lower()}.")))
+    except Exception:                                                # the library is optional for an assessment: its absence only means no topics are listed
+        log.exception("library topics could not be listed")
+    if verdict in ("rejected", "uncertain"):
+        advice = S.ClinicianAdvice(recommended=False, level=None, reason="A clinician cannot judge a photo that is not usable. Retake it first; if a face or the area is clearly in the photo, ask the clinic team to look at it instead.")
+    else:
+        advice = S.ClinicianAdvice(recommended=False, level="routine", reason="This check cannot tell whether anything on your skin needs attention. If the area is painful, spreading, bleeding, changing or has lasted more than a few weeks, "
+                                                                              "please have a clinician look at it; a clinician reviews accepted photos together with your history.")
+    guidance = S.Guidance(basis="model_findings" if findings else "photo_quality_only", visible=[o.id for o in obs if o.kind != "skin_feature"], may_explain=[f"{o.label}: {o.summary}" for o in findings][:6],
+                          cannot_establish=cannot, history=HISTORY_QUESTIONS, clinician_advice=advice, knowledge=knowledge_refs)
     review = S.ClinicianReview(status="reviewed" if (row.get("clinician_review") == "reviewed") else "pending", message="A clinician reviews accepted photos together with your history.") if kept else \
         S.ClinicianReview(status="not_applicable", message="This photo was not kept, so there is nothing for a clinician to review.")
     status = {"accepted": "completed", "uncertain": "uncertain", "rejected": "rejected"}.get(verdict or "", "completed")
@@ -319,7 +348,7 @@ def build(*, analysis_id: str, owner: str, out: dict, data: bytes | None, params
         id=analysis_id, conversation_id=params.get("conversation_id"), message_id=params.get("message_id"), index=int(params.get("index", 0)), status=status, created_at=created_at, finished_at=finished_at,
         image=image, transform=transform, outcome=outcome, provenance=prov, observations=obs,
         sections=S.Sections(observe=[o.id for o in obs if o.group == "observe"], areas=[o.id for o in obs if o.group == "area"], meaning=meaning, cannot=cannot, next_steps=steps, questions=qs),
-        capabilities=caps, clinician_review=review,
+        capabilities=caps, clinician_review=review, guidance=guidance,
         disclaimers=[safety.NOT_DIAGNOSIS, safety.REVIEW_NOTE] + [d for d in (ia.disclaimers if ia else []) if d not in (safety.NOT_DIAGNOSIS, safety.REVIEW_NOTE)])
     return analysis.model_dump(mode="json")
 

@@ -220,8 +220,41 @@ class Sections(Strict):
     questions: list[Question] = Field(default_factory=list)
 
 
+class ClinicianAdvice(Strict):
+    """Whether a clinician should look, and why. Never a reassurance: 'not recommended by this check' is not 'nothing is wrong'."""
+    recommended: bool = False
+    level: Literal["routine", "prompt", "urgent"] | None = None
+    reason: str
+
+
+class KnowledgeRef(Strict):
+    """A topic of the dermatology library that the person can ask about from this assessment (a general explanation, not a finding about the photo)."""
+    topic: str
+    article_id: str
+    title: str
+    tier: Literal["approved", "reference"]
+    ask: str = ""                                      # the question the app sends when the person chooses this topic
+
+
+class Guidance(Strict):
+    """Contract 1.1 (additive): the five distinctions the person needs, each from a real source.
+    visible          - ids of the observations that describe what the checks measured IN THE PHOTO (never a finding about the skin);
+    may_explain      - what a visible FEATURE of the skin may explain: filled only from an approved model's findings, empty otherwise;
+    cannot_establish - what the photo and this check cannot tell, including the skin-tone and whole-body limits;
+    history          - what the person could tell a clinician (or this assistant) to make the next answer more useful;
+    clinician_advice - whether a clinician should look, and why."""
+    basis: Literal["photo_quality_only", "model_findings"] = "photo_quality_only"
+    visible: list[str] = Field(default_factory=list)
+    may_explain: list[str] = Field(default_factory=list)
+    cannot_establish: list[str] = Field(default_factory=list)
+    history: list[str] = Field(default_factory=list)
+    clinician_advice: ClinicianAdvice
+    knowledge: list[KnowledgeRef] = Field(default_factory=list)
+
+
 class PhotoAnalysis(Strict):
     api_version: Literal["photo-analysis/1"] = API_VERSION
+    contract_minor: int = 1                            # 0: no guidance block; 1: guidance (additive, older readers ignore it)
     id: str                                            # the analysis (session) id: also the id of the job that produced it
     conversation_id: str | None = None
     message_id: str | None = None
@@ -240,6 +273,7 @@ class PhotoAnalysis(Strict):
     sections: Sections = Field(default_factory=Sections)
     capabilities: list[CapabilityNote] = Field(default_factory=list)
     clinician_review: ClinicianReview | None = None
+    guidance: Guidance | None = None
     disclaimers: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -260,4 +294,9 @@ class PhotoAnalysis(Strict):
             raise ValueError("a question names an observation that does not exist")
         if self.image and self.image.width and self.transform and (self.image.width, self.image.height) != (self.transform.width, self.transform.height):
             raise ValueError("image size and transform size disagree")
+        if self.guidance is not None:
+            if not set(self.guidance.visible) <= known:
+                raise ValueError("guidance.visible names an observation that does not exist")
+            if self.guidance.may_explain and self.guidance.basis != "model_findings":
+                raise ValueError("guidance.may_explain can only be filled from an approved model's findings")
         return self

@@ -70,6 +70,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_notifications_dedupe ON notifications(user_
 CREATE INDEX IF NOT EXISTS ix_notifications_user ON notifications(user_id, created_at DESC);
 CREATE TABLE IF NOT EXISTS care_plans(id TEXT PRIMARY KEY, patient_id TEXT, doctor_id TEXT, status TEXT, assessment TEXT, findings TEXT,
   stages TEXT, notes TEXT, recommended_item_ids TEXT, reviewed_at REAL, updated_at REAL);
+CREATE TABLE IF NOT EXISTS appointment_requests(id TEXT PRIMARY KEY, patient_id TEXT NOT NULL, service_id TEXT, service_name TEXT, reason TEXT NOT NULL, preferred TEXT, contact_method TEXT NOT NULL,
+  contact_detail TEXT, analysis_id TEXT, share_summary INTEGER DEFAULT 0, urgency TEXT NOT NULL DEFAULT 'routine', status TEXT NOT NULL DEFAULT 'requested', confirmed_for TEXT, staff_note TEXT,
+  decided_by TEXT, created_at REAL, updated_at REAL);
+CREATE INDEX IF NOT EXISTS ix_appt_patient ON appointment_requests(patient_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_appt_status ON appointment_requests(status, created_at);
 """
 
 # Additive column migrations for databases created by earlier versions.

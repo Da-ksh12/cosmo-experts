@@ -49,11 +49,32 @@ class RequestClass:
         return self.kind in ("diagnosis_request", "medication_advice")
 
 
-def classify_request(text: str) -> RequestClass:
-    """Urgent first (approval-controlled policy), then the two refusals; everything else is education/extraction."""
+# Ordinary non-prescription skincare products and routines, and the medicines that are NOT that. "Should I use sunscreen?" is a skincare question; "should I use isotretinoin?" is not.
+SKINCARE_PRODUCTS = re.compile(
+    r"\b(?:sun ?screens?|spf|moistur\w+|cleansers?|face ?wash|toners?|serums?|emollients?|lotions?|creams?|gels?|ointments?|vitamin c|niacinamide|hyaluronic|ceramides?|exfoliat\w+|scrubs?|masks?|"
+    r"make-?up|foundation|lip balm|soaps?|shampoos?|conditioners?|retinol|salicylic|benzoyl|azelaic|glycolic|kojic|aha|bha|products?|routines?|skincare|skin care)\b", re.I)
+PRESCRIPTION_DRUGS = re.compile(
+    r"\b(?:isotretinoin|accutane|roaccutane|tretinoin|retin-?a|tazarotene|clindamycin|erythromycin|doxycycline|minocycline|lymecycline|tetracycline|azithromycin|amoxicillin|spironolactone|"
+    r"prednisolone|prednisone|clobetasol|betamethasone|mometasone|fluocinolone|acitretin|dapsone|metronidazole|methotrexate|finasteride|ivermectin|fluconazole|terbinafine|ketoconazole)\b", re.I)
+_MEDICINE_WORDS = re.compile(r"\b(?:medicines?|medications?|drugs?|tablets?|pills?|doses?|dosage|prescri\w+|antibiotics?|capsules?|injections?)\b", re.I)
+
+
+def _skincare_question(text: str) -> bool:
+    """A question about ordinary skincare products (sunscreen, cleanser, moisturiser ...) that mentions no prescription medicine and no medicine words."""
+    return bool(SKINCARE_PRODUCTS.search(text)) and not PRESCRIPTION_DRUGS.search(text) and not _MEDICINE_WORDS.search(text)
+
+
+_DOC_PRINTS = re.compile(r"\b(?:listed|printed|written|mentioned|prescribed)\b.{0,40}\b(?:on|in)\b.{0,30}\b(?:prescription|report|document|file|paper)\b|"
+                         r"\b(?:prescription|report|document|file)\b.{0,40}\b(?:lists?|says?|shows?|mentions?|prints?)\b", re.I)
+
+
+def classify_request(text: str, *, domain: str = "general") -> RequestClass:
+    """Urgent first (approval-controlled policy), then the two refusals; everything else is education/extraction.
+    domain='skincare': 'should I use / can I start ...' about an ordinary skincare product is education, not a request for medication advice.
+    domain='records' (and 'skincare'): 'which medicine is listed on my prescription' asks what a document prints, not what to take."""
     if clinical_content.urgent_policy().regex.search(text):
         return RequestClass("urgent", ("urgent_symptom_policy",))
-    if MEDICATION_REQUEST.search(text):
+    if MEDICATION_REQUEST.search(text) and not (domain == "skincare" and _skincare_question(text)) and not (domain in ("skincare", "records") and _DOC_PRINTS.search(text)):
         return RequestClass("medication_advice", ("medication_advice_request",))
     if DIAGNOSIS_REQUEST.search(text):
         return RequestClass("diagnosis_request", ("diagnosis_request",))
@@ -82,6 +103,13 @@ MED_CHANGE = re.compile(
     r"\b(?:(?:you should|you must|you need to|you can|i recommend|i suggest|consider|please)\s+(?:start|stop|take|increase|decrease|double|skip|switch|discontinue|reduce|use)\b|"
     r"(?:start|stop|increase|decrease|double|skip|switch|discontinue|reduce)\s+(?:your|the|taking)\s+(?:\w+\s+){0,2}(?:medicines?|medications?|tablets?|pills?|doses?|dosage|drugs?|creams?|ointments?|supplements?))",
     re.I)
+# Skincare guidance (kind="skincare_guidance"): general non-prescription self-care is allowed to say "use", "apply", "choose". What stays forbidden: changing a MEDICINE, naming a
+# prescription-only drug, and giving a dose or a strength. Diagnostic claims, certainty claims and unapproved emergency wording stay forbidden too.
+MED_CHANGE_SKINCARE = re.compile(
+    r"\b(?:(?:you should|you must|you need to|i recommend|i suggest|please)\s+(?:start|stop|increase|decrease|double|skip|switch|discontinue|reduce)\s+(?:\w+\s+){0,3}"
+    r"(?:medicines?|medications?|tablets?|pills?|doses?|dosage|drugs?|antibiotics?)|"
+    r"(?:start|stop|increase|decrease|double|skip|switch|discontinue|reduce)\s+(?:your|the|taking)\s+(?:\w+\s+){0,2}(?:medicines?|medications?|tablets?|pills?|doses?|dosage|drugs?|antibiotics?))", re.I)
+DOSE_OR_STRENGTH = re.compile(r"\b\d+(?:\.\d+)?\s?(?:mg|mcg|µg|ml|iu|units?)\b|\b\d+(?:\.\d+)?\s?%", re.I)
 OVERCLAIM = re.compile(r"\b(?:definitely|certainly|100\s?%|guarantee[sd]?|without (?:a )?doubt|proves?|proven|for sure|absolutely)\b", re.I)
 EMERGENCY_GUIDANCE = re.compile(r"\b(?:call (?:an |the |your )?(?:ambulance|emergency)|dial (?:911|112|108|999)|go to the (?:nearest )?(?:emergency|er\b|a&e)|emergency (?:room|number|services?))\b", re.I)
 _SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
@@ -132,8 +160,13 @@ def review_text(text: str, *, kind: str = "education", evidence: list[str] | Non
         sent_full, sent = sent, checked
         if DIAG_CLAIM.search(sent):
             found.append("diagnostic_claim")
-        if MED_CHANGE.search(sent):
+        if (MED_CHANGE_SKINCARE if kind == "skincare_guidance" else MED_CHANGE).search(sent):
             found.append("medication_change")
+        if kind == "skincare_guidance":
+            if PRESCRIPTION_DRUGS.search(sent):
+                found.append("prescription_drug")
+            if DOSE_OR_STRENGTH.search(sent):
+                found.append("dose_or_strength")
         if OVERCLAIM.search(sent):
             found.append("certainty_claim")
         if EMERGENCY_GUIDANCE.search(sent):
@@ -148,13 +181,13 @@ def review_text(text: str, *, kind: str = "education", evidence: list[str] | Non
     rev.allowed = not rev.violations
     if not rev.allowed:
         codes = set(rev.codes())
-        rev.replacement = REFUSE_MSG if codes & {"diagnostic_claim", "medication_change"} else UNSUPPORTED_MSG if "unapproved_emergency_guidance" not in codes else urgent_message()
+        rev.replacement = REFUSE_MSG if codes & {"diagnostic_claim", "medication_change", "prescription_drug", "dose_or_strength"} else UNSUPPORTED_MSG if "unapproved_emergency_guidance" not in codes else urgent_message()
     if experimental:
         rev.labels.append("research_only")
         rev.disclaimers += [EXPERIMENTAL_NOTE]
     if model_derived:
         rev.disclaimers.append(CONFIDENCE_NOTE)
-    if kind in ("extraction", "image_assessment", "education"):
+    if kind in ("extraction", "image_assessment", "education", "skincare_guidance"):
         rev.disclaimers.append(NOT_DIAGNOSIS)
     return rev
 

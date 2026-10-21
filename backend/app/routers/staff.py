@@ -276,7 +276,29 @@ def kb_approve(kid: str, body: KBApproval | None = None, user=Depends(require("d
 
 @router.get("/clinic/content-status")
 def content_status(user=Depends(doctor)):
-    return clinical_content.status()
+    from ..derm import reference as derm_reference, triage as derm_triage
+    return {**clinical_content.status(), "derm_library": derm_reference.status(), "derm_triage": derm_triage.policy_status()}
+
+
+@router.get("/clinic/derm-library")
+def derm_library(user=Depends(doctor)):
+    """The dermatology library as the clinic must review it: every article with its sources (publisher, link, the date the page showed, reuse basis), the claims a clinician has to confirm,
+    and where it stands now (approved in the review table, or shown to patients only with a label saying it is not reviewed yet). Approving happens in the knowledge-base screen."""
+    from ..derm import pack as derm_pack, reference as derm_reference, triage as derm_triage
+    try:
+        pk = derm_pack.load()
+    except derm_pack.PackError as e:
+        return {"usable": False, "problem": str(e)[:300]}
+    shown = derm_reference.resolve_all()
+    rows = {r["id"]: r for r in db.q("SELECT id,review_status,reviewed_by,reviewed_at,review_due,version FROM kb_articles WHERE id LIKE 'derm.%'")}
+    arts = []
+    for a in pk.articles.values():
+        r, kb = shown.get(a.id), rows.get(a.id)
+        arts.append({"id": a.id, "title": a.title, "topic": a.topic, "version": a.version, "tier": r.tier if r else "not_shown", "review_status": kb["review_status"] if kb else "not_in_review_table",
+                     "edited_by_clinician": bool(r and r.edited_by_clinician), "claims_to_verify": a.claims_to_verify, "contraindications": a.contraindications, "limitations": a.limitations,
+                     "sources": pk.source_list(a), "statements": sum(len(v) for v in a.sections.values())})
+    return {"usable": True, "status": derm_reference.status(), "pack": {"version": derm_pack.VERSION, "sha256": pk.sha256, "checked_on": pk.meta.get("checked_on"), "checked_by": pk.meta.get("checked_by")},
+            "articles": arts, "triage_rules": derm_triage.review_sheet(), "policy": derm_triage.policy_status()}
 
 
 # ---------------- monitoring ----------------

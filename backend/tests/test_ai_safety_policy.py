@@ -64,7 +64,11 @@ def test_the_assistant_uses_the_shared_wording_not_a_copy_of_it():
 def test_a_request_for_a_diagnosis_or_medicine_advice_is_refused_alike_on_every_surface(client, text):
     assert safety.classify_request(text).refuse, text
     a = assistant_ask(client, text)
-    assert a["abstained"] and a["reason"] == "clinical_decision" and a["answer"] == safety.REFUSE_MSG and a["sources"] == []
+    # The assistant declines the same requests but no longer with a bare sentence: the card says what it cannot do, what it can, and the way forward (tests/test_assistant_dispatch.py covers its content).
+    assert a["abstained"] and a["reason"] == "clinical_decision" and a["status"] == "abstained" and a["answer"].startswith("What I can and can't do here")
+    assert "can't diagnose" in a["answer"] or "can't recommend or choose medicines" in a["answer"]
+    assert not safety.PRESCRIPTION_DRUGS.search(a["answer"]) and not safety.DOSE_OR_STRENGTH.search(a["answer"]) and not a["card"]["route"] == "photo"
+    assert all(s["kind"] in ("derm_source", "knowledge_base") for s in a["sources"])                  # nothing from the person's documents is presented as the basis of a medical decision
     g = agent_chat(client, text)
     assert g["status"] == "refused" and g["answer"] == safety.REFUSE_MSG and g["steps"] == [] and g["sources"] == []
     k = knowledge(client, text)
@@ -75,7 +79,7 @@ def test_a_request_for_a_diagnosis_or_medicine_advice_is_refused_alike_on_every_
 def test_urgent_wording_is_the_one_the_approval_policy_controls_on_every_surface(client, text):
     want = clinical_content.urgent_policy().message
     a = assistant_ask(client, text)
-    assert a["reason"] == "urgent" and a["answer"] == want
+    assert a["reason"] == "urgent" and a["answer"] == want and a["card"]["escalation"]["level"] == "emergency"
     g = agent_chat(client, text)
     assert g["status"] == "urgent" and g["answer"] == want and g["steps"] == []
     k = knowledge(client, text)

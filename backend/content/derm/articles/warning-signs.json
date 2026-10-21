@@ -1,0 +1,61 @@
+{
+  "id": "derm.warning-signs",
+  "version": 1,
+  "language": "en",
+  "topic": "warning-signs",
+  "title": "Skin warning signs that need prompt help",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["warning signs", "emergency", "urgent", "infection", "infected", "cellulitis", "pus", "spreading", "fever", "rash with fever", "blisters", "blistering", "peeling", "shingles", "swelling", "allergic reaction", "anaphylaxis", "hives", "swollen lips", "swollen face", "bahut dard", "pus aa raha", "bukhar", "बुखार", "सूजन", "मवाद"],
+  "summary": "Most skin problems are not emergencies, but some signs mean the skin is infected, a reaction is serious, or another illness is involved. Those signs should not wait for an ordinary appointment. This page explains the main ones in plain language.",
+  "sections": {
+    "what_it_is": [
+      "Skin infection (cellulitis): skin that is sore, hot and puffy, often red, and sometimes blistered, with a feeling of being unwell. Redness is less obvious on brown and black skin, so warmth, swelling and pain matter. Early treatment can stop it becoming more serious.",
+      "A serious allergic reaction (anaphylaxis) develops within minutes: swelling of the lips, mouth, tongue or throat, trouble breathing or swallowing, feeling faint or confused, pale or blue skin, and sometimes an itchy raised rash.",
+      "A serious drug or skin reaction can start with flu-like symptoms, then a spreading painful rash with blisters and sores in the mouth, eyes or genitals, and skin that peels easily.",
+      "A rash that does not fade when a clear glass is pressed firmly against it, especially with fever, headache, a stiff neck, drowsiness or feeling very unwell, can be a sign of a serious blood or brain infection. Rashes are harder to see on brown and black skin, so look at paler areas such as the palms, soles, inside of the mouth and whites of the eyes.",
+      "Shingles can cause a painful blistering rash on one side of the body. A rash on or near the eye, or any change in vision, needs urgent attention.",
+      "Eczema that becomes infected can blister, crust, weep fluid and form pus-filled spots, with pain, warmth and sometimes fever."
+    ],
+    "may_contribute": [],
+    "self_care": [
+      "Do not wait or try home remedies when these signs are present: seek help promptly.",
+      "While arranging help, note when the symptoms began and which medicines have been taken, and bring the medicines along."
+    ],
+    "avoid": [
+      "Driving yourself when seriously unwell: ask someone to take you instead.",
+      "Waiting to see whether a spreading, painful or blistering rash settles on its own."
+    ],
+    "monitor": [
+      "A pen mark around the edge of a red area makes it easy to see whether it is spreading. Spreading, or increasing pain, is a reason to be seen the same day."
+    ],
+    "see_clinician": [
+      "Skin that is painful, hot and swollen: ask for an urgent appointment, or contact the local urgent medical helpline.",
+      "A shingles rash on or near the eye or nose, or any change in vision: urgent assessment the same day.",
+      "Eczema with blistering, crusting, weeping, pus or sudden worsening, or with a high temperature or feeling unwell: urgent assessment the same day."
+    ],
+    "urgent": [
+      "Emergency help now: swelling of the lips, mouth, tongue or throat, trouble breathing or swallowing; a rash that does not fade under a glass together with fever or feeling very unwell; a spreading, painful, blistering or peeling rash, or sores in the mouth or eyes; a skin infection with confusion, fainting, a very fast heartbeat, purple patches or cold, clammy or pale skin."
+    ],
+    "photo_limits": [
+      "A photo cannot judge how serious a reaction or infection is. Symptoms such as pain, fever, spread and feeling unwell matter more than how the skin looks in a picture."
+    ]
+  },
+  "terms": [
+    {"term": "cellulitis", "plain": "a bacterial infection of the skin and the tissue just under it"},
+    {"term": "anaphylaxis", "plain": "a sudden, severe allergic reaction that is a medical emergency"}
+  ],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a triage service. This page cannot cover every situation, and anyone who is worried or feels very unwell should seek help without waiting."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-cellulitis", "nhs-anaphylaxis", "nhs-stevens-johnson", "nhs-meningitis-symptoms", "nhs-shingles", "nhs-atopic-eczema", "nhs-acne"],
+  "claims_to_verify": [
+    "All emergency and urgent wording must match the clinic's approved urgent-symptom policy and name the local emergency number and urgent service.",
+    "The source pages are written for the NHS in England (for example the 999 and 111 numbers and A&E); the clinic must replace them with the services available in its region.",
+    "Two of the source pages (NHS Anaphylaxis, and others) show a scheduled review date that has passed: recheck the current wording."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician. Emergency wording is governed by the clinic's urgent-symptom policy."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

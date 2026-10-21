@@ -1,0 +1,64 @@
+{
+  "id": "derm.routine-basics",
+  "version": 1,
+  "language": "en",
+  "topic": "routine",
+  "title": "A simple, gentle skincare routine",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["skincare routine", "skin care routine", "routine", "skincare", "skin care", "cleanser", "moisturiser", "moisturizer", "gentle routine", "basic routine", "oily skin", "combination skin", "sensitive skin", "skin type", "face wash", "toner", "glowing skin", "healthy skin", "kaun sa face wash", "skin care routine batao", "रूटीन", "स्किन केयर", "फेस वाश"],
+  "summary": "A basic routine has three steps in the morning (gentle cleanse or rinse, moisturise, sunscreen) and two in the evening (gentle cleanse, moisturise). Adding products slowly, one at a time, makes it easy to tell what helps and what irritates.",
+  "sections": {
+    "what_it_is": [
+      "Skin types are a rough guide only: dry (tight or flaky), oily (shiny, blocked pores), combination, and sensitive (stings or reddens easily). Skin can change with season, age, hormones and products.",
+      "Most skin concerns respond better to a short, consistent routine than to many products."
+    ],
+    "may_contribute": [],
+    "self_care": [
+      "Morning: rinse or cleanse gently if needed, moisturise, then apply a broad-spectrum sunscreen of SPF 30 or higher.",
+      "Evening: take off sunscreen and make-up, cleanse gently with fingertips and lukewarm water, pat dry, and moisturise.",
+      "Wash up to twice a day and after sweating; more often is not better.",
+      "Choose fragrance-free products. If the skin is acne-prone, choose non-comedogenic or oil-free products.",
+      "Dry skin does best with a richer cream or ointment; oily skin often prefers a lighter gel or lotion.",
+      "Add one new product at a time, a couple of weeks apart, and test it on a small patch first.",
+      "Give each product several weeks before judging it, unless it burns or stings, in which case stop it.",
+      "Keep it simple. Every extra product, especially strong active ingredients, raises the chance of irritation."
+    ],
+    "avoid": [
+      "Scrubbing and strong exfoliating acids used often.",
+      "Very hot water.",
+      "Using several strong active ingredients at once.",
+      "Sharing products or applicators."
+    ],
+    "monitor": [
+      "Take a photo in the same light once a week for the first month of a new routine and note any changes."
+    ],
+    "see_clinician": [
+      "A concern is not improving after about six to eight weeks, is painful, spreading or leaving marks.",
+      "A routine always stings or causes redness."
+    ],
+    "urgent": [],
+    "photo_limits": [
+      "A photo cannot show skin type, and it cannot tell whether a product suits a person."
+    ]
+  },
+  "terms": [
+    {"term": "fragrance-free", "plain": "no fragrance ingredients were added; unscented products can still contain masking ingredients"},
+    {"term": "non-comedogenic", "plain": "made so that it is less likely to block pores"}
+  ],
+  "contraindications": [
+    "If pregnant, planning a pregnancy or breastfeeding, ask a doctor or pharmacist before adding any active ingredient to the routine."
+  ],
+  "limitations": [
+    "General education. A routine that suits most skin may not suit skin with eczema, rosacea or other conditions; those need their own advice."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-acne", "aad-acne-tips", "aad-dry-skin-tips", "aad-test-products", "nhs-emollients", "nhs-sunscreen", "aad-sunscreen-faqs"],
+  "claims_to_verify": [
+    "The skin-type descriptions are general dermatology education and are not taken from one source: the clinic should confirm or replace them.",
+    "Matching richer creams to dry skin and lighter gels to oily skin is appropriate general advice.",
+    "Giving each new product several weeks is consistent with the clinic's practice."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

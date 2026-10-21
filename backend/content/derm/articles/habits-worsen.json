@@ -1,0 +1,71 @@
+{
+  "id": "derm.habits-worsen",
+  "version": 1,
+  "language": "en",
+  "topic": "habits",
+  "title": "Skincare habits that can worsen irritation",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["habits", "mistakes", "skin care mistakes", "what to avoid", "avoid", "bad for skin", "worsen", "make worse", "picking", "popping", "squeezing", "scrubbing", "over washing", "overwashing", "home remedies", "home remedy", "lemon", "toothpaste", "baking soda", "gharelu nuskhe", "nuskhe", "gharelu upay", "घरेलू नुस्खे", "नुस्खे", "नींबू"],
+  "summary": "Many skin problems get worse because of how the skin is treated, not because of dirt. The main culprits are scrubbing, washing too often, picking, hot water, changing products constantly and stacking strong ingredients. Gentle, consistent care usually works better.",
+  "sections": {
+    "what_it_is": [
+      "Skin that is over-washed, scrubbed or treated with many strong products loses its protective barrier and becomes dry, red and sore.",
+      "Popping or squeezing spots can push material deeper, increase inflammation and leave marks or scars."
+    ],
+    "may_contribute": [
+      "Switching products every week or so, so nothing gets a fair trial. Many treatments need six to eight weeks, and clearing can take three to four months.",
+      "Treating only the visible spot, when acne treatments are meant to be applied thinly across the whole acne-prone area.",
+      "Using make-up, hair or skin products that block pores, especially hair oils or pomades that reach the forehead and temples.",
+      "Sleeping in make-up, and sharing make-up, brushes or applicators.",
+      "Washing the face many times a day, or scrubbing hard.",
+      "Using very hot water.",
+      "Rubbing off sweat during exercise instead of gently patting it away.",
+      "Wearing caps and hats that are not washed often, because sweat and oil build up."
+    ],
+    "self_care": [
+      "Wash gently with fingertips, up to twice a day and after sweating, then pat dry.",
+      "Pat sweat away with a clean towel.",
+      "Moisturise with a product made for the skin type, and avoid drying alcohol-based toners.",
+      "Give a routine or treatment a fair trial before changing it, unless it burns or stings.",
+      "Remove make-up every night, and keep brushes and applicators personal.",
+      "Wash caps, hats and pillowcases regularly."
+    ],
+    "avoid": [
+      "Picking, popping or squeezing spots.",
+      "Home remedies that are strong or acidic on the skin, such as lemon juice, toothpaste or baking soda. They can burn the skin and leave dark marks. A clinician or pharmacist can suggest safer options.",
+      "Skin-lightening creams of unknown content, and bleach or other household chemicals on the skin.",
+      "Using leftover steroid or medicated creams on the face or an unknown rash without advice.",
+      "Many new products at once.",
+      "Sunbeds and deliberate tanning."
+    ],
+    "monitor": [
+      "Write down the date each product is started or stopped. If the skin gets worse after a change, that note points to the likely cause."
+    ],
+    "see_clinician": [
+      "The skin stays irritated after simplifying the routine for a couple of weeks.",
+      "Deep or painful acne, or marks and scars forming.",
+      "Any burn, blister or rash after a home remedy or a product."
+    ],
+    "urgent": [
+      "Spreading redness, pain, heat, swelling or pus, or a fever after a burn, a picked spot or a procedure."
+    ],
+    "photo_limits": [
+      "A photo cannot show which habit is causing the problem."
+    ]
+  },
+  "terms": [],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a diagnosis. Which habit matters most differs from person to person."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["aad-acne-habits", "aad-acne-tips", "aad-acne-darker-skin", "nhs-acne", "aad-fade-dark-spots", "fda-skin-lightening", "aad-test-products"],
+  "claims_to_verify": [
+    "The warning about lemon juice, toothpaste and baking soda is not taken from the listed pages; it is general dermatology advice and needs the clinic's confirmation or removal.",
+    "The warning about leftover steroid or medicated creams on the face or on an unknown rash is general dermatology advice and needs the clinic's confirmation.",
+    "Allowing three to four months for full clearing of acne is consistent with the clinic's practice."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

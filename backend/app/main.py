@@ -1,3 +1,4 @@
+import logging
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -13,7 +14,7 @@ from .config import CORS_ORIGINS
 from .datasets import registry
 from .gateway import api as gateway_api, jobs as gateway_jobs
 from .middleware import Guard
-from .routers import agent as agent_router, ai as ai_router, auth as auth_router, care, files as files_router, patient, photo_analysis as photo_analysis_router, staff
+from .routers import agent as agent_router, ai as ai_router, auth as auth_router, booking as booking_router, care, files as files_router, patient, photo_analysis as photo_analysis_router, staff
 
 WARM = {"embeddings": "pending"}
 
@@ -52,6 +53,11 @@ def _startup():
         security.seed_users()
     registry.seed()
     clinical_content.seed_kb()          # shipped drafts are inserted as DRAFT only; the assistant ignores them until a doctor approves
+    from .derm import pack as derm_pack
+    try:
+        derm_pack.seed_drafts()         # the dermatology library, as DRAFT rows the clinic's doctors can review, edit and approve in the clinic workspace (never approved here)
+    except derm_pack.PackError as e:
+        logging.getLogger("cosmo.startup").error("the dermatology library did not load, so it is not offered: %s", e)
 
 
 app = FastAPI(title="Cosmo Experts AI", version="1.0.0", lifespan=lifespan)
@@ -75,6 +81,7 @@ app.include_router(ai_router.router)
 app.include_router(agent_router.router)
 app.include_router(gateway_api.router)
 app.include_router(photo_analysis_router.router)
+app.include_router(booking_router.router)
 app.add_middleware(Guard)
 app.add_middleware(limits.RequestLimits)                     # outermost: size, concurrency and time limits apply before anything else runs
 

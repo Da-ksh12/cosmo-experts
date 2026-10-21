@@ -1,0 +1,70 @@
+{
+  "id": "derm.acne-marks-scars",
+  "version": 1,
+  "language": "en",
+  "topic": "acne-marks",
+  "title": "Dark marks and scars after acne",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["acne marks", "acne scars", "acne scar", "scars", "scar", "dark marks", "dark spots after pimples", "pimple marks", "post inflammatory hyperpigmentation", "pih", "pitted", "keloid", "daag", "daag dhabbe", "pimples ke daag", "दाग", "दाग धब्बे", "निशान"],
+  "summary": "After a pimple heals, a flat dark or red mark can remain. This is different from a scar, which changes the texture of the skin. Marks often fade slowly with sun protection and gentle care, while scars usually need a dermatologist's advice.",
+  "sections": {
+    "what_it_is": [
+      "A flat dark mark after a pimple is called post-inflammatory hyperpigmentation. It is the skin's reaction to inflammation and is common, particularly in deeper skin tones. It is not dirt and it is not a scar.",
+      "A pink or red mark can also follow a pimple. Redness can be harder to see on brown and black skin.",
+      "Scars change the texture of the skin: they can be pitted, or raised and firm. In people with darker skin, raised keloid-type scars and dark patches are more likely after severe acne."
+    ],
+    "may_contribute": [
+      "Picking or squeezing spots raises the chance of marks and scars.",
+      "Sun exposure can make dark marks darker and slower to fade.",
+      "Irritating products, especially ones that burn or sting, can darken marks.",
+      "Acne that is left untreated for a long time or is severe is more likely to leave marks and scars."
+    ],
+    "self_care": [
+      "Treat the acne itself first. Marks usually start to fade once new spots stop forming.",
+      "Wear a broad-spectrum, water-resistant sunscreen of SPF 30 or higher every day, and reapply about every two hours outdoors. A tinted sunscreen that contains iron oxide also protects against visible light, which can darken marks in deeper skin tones.",
+      "Choose gentle, fragrance-free products, and stop any product that burns or stings.",
+      "Be patient. Marks only a few shades darker than the surrounding skin often fade over about six to twelve months; deeper marks can take years.",
+      "Some products sold without a prescription contain ingredients such as azelaic acid, vitamin C or retinoid-type ingredients that are used for dark marks. A pharmacist or dermatologist can say which are suitable for a given skin type before starting."
+    ],
+    "avoid": [
+      "Picking or squeezing spots.",
+      "Skin-lightening creams of unknown content, including imported products without a clear label. Some have been found to contain mercury or hidden strong steroids, which can seriously harm the skin and health.",
+      "Applying bleach or other household chemicals to the skin.",
+      "At-home or salon peels, microneedling and laser treatments without advice. In deeper skin tones they can cause lasting dark or light patches."
+    ],
+    "monitor": [
+      "Photograph the marks in the same light every four weeks and note whether they look lighter, the same or darker.",
+      "Note any new marks after a new product or a procedure."
+    ],
+    "see_clinician": [
+      "Marks are not fading after several months of sun protection and gentle care.",
+      "Scars are forming, thickening or becoming raised, or they bother you.",
+      "A dermatologist can choose and combine stronger treatments safely, including prescription creams and in-clinic procedures, and can say which suit your skin tone."
+    ],
+    "urgent": [],
+    "photo_limits": [
+      "A photo has difficulty showing the difference between a flat mark and a slightly raised scar, and colours change with lighting and camera settings."
+    ]
+  },
+  "terms": [
+    {"term": "post-inflammatory hyperpigmentation", "plain": "a flat, darker mark that remains after skin inflammation such as a pimple has healed"},
+    {"term": "keloid", "plain": "a raised, firm scar that grows beyond the original injury"}
+  ],
+  "contraindications": [
+    "Ingredients used for dark marks can irritate skin and some are not suitable in pregnancy or breastfeeding. Ask a doctor or pharmacist before starting."
+  ],
+  "limitations": [
+    "General education, not a diagnosis. A dark mark that is new, changing, itchy or bleeding should be looked at in person (see the article on moles and spots).",
+    "Fading times are typical ranges, not a prediction for any one person."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-acne", "aad-fade-dark-spots", "aad-acne-darker-skin", "aad-melasma-self-care", "fda-skin-lightening"],
+  "claims_to_verify": [
+    "Marks a few shades darker than the skin usually fade within about six to twelve months, and deeper marks can take years.",
+    "In deeper skin tones, peels, microneedling and lasers can cause lasting dark or light patches, so advice from a dermatologist experienced with the patient's skin tone should come first.",
+    "The statement about raised keloid-type scars after severe acne in people with darker skin is accurate and appropriately worded."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

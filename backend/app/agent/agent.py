@@ -226,7 +226,7 @@ def run(user: dict, message: str, *, request_id: str = "", cancel=None) -> Agent
     s = Session(user, rid, tid, cancel)
     notes: list[str] = []
     prov_name = "none"
-    cls = safety.classify_request(msg)
+    cls = safety.classify_request(msg, domain="records")
     if cls.kind == "urgent":
         intent, ans = "urgent", compose.Answer(safety.urgent_message(), status="urgent", reason="urgent")
     elif cls.refuse:

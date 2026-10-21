@@ -1,0 +1,160 @@
+{
+  "_meta": {
+    "pack": "derm-education",
+    "purpose": "The sources the dermatology and skincare education pack (content/derm/articles) is written from. Every entry was opened on the accessed date and read; the dates are the ones the page itself showed. Nothing here was invented or guessed: a page that could not be opened is not listed.",
+    "checked_on": "2026-10-21",
+    "checked_by": "AI-assisted software draft (Claude). Not a clinician. A qualified clinician must still confirm the wording of every article before it is treated as approved.",
+    "how_the_text_is_written": "All wording in the articles is original (short plain-language statements written for patients). The sources are summarised, never copied, and every article names the sources it rests on. No images are used.",
+    "terms_bases": {
+      "ogl_v3": "NHS website content is released under the Open Government Licence v3.0 (https://www.nhs.uk/our-policies/terms-and-conditions/, read 2026-10-21). Adapted wording must not be presented as the NHS's own text; the required notice is: 'Contains public sector information licensed under the Open Government Licence v3.0.'",
+      "us_gov_public_domain": "A work of the US federal government (MedlinePlus health-topic pages, NIH, CDC, FDA pages): generally not copyrighted. MedlinePlus asks for the credit 'Source: MedlinePlus, National Library of Medicine' (https://medlineplus.gov/about/using/usingcontent/, read 2026-10-21). Page-level notices were checked; third-party images are never used.",
+      "restricted_facts_only": "Copyrighted website. Its terms (https://www.aad.org/terms-use, summarised from a search result 2026-10-21; the page itself was not opened) forbid reproducing or ingesting its content without written permission. So NO wording is taken from it: the pack states widely-held facts in original words, with a link for the reader, and every such statement is also listed for the clinic's own review. If the clinic wants closer wording it must ask the owner for permission (permissions@aad.org) and have its counsel confirm."
+    }
+  },
+  "sources": {
+    "nhs-acne": {
+      "publisher": "NHS (England)", "title": "Acne", "url": "https://www.nhs.uk/conditions/acne/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2026-09-22", "next_review_due": "2029-09-22", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-contact-dermatitis": {
+      "publisher": "NHS (England)", "title": "Contact dermatitis", "url": "https://www.nhs.uk/conditions/contact-dermatitis/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2023-05-03", "next_review_due": "2026-05-03", "accessed": "2026-10-21",
+      "source_review_overdue": true,
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-rosacea": {
+      "publisher": "NHS (England)", "title": "Rosacea", "url": "https://www.nhs.uk/conditions/rosacea/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2023-03-17", "next_review_due": "2026-03-17", "accessed": "2026-10-21",
+      "source_review_overdue": true,
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-atopic-eczema": {
+      "publisher": "NHS (England)", "title": "Atopic eczema", "url": "https://www.nhs.uk/conditions/atopic-eczema/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2024-09-06", "next_review_due": "2027-09-06", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-emollients": {
+      "publisher": "NHS (England)", "title": "Emollients", "url": "https://www.nhs.uk/tests-and-treatments/emollients/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2023-10-24", "next_review_due": "2026-10-24", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-sunscreen": {
+      "publisher": "NHS (England)", "title": "Sunscreen and sun safety", "url": "https://www.nhs.uk/live-well/seasonal-health/sunscreen-and-sun-safety/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2026-03-24", "next_review_due": "2029-03-24", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-melanoma-symptoms": {
+      "publisher": "NHS (England)", "title": "Symptoms of melanoma skin cancer", "url": "https://www.nhs.uk/conditions/melanoma-skin-cancer/symptoms/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2026-07-15", "next_review_due": "2029-07-15", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-cellulitis": {
+      "publisher": "NHS (England)", "title": "Cellulitis", "url": "https://www.nhs.uk/conditions/cellulitis/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2024-04-18", "next_review_due": "2027-04-18", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-meningitis-symptoms": {
+      "publisher": "NHS (England)", "title": "Meningitis: symptoms", "url": "https://www.nhs.uk/conditions/meningitis/symptoms/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2026-06-12", "next_review_due": "2029-06-12", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-anaphylaxis": {
+      "publisher": "NHS (England)", "title": "Anaphylaxis", "url": "https://www.nhs.uk/conditions/anaphylaxis/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2023-06-21", "next_review_due": "2026-06-21", "accessed": "2026-10-21",
+      "source_review_overdue": true,
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-stevens-johnson": {
+      "publisher": "NHS (England)", "title": "Stevens-Johnson syndrome", "url": "https://www.nhs.uk/conditions/stevens-johnson-syndrome/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2026-03-04", "next_review_due": "2029-03-04", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "nhs-shingles": {
+      "publisher": "NHS (England)", "title": "Shingles", "url": "https://www.nhs.uk/conditions/shingles/",
+      "kind": "public_health_service_patient_information", "page_reviewed": "2023-11-23", "next_review_due": "2026-11-23", "accessed": "2026-10-21",
+      "terms": {"basis": "ogl_v3", "url": "https://www.nhs.uk/our-policies/terms-and-conditions/", "checked": "2026-10-21"}
+    },
+    "medlineplus-acne": {
+      "publisher": "MedlinePlus, National Library of Medicine (USA)", "title": "Acne", "url": "https://medlineplus.gov/acne.html",
+      "kind": "government_health_topic_summary", "page_reviewed": "2024-10-12", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "us_gov_public_domain", "url": "https://medlineplus.gov/about/using/usingcontent/", "checked": "2026-10-21"}
+    },
+    "medlineplus-pigmentation": {
+      "publisher": "MedlinePlus, National Library of Medicine (USA)", "title": "Skin Pigmentation Disorders", "url": "https://medlineplus.gov/skinpigmentationdisorders.html",
+      "kind": "government_health_topic_summary", "page_reviewed": "2025-09-19", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "us_gov_public_domain", "url": "https://medlineplus.gov/about/using/usingcontent/", "checked": "2026-10-21"}
+    },
+    "medlineplus-sun-exposure": {
+      "publisher": "MedlinePlus, National Library of Medicine (USA)", "title": "Sun Exposure", "url": "https://medlineplus.gov/sunexposure.html",
+      "kind": "government_health_topic_summary", "page_reviewed": "2026-08-25", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "us_gov_public_domain", "url": "https://medlineplus.gov/about/using/usingcontent/", "checked": "2026-10-21"}
+    },
+    "niams-acne": {
+      "publisher": "National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH (USA)", "title": "Acne", "url": "https://www.niams.nih.gov/health-topics/acne",
+      "kind": "government_health_topic_summary", "page_reviewed": "2023-07", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "us_gov_public_domain", "url": "https://www.niams.nih.gov/", "checked": "2026-10-21", "note": "The page shows no copyright or reuse statement; as a work of a US federal agency it is generally in the public domain."}
+    },
+    "cdc-sun-safety": {
+      "publisher": "Centers for Disease Control and Prevention (USA)", "title": "Sun Safety Facts", "url": "https://www.cdc.gov/skin-cancer/sun-safety/index.html",
+      "kind": "government_public_health_guidance", "page_reviewed": "2026-06-17", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "us_gov_public_domain", "url": "https://www.cdc.gov/", "checked": "2026-10-21", "note": "The page shows no reuse statement; as a work of a US federal agency it is generally in the public domain."}
+    },
+    "fda-skin-lightening": {
+      "publisher": "US Food and Drug Administration", "title": "Skin Facts! What You Need to Know About Skin Lightening Products",
+      "url": "https://www.fda.gov/consumers/health-fraud-scams/skin-facts-what-you-need-know-about-skin-lightening-products",
+      "kind": "government_consumer_safety_notice", "page_reviewed": "2026-05-11", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "us_gov_public_domain", "url": "https://www.fda.gov/", "checked": "2026-10-21", "note": "The page is dated 'content current as of'; it names mercury and hydroquinone products. Details of the harm come from the FDA's linked pages, which were not opened; this pack states only what the opened page says."}
+    },
+    "aad-acne-tips": {
+      "publisher": "American Academy of Dermatology", "title": "Acne: Tips for managing", "url": "https://www.aad.org/public/diseases/acne/skin-care/tips",
+      "kind": "professional_society_patient_education", "page_reviewed": "2022-11-16", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21"}
+    },
+    "aad-acne-habits": {
+      "publisher": "American Academy of Dermatology", "title": "10 skin care habits that can worsen acne", "url": "https://www.aad.org/public/diseases/acne/skin-care/habits-stop",
+      "kind": "professional_society_patient_education", "page_reviewed": null, "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21", "note": "The page shows no review date (only a copyright year)."}
+    },
+    "aad-acne-darker-skin": {
+      "publisher": "American Academy of Dermatology", "title": "10 tips for clearing acne in darker skin tones", "url": "https://www.aad.org/public/diseases/acne/diy/skin-color",
+      "kind": "professional_society_patient_education", "page_reviewed": null, "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21", "note": "The page shows no review date (only a copyright year)."}
+    },
+    "aad-fade-dark-spots": {
+      "publisher": "American Academy of Dermatology", "title": "How to fade dark spots in darker skin tones", "url": "https://www.aad.org/public/everyday-care/skin-care-secrets/routine/fade-dark-spots",
+      "kind": "professional_society_patient_education", "page_reviewed": "2025-03-10", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21"}
+    },
+    "aad-melasma-self-care": {
+      "publisher": "American Academy of Dermatology", "title": "Melasma: Self-care", "url": "https://www.aad.org/public/diseases/a-z/melasma-self-care",
+      "kind": "professional_society_patient_education", "page_reviewed": "2023-09-12", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21"}
+    },
+    "aad-dry-skin-tips": {
+      "publisher": "American Academy of Dermatology", "title": "Dermatologists' top tips for relieving dry skin", "url": "https://www.aad.org/public/everyday-care/skin-care-basics/dry/dermatologists-tips-relieve-dry-skin",
+      "kind": "professional_society_patient_education", "page_reviewed": "2026-01-02", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21"}
+    },
+    "aad-sunscreen-faqs": {
+      "publisher": "American Academy of Dermatology", "title": "Sunscreen FAQs", "url": "https://www.aad.org/media/stats-sunscreen",
+      "kind": "professional_society_patient_education", "page_reviewed": "2025-02-11", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21"}
+    },
+    "aad-how-to-apply-sunscreen": {
+      "publisher": "American Academy of Dermatology", "title": "How to apply sunscreen", "url": "https://www.aad.org/public/everyday-care/sun-protection/shade-clothing-sunscreen/how-to-apply-sunscreen",
+      "kind": "professional_society_patient_education", "page_reviewed": "2025-08-15", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21"}
+    },
+    "aad-test-products": {
+      "publisher": "American Academy of Dermatology", "title": "How to test skin care products", "url": "https://www.aad.org/public/everyday-care/skin-care-secrets/prevent-skin-problems/test-skin-care-products",
+      "kind": "professional_society_patient_education", "page_reviewed": "2021-08-10", "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21"}
+    },
+    "aad-abcdes": {
+      "publisher": "American Academy of Dermatology", "title": "What to look for: ABCDEs of melanoma", "url": "https://www.aad.org/public/diseases/skin-cancer/find/at-risk/abcdes",
+      "kind": "professional_society_patient_education", "page_reviewed": null, "next_review_due": null, "accessed": "2026-10-21",
+      "terms": {"basis": "restricted_facts_only", "url": "https://www.aad.org/terms-use", "checked": "2026-10-21", "note": "The page shows no review date (only a copyright year)."}
+    }
+  }
+}

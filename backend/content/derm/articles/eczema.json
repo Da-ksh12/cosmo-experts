@@ -1,0 +1,71 @@
+{
+  "id": "derm.eczema",
+  "version": 1,
+  "language": "en",
+  "topic": "eczema",
+  "title": "Eczema: itchy, dry, inflamed patches",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["eczema", "atopic dermatitis", "dermatitis", "itchy patches", "itchy rash", "dry itchy skin", "flare", "flare up", "scratching", "dry patches", "psoriasis", "khujli", "khujli wale daag", "एक्जिमा", "एग्जिमा", "खुजली", "चकत्ते"],
+  "summary": "Eczema (atopic dermatitis) causes dry, itchy, red or darker patches that come and go. It is not contagious. Regular moisturising, avoiding triggers and not scratching help, and infected or severe eczema needs a clinician.",
+  "sections": {
+    "what_it_is": [
+      "Eczema is a common long-term skin condition that causes dry, itchy patches. It often starts in childhood but can begin at any age, and it can affect any part of the body.",
+      "On brown and black skin, the patches may look darker brown, purple or grey rather than red.",
+      "It is not contagious. Other conditions, such as psoriasis or a fungal infection, can look similar, so a patch that does not respond to moisturising deserves a clinician's look."
+    ],
+    "may_contribute": [
+      "Soap, washing detergent and other irritants.",
+      "Some fabrics, such as wool, and heat or sweating.",
+      "Pets, pollen and dust mites, and certain foods for some people. Diet should not be changed unless a doctor advises it.",
+      "Dry air, cold weather and stress."
+    ],
+    "self_care": [
+      "Moisturise at least twice a day, and keep doing it when the skin looks better.",
+      "Wash with a moisturiser used as a soap substitute instead of ordinary soap.",
+      "Notice and avoid the triggers that seem to bring on flares.",
+      "Keep nails short, and gently pat or rub an itchy area instead of scratching.",
+      "Keep cool, and wear loose, soft clothing such as cotton.",
+      "Take moisturiser from a tub with a clean spoon or use a pump, and do not share it.",
+      "Moisturisers can catch fire easily on clothing and bedding, so keep them away from flames and cigarettes."
+    ],
+    "avoid": [
+      "Scratching.",
+      "Known triggers such as perfumed products and harsh soaps.",
+      "Overheating and very hot baths or showers.",
+      "Aqueous cream as a moisturiser or soap substitute, because it can irritate the skin."
+    ],
+    "monitor": [
+      "Note what happens before flares (new products, weather, illness, stress) and take dated photos of patches.",
+      "Note whether the itch disturbs sleep."
+    ],
+    "see_clinician": [
+      "The symptoms sound like eczema, or treatments are not helping.",
+      "It is severe, or it affects sleep, school, work or mood.",
+      "Prescription creams for flares should be used only as a clinician directs."
+    ],
+    "urgent": [
+      "Blistering, crusting, weeping fluid, pus-filled spots, pain, swelling or warmth, sudden worsening or spreading, a high temperature or feeling generally unwell. These can mean an infection or a more serious complication and need an urgent assessment."
+    ],
+    "photo_limits": [
+      "A photo cannot tell eczema from psoriasis, a fungal infection or contact dermatitis, and it cannot show itch."
+    ]
+  },
+  "terms": [
+    {"term": "atopic dermatitis", "plain": "the most common type of eczema, linked to dry, easily irritated skin and often to hay fever or asthma"},
+    {"term": "flare", "plain": "a period when eczema gets worse"}
+  ],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a diagnosis."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-atopic-eczema", "nhs-emollients", "aad-dry-skin-tips"],
+  "claims_to_verify": [
+    "The statement that diet should not be changed unless a doctor advises it matches the clinic's practice.",
+    "The urgent list (infection or a herpes complication) is complete and worded proportionately.",
+    "Using a moisturiser as a soap substitute is practical for the clinic's patients, where leave-on emollient washes may not be easy to buy."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

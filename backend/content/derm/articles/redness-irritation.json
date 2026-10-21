@@ -1,0 +1,75 @@
+{
+  "id": "derm.redness-irritation",
+  "version": 1,
+  "language": "en",
+  "topic": "redness",
+  "title": "Red, sore or irritated skin",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["redness", "red skin", "red face", "face is red", "skin is red", "skin looks red", "red and sore", "red and itchy", "red and stings", "red and irritated", "irritation", "irritated", "sensitive skin", "burning", "stinging", "stings", "itchy", "itching", "rash", "flushing", "inflamed", "swollen", "sunburn", "lalpan", "laal", "jalan", "khujli", "chehra laal", "लालिमा", "जलन", "खुजली", "रैश"],
+  "summary": "Red, sore, itchy or stinging skin has many possible causes: irritation from products or weather, an allergic reaction, eczema, rosacea, acne or sunburn. Often the first steps are to simplify the routine and avoid the likely trigger. Redness can be harder to see on brown and black skin, so how the skin feels matters as much as its colour.",
+  "sections": {
+    "what_it_is": [
+      "Irritation is the most common reason. Soaps, detergents, some skincare ingredients and frequent contact with water can irritate skin, and it often improves once the trigger is found and avoided.",
+      "Allergic reactions are less common. Fragrances, preservatives, nickel and some cosmetics can cause them.",
+      "Other common causes include eczema, rosacea, acne and sunburn.",
+      "On brown or black skin, redness may look dark brown, purple or grey rather than red. Sunburn on darker skin can look like darker patches."
+    ],
+    "may_contribute": [
+      "A new product, or several new products at once.",
+      "Fragrance, essential oils and alcohol-based products.",
+      "Scrubbing, strong exfoliating acids or using many active ingredients together.",
+      "Hot water, wind, cold, heat and sweat.",
+      "Sun exposure.",
+      "Stress, for some people."
+    ],
+    "self_care": [
+      "Stop any product started recently and rinse the area with lukewarm water.",
+      "Keep to a short, bland routine for a week or two: a gentle fragrance-free cleanser, a plain moisturiser and a daily sunscreen. Mineral sunscreens are often recommended for sensitive skin.",
+      "A cool compress can soothe the skin.",
+      "Moisturise often, especially dry or itchy areas.",
+      "Add products back one at a time, a couple of weeks apart, and test each on a small patch first."
+    ],
+    "avoid": [
+      "Fragrance, essential oils, alcohol-based toners, scrubs and strong exfoliating acids while the skin is irritated.",
+      "Hot water on the face and body.",
+      "Rubbing and scratching.",
+      "Using several new active ingredients at the same time."
+    ],
+    "monitor": [
+      "Note when the redness started, what was applied just before, and whether it eases within a few days once the suspected trigger is removed.",
+      "Take a photo in the same light every few days."
+    ],
+    "see_clinician": [
+      "The skin is not improving within about one to two weeks after removing likely triggers.",
+      "It keeps coming back, or the trigger cannot be found. A dermatologist can arrange patch testing to look for allergies.",
+      "It is severe, very uncomfortable, or affecting sleep or daily life."
+    ],
+    "urgent": [
+      "Swelling of the lips, tongue, face or throat, or trouble breathing.",
+      "Redness that is spreading quickly, hot, swollen, very painful or oozing pus, or comes with a fever.",
+      "A red, painful eye, light sensitivity or blurred vision."
+    ],
+    "photo_limits": [
+      "Redness is harder to see in a photo on brown and black skin, and photos cannot show warmth, tenderness or itch.",
+      "A photo cannot tell irritation from an allergy, eczema, rosacea or an infection."
+    ]
+  },
+  "terms": [
+    {"term": "irritant reaction", "plain": "skin that is sore or inflamed because something directly bothered it, not because of an allergy"},
+    {"term": "patch testing", "plain": "a test by a clinician that applies small amounts of common allergens to the skin to find out what causes a reaction"}
+  ],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a diagnosis. Red skin can have many causes, including infections."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-contact-dermatitis", "nhs-rosacea", "aad-test-products", "aad-sunscreen-faqs", "nhs-emollients"],
+  "claims_to_verify": [
+    "Keeping to a bland routine for one to two weeks and then adding products back one at a time is appropriate advice for the clinic's patients.",
+    "Mineral sunscreens are a reasonable suggestion for irritated or sensitive skin.",
+    "The urgent list is complete and worded proportionately."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

@@ -1,0 +1,63 @@
+{
+  "id": "derm.when-to-see",
+  "version": 1,
+  "language": "en",
+  "topic": "when-to-see",
+  "title": "Self-care or professional care? When to see a clinician",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["when to see a doctor", "when to see a dermatologist", "should i see a doctor", "should i see a dermatologist", "see a dermatologist", "see a doctor", "need a doctor", "need a dermatologist", "is it serious", "is this serious", "how serious", "self care or doctor", "kab doctor ko dikhaye", "doctor ko dikhana", "dermatologist ko dikhana", "डॉक्टर को दिखाना", "त्वचा रोग विशेषज्ञ"],
+  "summary": "Many skin concerns are reasonable to manage with gentle self-care for a few weeks. Some need a clinician's advice soon, and a few need help the same day or right away. The lists below describe which is which; if in doubt, ask.",
+  "sections": {
+    "what_it_is": [
+      "Self-care is reasonable when a concern is mild, recent, not painful, not spreading, not leaving scars, and improving or stable, with no fever.",
+      "Booking a dermatologist appointment makes sense for concerns that last, keep coming back, leave marks or scars, or affect sleep, mood or confidence.",
+      "Some signs need an urgent assessment, and a few call for emergency help."
+    ],
+    "may_contribute": [],
+    "self_care": [
+      "Keep the routine gentle and simple while the concern is mild, and keep a dated photo record.",
+      "Decide on a review point in advance, for example about six to eight weeks for acne, or one to two weeks for an irritation after removing likely triggers."
+    ],
+    "avoid": [
+      "Waiting for weeks with a spot that is changing, bleeding or not healing.",
+      "Trying many new products at once to 'fix' a concern."
+    ],
+    "monitor": [
+      "Look for any change in size, shape, colour, pain, itch, bleeding or spread."
+    ],
+    "see_clinician": [
+      "Self-care has not helped after about six to eight weeks (acne) or about one to two weeks (an irritation).",
+      "Spots are deep, painful or leaving scars.",
+      "Dryness or itching continues, or the skin is cracking or bleeding.",
+      "A rash keeps returning, has no clear cause, or affects sleep, work or school.",
+      "A mole or spot is new, changing, itchy, bleeding or crusting, or a sore does not heal.",
+      "A new or unusual mark has not gone away after a few weeks, including on the palms or soles.",
+      "A dark streak appears under a nail without an injury.",
+      "A skin concern is affecting mood or confidence."
+    ],
+    "urgent": [
+      "Painful, hot, swollen, spreading skin, pus, red streaks, or a fever with a skin infection: ask for an urgent appointment the same day, or contact the local urgent medical helpline.",
+      "A painful blistering rash on one side of the face or near an eye, or any eye pain, light sensitivity or blurred vision with a skin condition: urgent assessment the same day.",
+      "Eczema with blisters, weeping, crusting or pus-filled spots and feeling unwell: urgent assessment the same day.",
+      "Swelling of the lips, tongue, face or throat, trouble breathing, a rash that does not fade when pressed with a glass together with fever or feeling very unwell, or widespread blistering or peeling with sores in the mouth or eyes: emergency help now."
+    ],
+    "photo_limits": [
+      "A photo cannot tell how serious something is. When a photo seems fine but the skin is painful, spreading or the person feels unwell, trust the symptoms and seek help."
+    ]
+  },
+  "terms": [],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a triage service. These lists cannot cover every situation, and anyone who feels very unwell or is worried should seek help without waiting."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-acne", "aad-acne-tips", "aad-dry-skin-tips", "nhs-atopic-eczema", "nhs-contact-dermatitis", "nhs-rosacea", "nhs-melanoma-symptoms", "nhs-cellulitis", "nhs-shingles", "nhs-meningitis-symptoms", "nhs-anaphylaxis", "nhs-stevens-johnson"],
+  "claims_to_verify": [
+    "Every urgent and emergency item, and the wording used for the urgent helpline, must match the clinic's approved urgent-symptom policy.",
+    "Which signs need same-day assessment and which need emergency help is a clinical decision and must be confirmed by the clinic.",
+    "The 'urgent helpline' wording is generic: the clinic should name the local number or service."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician. The urgent-symptom wording is also governed by the clinic's urgent-symptom policy."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

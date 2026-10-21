@@ -1,0 +1,73 @@
+{
+  "id": "derm.dry-skin-barrier",
+  "version": 1,
+  "language": "en",
+  "topic": "dry-skin",
+  "title": "Dry skin and the skin barrier",
+  "audience": "patient",
+  "applies_to": ["face", "body"],
+  "keywords": ["dry skin", "dryness", "flaky", "flaking", "peeling", "tight skin", "rough skin", "skin barrier", "barrier", "moisturiser", "moisturizer", "cracked", "dehydrated", "scaly", "sukhi twacha", "sookhi", "rukhi", "रूखी त्वचा", "सूखी त्वचा", "रूखापन"],
+  "summary": "Dry skin feels tight, rough or flaky because it is losing water faster than usual. Simple habits help most: short lukewarm showers, a gentle cleanser used only where needed, and moisturiser applied soon after washing and several times a day.",
+  "sections": {
+    "what_it_is": [
+      "The outer layer of the skin works as a barrier that holds water in and keeps irritants out. Hot water, harsh soaps, dry air and some products weaken it, and then the skin feels tight and flaky.",
+      "Dryness can also go with eczema, psoriasis and other conditions, and occasionally it is a sign of an underlying health condition."
+    ],
+    "may_contribute": [
+      "Long or hot showers and baths.",
+      "Harsh soaps and frequent washing.",
+      "Dry air from heaters or air conditioning, and cold weather.",
+      "Products with alcohol or fragrance, and some strong active ingredients.",
+      "Age, and the skin condition eczema."
+    ],
+    "self_care": [
+      "Keep showers and baths to about five to ten minutes in warm, not hot, water, and pat the skin dry, leaving it slightly damp.",
+      "Use a mild, fragrance-free cleanser, and only where needed. A leave-on moisturiser can replace soap for washing.",
+      "Moisturise soon after washing and several times a day. Creams and ointments usually hold in water better than lotions; very dry skin often does best with an ointment.",
+      "Choose products labelled fragrance-free. Unscented products can still contain ingredients that mask smell.",
+      "A humidifier in the bedroom can help in dry air; clean it regularly.",
+      "Wear gloves for wet tasks and in cold weather, and choose loose cotton clothing.",
+      "Use sunscreen on exposed skin every day."
+    ],
+    "avoid": [
+      "Hot showers and long baths.",
+      "Scrubs and harsh exfoliants.",
+      "Alcohol-based and fragranced products on dry skin.",
+      "Washing more often than needed.",
+      "Aqueous cream as a moisturiser or soap substitute, because it can irritate the skin."
+    ],
+    "monitor": [
+      "Note how often moisturiser is applied and whether the skin feels better within about two weeks."
+    ],
+    "see_clinician": [
+      "The dryness continues after trying these steps for a couple of weeks.",
+      "The skin is painful, cracked, bleeding, stinging or very itchy.",
+      "Patches are red, thick or scaly, which can be eczema or psoriasis.",
+      "A product causes burning, stinging or irritation."
+    ],
+    "urgent": [
+      "Oozing, crusting, pus, increasing redness or warmth, or a fever can mean an infection and need prompt assessment."
+    ],
+    "photo_limits": [
+      "A photo cannot tell ordinary dryness from eczema, psoriasis or a fungal infection."
+    ]
+  },
+  "terms": [
+    {"term": "emollient", "plain": "a moisturiser that soothes dry skin and holds water in"},
+    {"term": "skin barrier", "plain": "the outer layer of skin that holds water in and keeps irritants out"}
+  ],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a diagnosis. Dryness that does not improve can point to another condition.",
+    "Moisturisers can catch fire easily on clothing and bedding: keep them away from flames and cigarettes, and take cream from a tub with a clean spoon."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["aad-dry-skin-tips", "nhs-emollients", "nhs-atopic-eczema"],
+  "claims_to_verify": [
+    "Showers of about five to ten minutes in warm water are appropriate advice for the clinic's patients and climate.",
+    "Stating that ointments suit very dry skin better than lotions is appropriate, and the NHS advice that ointments should not be used on weeping eczema is respected elsewhere.",
+    "The NHS emollients page's scheduled review date (24 October 2026) is close, so recheck the source wording."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}

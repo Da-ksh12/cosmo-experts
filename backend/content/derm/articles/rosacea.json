@@ -1,0 +1,65 @@
+{
+  "id": "derm.rosacea",
+  "version": 1,
+  "language": "en",
+  "topic": "rosacea",
+  "title": "Rosacea and facial flushing",
+  "audience": "patient",
+  "applies_to": ["face"],
+  "keywords": ["rosacea", "flushing", "facial redness", "red cheeks", "visible blood vessels", "broken capillaries", "red nose", "warm face", "burning face", "blushing easily", "चेहरा लाल", "गाल लाल"],
+  "summary": "Rosacea is a long-term skin condition that causes redness and flushing, mainly on the face, sometimes with small bumps and tiny visible blood vessels. It cannot be cured but can usually be controlled. Sun protection and avoiding triggers help, and a clinician can offer treatments.",
+  "sections": {
+    "what_it_is": [
+      "Typical features are redness across the nose, cheeks, forehead or chin that comes and goes, a feeling of warmth or heat in the face, and burning or stinging when water or skincare products touch the skin.",
+      "Over time the redness can become persistent, tiny blood vessels can show, and small red or pink bumps can appear.",
+      "Redness can be harder to see on brown and black skin, so burning, warmth and bumps are useful clues."
+    ],
+    "may_contribute": [
+      "Alcohol, spicy food and hot drinks.",
+      "Sunlight, heat, humidity and cold weather.",
+      "Exercise that raises the body temperature.",
+      "Stress."
+    ],
+    "self_care": [
+      "Notice and avoid the triggers that bring on flushing.",
+      "Choose gentle products made for sensitive skin.",
+      "Wear a broad-spectrum sunscreen of SPF 30 or higher every day.",
+      "Cover the face in cold weather and avoid overheating.",
+      "If the eyelids are sore or crusty, clean them daily with a method a clinician or pharmacist recommends.",
+      "Look after stress and sleep where possible."
+    ],
+    "avoid": [
+      "Known triggers where possible.",
+      "Harsh cleansers, scrubs and products that sting."
+    ],
+    "monitor": [
+      "A simple diary of food, drink, weather, activity and products next to dated photos shows which triggers matter."
+    ],
+    "see_clinician": [
+      "The symptoms sound like rosacea. Treatments such as prescription creams or gels exist, and rosacea may get worse without treatment. This is not an emergency, but earlier advice helps.",
+      "Treatment is not working. A dermatologist can review it."
+    ],
+    "urgent": [
+      "Eye pain, blurred vision, light sensitivity, a red eye or a gritty feeling can be a sign of an eye inflammation that needs prompt treatment."
+    ],
+    "photo_limits": [
+      "A photo cannot tell rosacea from acne, eczema, a reaction to a product or other causes of facial redness."
+    ]
+  },
+  "terms": [
+    {"term": "flushing", "plain": "sudden redness and warmth of the face"}
+  ],
+  "contraindications": [],
+  "limitations": [
+    "General education, not a diagnosis. Rosacea is diagnosed by a clinician."
+  ],
+  "evidence_type": "patient_education_guidance",
+  "source_ids": ["nhs-rosacea"],
+  "claims_to_verify": [
+    "The source page's scheduled review date (March 2026) has passed, so the current NHS wording should be rechecked.",
+    "Cleaning the eyelids daily when they are sore is appropriate to mention here, or should be left to the clinician.",
+    "The urgent eye-symptom statement is appropriately worded."
+  ],
+  "review": {"status": "pending_clinician_review", "reviewed_by": null, "reviewed_on": null, "review_due": null, "note": "Written by an AI-assisted software draft from the listed sources. Not yet read or approved by a clinician."},
+  "authored": {"by": "AI-assisted software draft (Claude)", "on": "2026-10-21"}
+}
