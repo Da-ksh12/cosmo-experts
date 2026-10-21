@@ -1,17 +1,21 @@
-/** Build target and server address. One source tree, two builds:
+/** Build target and server address. One source tree, three builds:
  *  - web (default): the pages call the API on their own origin and the Next.js proxy forwards it (next.config.ts). Nothing changes.
- *  - android (NEXT_PUBLIC_TARGET=android): a static bundle inside the Capacitor app. The screens, styles and routing are inside the APK, so the app opens with no server running anywhere.
- *    Data, sign-in and AI answers come from ONE explicit https server address.
+ *  - Android RELEASE (NEXT_PUBLIC_TARGET=android, NEXT_PUBLIC_RELEASE=1, scripts/build-android.mjs --release): a static bundle inside the Capacitor app that talks to ONE fixed https server compiled in
+ *    at build time. There is no server-address screen, no preview mode and no development override: a person cannot point the app anywhere else, and a stray saved address is ignored and erased.
+ *  - Android developer build (NEXT_PUBLIC_TARGET=android only): the same bundle plus developer tools (choose another server, labelled offline preview). Never given to clients.
  *
- * The address can be set at build time (NEXT_PUBLIC_API_BASE, from COSMO_API_BASE or android.config.json) and changed at run time in Settings (stored on the phone). It is only an address:
+ * The screens, styles and routing are inside the APK, so the app opens with no server running anywhere. Data, sign-in and AI answers come from the server address, which is only an address:
  * no secret, credential or key is ever part of the app.
  *
- * A production build NEVER uses a development address. Plain http://, localhost, loopback and private-network addresses are refused at build time (scripts/build-android.mjs), refused when typed
- * in the app, and ignored (and erased) if one is found in the phone's storage. Only a build made with --dev-server (NEXT_PUBLIC_ALLOW_DEV_HTTP=1) accepts them. */
+ * No build ever uses a development address. Plain http://, localhost, loopback and private-network addresses are refused at build time (scripts/build-android.mjs), refused when typed in a
+ * developer build, and ignored (and erased) if one is found in the phone's storage. Only a build made with --dev-server (NEXT_PUBLIC_ALLOW_DEV_HTTP=1) accepts them. */
 
 export const IS_APP = process.env.NEXT_PUBLIC_TARGET === "android";
+export const IS_RELEASE = IS_APP && process.env.NEXT_PUBLIC_RELEASE === "1";
+/** Developer-only tools of the Android app (server override, offline preview). A constant, so a release build drops every branch behind it. */
+export const DEV_TOOLS = IS_APP && !IS_RELEASE;
 export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "web";
-export const ALLOW_DEV_HTTP = IS_APP && process.env.NEXT_PUBLIC_ALLOW_DEV_HTTP === "1";
+export const ALLOW_DEV_HTTP = DEV_TOOLS && process.env.NEXT_PUBLIC_ALLOW_DEV_HTTP === "1";
 const STORE_KEY = "cosmo.apiBase";
 const CHANGED = "cosmo:apibase";
 
@@ -30,16 +34,30 @@ function usable(base: string): boolean {
 
 const BUILD_API_BASE = (() => {
   const b = (process.env.NEXT_PUBLIC_API_BASE ?? "").trim().replace(/\/+$/, "");
-  return b && usable(b) ? b : "";                  // a development address baked into a production build is dropped here as a second line of defence (the build script already refuses it)
+  return b && usable(b) ? b : "";                  // a development address baked into a build is dropped here as a second line of defence (the build script already refuses it)
+})();
+
+/** The public web origin (https only) that hosts the password-reset page, or "". A reset link in an e-mail opens in a browser and cannot open the app's own internal address. */
+export const WEB_ORIGIN = (() => {
+  const w = (process.env.NEXT_PUBLIC_WEB_ORIGIN ?? "").trim().replace(/\/+$/, "");
+  try { const u = new URL(w); return u.protocol === "https:" && !isDevHost(u.hostname) ? u.origin : ""; } catch { return ""; }
 })();
 
 function read(): string {
   try { return localStorage.getItem(STORE_KEY) ?? ""; } catch { return ""; }
 }
+let purged = false;
+function forgetSaved() {
+  if (purged) return;
+  purged = true;
+  try { localStorage.removeItem(STORE_KEY); } catch { /* storage blocked: nothing to erase */ }
+}
 
-/** The server the app talks to: "" on the web (same origin), otherwise the saved address, else the build-time address, else nothing: there is no silent fallback to anything else. */
+/** The server the app talks to. "" on the web (same origin). In a release build ALWAYS the compiled-in address (anything saved on the phone is ignored and erased). In a developer build the saved
+ *  address, else the build-time address, else nothing: there is no silent fallback to anything else. */
 export function getApiBase(): string {
   if (!IS_APP) return "";
+  if (IS_RELEASE) { forgetSaved(); return BUILD_API_BASE; }
   const saved = read();
   if (saved && !usable(saved)) {                    // e.g. an old development address left on the phone by an earlier build
     try { localStorage.removeItem(STORE_KEY); } catch { /* ignore */ }
@@ -53,6 +71,7 @@ export function defaultApiBase(): string {
 }
 
 export function setApiBase(base: string | null) {
+  if (!DEV_TOOLS) return;                           // a release build has one fixed server
   try {
     if (base) localStorage.setItem(STORE_KEY, base);
     else localStorage.removeItem(STORE_KEY);
@@ -76,7 +95,7 @@ export function serverLabel(): string {
   try { return new URL(b).host; } catch { return b; }
 }
 
-/** Check an address typed by a person. Production builds accept https:// addresses of public servers only. */
+/** Check an address typed by a person (developer builds only). Production builds accept https:// addresses of public servers only. */
 export function parseServerUrl(raw: string): { ok: true; base: string } | { ok: false; error: string } {
   const text = raw.trim();
   if (!text) return { ok: false, error: "Enter the server address, for example https://api.example.com" };
@@ -102,6 +121,7 @@ export async function checkServer(base: string, timeoutMs = 8000): Promise<{ ok:
     const offline = typeof navigator !== "undefined" && navigator.onLine === false;
     return { ok: false, message: e instanceof DOMException && e.name === "AbortError" ? "The server did not answer in time."
       : offline ? "This phone has no internet connection."
+      : IS_RELEASE ? "Could not connect. Please check your internet connection."
       : "Could not connect. Check the address and your internet connection. If the server is running, it must also list this app as an allowed origin (see docs/ANDROID_APK.md)." };
   } finally { clearTimeout(t); }
 }

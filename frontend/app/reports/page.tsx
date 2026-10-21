@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import DocumentPreview from "@/components/DocumentPreview";
 import ResultsOverTime from "@/components/ResultsOverTime";
 import { ScreenBar } from "@/components/Shell";
-import { AuthImage, ConfirmDialog, EmptyState, ErrorState, LoadingState, Note, PageHeading, Pill as Badge, fmtBytes, fmtDate, useToast } from "@/components/ui";
+import { AuthImage, ConfirmDialog, EmptyState, ErrorState, LoadingState, PageHeading, Pill as Badge, fmtBytes, fmtDate, useToast } from "@/components/ui";
 import { api, CATEGORY_LABEL, del, DOC_TYPE_LABEL } from "@/lib/api";
 import { runUploadJob, STATUS_TEXT, JobStatus } from "@/lib/jobs";
 import { reportHref } from "@/lib/links";
@@ -29,6 +29,7 @@ export default function Reports() {
   const [preview, setPreview] = useState<Doc | null>(null);
   const [confirmDel, setConfirmDel] = useState<Doc | null>(null);
   const [drag, setDrag] = useState(false);
+  const [lastRead, setLastRead] = useState("");                // inline confirmation of the last upload (the list below also gains the report)
   const input = useRef<HTMLInputElement>(null);
   const n = useRef(0);
 
@@ -45,17 +46,19 @@ export default function Reports() {
       });
       if (done.status !== "completed") throw new Error((done.result as { error?: string } | null)?.error ?? done.error ?? "The document could not be read.");
       setJobs((j) => j.filter((x) => x.id !== job.id));
-      toast(`${job.file.name} was read successfully.`);
+      setLastRead(`${job.file.name} was read successfully.`);
       load();
     } catch (e) {
       setJobs((j) => j.map((x) => (x.id === job.id ? { ...x, status: "error", error: e instanceof Error ? e.message : "Upload failed." } : x)));
     }
-  }, [load, toast]);
+  }, [load]);
 
   const add = (files: FileList | File[]) => {
+    setLastRead("");
     for (const f of Array.from(files)) {
       if (!OK_EXT.test(f.name)) { toast(`${f.name}: this file type isn't supported.`, "bad"); continue; }
       if (f.size > MAX) { toast(`${f.name}: larger than 15 MB.`, "bad"); continue; }
+      if (f.size === 0) { toast(`${f.name} is empty.`, "bad"); continue; }
       const job: Job = { id: ++n.current, file: f, category: cat, progress: 0, status: "uploading" };
       setJobs((j) => [...j, job]);
       void send(job);
@@ -64,7 +67,7 @@ export default function Reports() {
 
   async function remove(d: Doc) {
     setConfirmDel(null);
-    try { await del(`/api/documents/${d.id}`); toast("The document and everything read from it was deleted."); load(); }
+    try { await del(`/api/documents/${d.id}`); load(); }                    // the report leaves the list: that is the confirmation
     catch (e) { toast(e instanceof Error ? e.message : "Could not delete.", "bad"); }
   }
 
@@ -72,20 +75,20 @@ export default function Reports() {
   return (
     <div className="space-y-6">
       <ScreenBar back="/" />
-      <PageHeading eyebrow="Upload reports" title="Share Your Reports" subtitle="Upload lab reports, prescriptions or previous consultation notes so we can explain them in simple words." />
+      <PageHeading eyebrow="Upload reports" title="Share Your Reports" />
 
       <div className="scroll-x" role="group" aria-label="Report type">
         {CATS.map(({ id, Icon }) => <button key={id} className="chip" aria-pressed={cat === id} onClick={() => setCat(id)}><Icon className="h-5 w-5" aria-hidden />{CATEGORY_LABEL[id]}</button>)}
       </div>
 
-      <div className={`card-flat flex flex-col items-center gap-3 border-2 border-dashed py-10 text-center transition ${drag ? "!border-teal bg-teal-soft" : ""}`}
+      <div className={`card-flat flex flex-col items-center gap-2.5 border-2 border-dashed py-7 text-center transition ${drag ? "!border-teal bg-teal-soft" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files); }}>
-        <span className="grid h-16 w-16 place-items-center rounded-full bg-sage text-teal"><UploadCloud className="h-8 w-8" strokeWidth={1.4} aria-hidden /></span>
-        <h2>Tap to Upload Reports</h2>
-        <p className="text-muted">Choose files from your device, or drop them here</p>
+        <span className="grid h-14 w-14 place-items-center rounded-full bg-sage text-teal"><UploadCloud className="h-7 w-7" strokeWidth={1.4} aria-hidden /></span>
+        <h2>Upload a report</h2>
         <button className="btn btn-primary" onClick={() => input.current?.click()}><FileUp className="h-5 w-5" aria-hidden /> Choose Files</button>
         <input ref={input} type="file" multiple className="sr-only" aria-label="Choose report files" accept=".pdf,.jpg,.jpeg,.png,.docx,.txt" onChange={(e) => { if (e.target.files) add(e.target.files); e.target.value = ""; }} />
-        <p className="text-sm text-muted">Supported: PDF, JPG, PNG, DOCX, TXT · up to 15 MB each</p>
+        <p className="text-sm text-muted">PDF, JPG, PNG, DOCX or TXT · up to 15 MB each</p>
+        {lastRead && <p className="text-sm font-semibold text-[var(--good-ink)]" role="status">{lastRead}</p>}
       </div>
 
       {jobs.length > 0 && (
@@ -125,7 +128,7 @@ export default function Reports() {
 
       <ResultsOverTime />
 
-      <Note tone="info">Files are stored privately on the clinic&apos;s system and are visible only to you and your care team. You can delete a document at any time.</Note>
+      <p className="text-center text-sm text-muted">Reports are private: only you and your care team can see them, and you can delete one at any time.</p>
       {latest && <Link href={reportHref(latest.id)} className="btn btn-primary w-full !py-3">Continue to my report summary <ArrowRight className="h-5 w-5" aria-hidden /></Link>}
 
       {preview && <DocumentPreview id={preview.id} name={preview.filename} mime={preview.mime} onClose={() => setPreview(null)} />}

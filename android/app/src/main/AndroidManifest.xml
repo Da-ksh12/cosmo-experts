@@ -41,9 +41,13 @@
         </provider>
     </application>
 
-    <!-- Permissions. The camera and microphone are asked for only when a person starts a photo or a voice question; the system file picker needs no storage permission. -->
+    <!-- Permissions, kept to the minimum:
+         * INTERNET: talking to the clinic's server.
+         * RECORD_AUDIO and MODIFY_AUDIO_SETTINGS: asked for only when a person taps the microphone to ask a question by voice.
+         * No CAMERA permission: "Take a photo" opens the phone's own camera app (Capacitor Camera plugin, ACTION_IMAGE_CAPTURE), which has its own permission, so this app never needs
+           (or asks for) access to the camera. Declaring CAMERA would only add a permission prompt before the camera can open.
+         * No storage permission: "Upload from gallery" uses Android's system photo picker, which hands over only the photos the person chooses. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 

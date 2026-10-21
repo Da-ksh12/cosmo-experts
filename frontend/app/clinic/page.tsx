@@ -80,8 +80,8 @@ export default function Clinic() {
 
       <section className="space-y-3"><h2>Patient submissions</h2>
         {!sub?.documents.length ? <EmptyState icon={<ClipboardList className="h-7 w-7" />} title="No submissions yet" /> : (
-          <div className="card overflow-x-auto !p-2" tabIndex={0} role="region" aria-label="Scrollable table"><table><thead><tr><th>Patient</th><th>Document</th><th>Type</th><th>Status</th><th></th></tr></thead><tbody>
-            {sub.documents.map((d) => <tr key={d.id}><td>{d.patient}</td><td>{d.filename}</td><td>{DOC_TYPE_LABEL[d.doc_type] ?? d.doc_type}</td><td>{d.review_status === "reviewed_by_clinician" ? <Pill tone="good">Reviewed</Pill> : <Pill tone="info">Awaiting review</Pill>}</td><td><button className="btn btn-sm" onClick={() => open(d.id)}>Review</button></td></tr>)}</tbody></table></div>)}
+          <div className="card overflow-x-auto !p-2" tabIndex={0} role="region" aria-label="Scrollable table"><table><thead><tr><th>Patient</th><th>Document</th><th className="hidden sm:table-cell">Type</th><th>Status</th><th></th></tr></thead><tbody>
+            {sub.documents.map((d) => <tr key={d.id}><td>{d.patient}</td><td className="break-all">{d.filename}</td><td className="hidden sm:table-cell">{DOC_TYPE_LABEL[d.doc_type] ?? d.doc_type}</td><td>{d.review_status === "reviewed_by_clinician" ? <Pill tone="good">Reviewed</Pill> : <Pill tone="info">Awaiting review</Pill>}</td><td><button className="btn btn-sm" onClick={() => open(d.id)}>Review</button></td></tr>)}</tbody></table></div>)}
         <h2 className="pt-2">Photo submissions</h2>
         {!sub?.images.filter((i) => i.has_file).length ? <p className="text-muted">No accepted photos waiting.</p> : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Photo submissions">
@@ -223,7 +223,7 @@ export default function Clinic() {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_2fr_auto]"><input className="input" value="doctor1" readOnly aria-label="Clinician id" /><input className="input" placeholder="Credentials as verified, e.g. MD Dermatology, registration no." value={ver.credentials} onChange={(e) => setVer({ ...ver, credentials: e.target.value })} aria-label="Credentials" />
             <button className="btn btn-primary" disabled={!ver.credentials} onClick={() => act(() => post("/api/admin/users/doctor1/verify-clinician", ver), "Verification recorded.")}><BadgeCheck className="h-5 w-5" aria-hidden /> Record</button></div></section>)}
 
-      <Details title="AI performance & error monitoring"><table><tbody>{Object.entries(metrics).map(([k, v]) => <tr key={k}><th>{k.replaceAll("_", " ")}</th><td>{v}</td></tr>)}</tbody></table></Details>
+      {user?.role === "admin" && <Details title="AI performance & error monitoring"><table><tbody>{Object.entries(metrics).map(([k, v]) => <tr key={k}><th>{k.replaceAll("_", " ")}</th><td>{v}</td></tr>)}</tbody></table></Details>}
     </div>
   );
 }

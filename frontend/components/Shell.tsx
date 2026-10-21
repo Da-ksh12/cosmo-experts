@@ -14,6 +14,11 @@ import NativeInit from "@/components/NativeInit";
 import { PhotoFlowProvider } from "@/lib/photoFlow";
 import { BrandLogo, Dialog, ToastProvider } from "@/components/ui";
 
+// These two are local constants ON PURPOSE. process.env.NEXT_PUBLIC_* is replaced by a literal at build time, so the bundler folds them and, in a release build, removes everything behind them
+// (the server dialog, preview mode, demo accounts). A flag imported from another module would not be folded. lib/config.ts defines the same flags for code that does not need to disappear.
+const IS_RELEASE = process.env.NEXT_PUBLIC_TARGET === "android" && process.env.NEXT_PUBLIC_RELEASE === "1";
+const DEV_TOOLS = process.env.NEXT_PUBLIC_TARGET === "android" && process.env.NEXT_PUBLIC_RELEASE !== "1";
+
 const Ctx = createContext<User | null>(null);
 export const useUser = () => useContext(Ctx);
 
@@ -36,9 +41,9 @@ function TopBanners({ showServer, preview, onRetried, onExitPreview }: { showSer
   const items = [
     !online && <div key="offline" role="status" className={`${row} bg-[var(--warn-bg)] text-[var(--warn-ink)]`}><span className="inline-flex items-center gap-2"><WifiOff className="h-4 w-4 shrink-0" aria-hidden /> You are offline. Nothing can be sent or loaded until you reconnect.</span></div>,
     online && showServer && down && <div key="server" role="status" className={`${row} bg-[var(--bad-bg)] text-[var(--bad-ink)]`}>
-      <span className="inline-flex items-center gap-2"><WifiOff className="h-4 w-4 shrink-0" aria-hidden /> Can&apos;t reach the server ({serverLabel()}).</span>
+      <span className="inline-flex items-center gap-2"><WifiOff className="h-4 w-4 shrink-0" aria-hidden /> {IS_RELEASE ? "Can't reach Cosmo Experts." : `Can't reach the server (${serverLabel()}).`}</span>
       <button type="button" className="underline" onClick={retry} disabled={busy}>{busy ? "Checking…" : "Try again"}</button></div>,
-    preview && <div key="preview" role="status" className={`${row} bg-gold-soft text-[#86622a]`}><span>PREVIEW · no server is connected · nothing is saved, sent or analysed</span>
+    DEV_TOOLS && preview && <div key="preview" role="status" className={`${row} bg-gold-soft text-[#86622a]`}><span>PREVIEW · no server is connected · nothing is saved, sent or analysed</span>
       <button type="button" className="underline" onClick={onExitPreview}>Connect to a server</button></div>,
   ].filter(Boolean);
   if (!items.length) return null;
@@ -112,7 +117,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={user}>
       <ToastProvider>
         <PhotoFlowProvider>
-          <TopBanners showServer={!PUBLIC.includes(path)} preview={!!user && isPreview()} onRetried={() => setReload((n) => n + 1)} onExitPreview={() => { void signOutEverywhere(); router.replace("/login"); }} />
+          <TopBanners showServer={!PUBLIC.includes(path)} preview={DEV_TOOLS && !!user && isPreview()} onRetried={() => setReload((n) => n + 1)} onExitPreview={() => { void signOutEverywhere(); router.replace("/login"); }} />
           <NativeInit />
           {user && (
             <header className={`sticky top-0 z-30 border-b border-line bg-white/85 pt-[env(safe-area-inset-top)] backdrop-blur ${patient && path !== "/" ? "hidden md:block" : ""}`}>

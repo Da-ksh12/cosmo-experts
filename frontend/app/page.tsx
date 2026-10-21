@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Bot, ClipboardCheck, FileText, Flower2, Image as ImageIcon, ScanFace, Sparkles, User } from "lucide-react";
+import { ArrowRight, ClipboardCheck, FileText, Flower2, Image as ImageIcon, ScanFace, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -52,8 +52,8 @@ export default function HomePage() {
 
       <section aria-label="Start here" className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 md:grid-cols-4">
         {ACTIONS.map(({ href, Icon, title, sub }, i) => (
-          <Link key={href} href={href} className={`card flex min-h-[210px] flex-col justify-start gap-3 rise-${Math.min(i + 1, 3)}`}>
-            <span className="grid h-24 place-items-center rounded-2xl bg-gradient-to-br from-sage to-gold-soft text-teal"><Icon className="h-11 w-11" strokeWidth={1.4} aria-hidden /></span>
+          <Link key={href} href={href} className={`card flex min-h-[172px] flex-col justify-start gap-2.5 rise-${Math.min(i + 1, 3)}`}>
+            <span className="grid h-20 place-items-center rounded-2xl bg-gradient-to-br from-sage to-gold-soft text-teal"><Icon className="h-10 w-10" strokeWidth={1.4} aria-hidden /></span>
             <span className="min-w-0 break-words"><span className="block font-serif text-lg font-semibold text-teal-dark">{title}</span><span className="block text-sm leading-snug text-muted">{sub}</span></span>
             <ArrowRight className="mt-auto h-5 w-5 self-end text-gold" aria-hidden />
           </Link>
@@ -83,14 +83,6 @@ export default function HomePage() {
                 <StatusPill kind={it.kind} status={it.status} /></span>
             </Link>))}</div>}
       </section>
-
-      <Link href="/ask" className="card-sage rise-3 flex flex-wrap items-center gap-4 no-underline">
-        <span className="grid h-16 w-16 place-items-center rounded-full bg-white text-teal"><Bot className="h-9 w-9" strokeWidth={1.4} aria-hidden /></span>
-        <span className="min-w-[min(12rem,100%)] flex-1 basis-48"><span className="block font-serif text-xl font-semibold text-teal-dark">Chat with our AI Assistant</span>
-          <span className="block text-muted">Ask about your reports. Answers show their sources.</span></span>
-        <span className="btn btn-primary">Start Chat <ArrowRight className="h-4 w-4" aria-hidden /></span>
-      </Link>
-
       {guide && (
         <Dialog title="What would you like to share?" onClose={() => setGuide(false)}>
           <p className="mb-4 text-muted">This only picks where to start. It is not a medical assessment.</p>

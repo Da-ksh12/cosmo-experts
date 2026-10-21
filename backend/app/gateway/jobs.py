@@ -20,7 +20,7 @@ TERMINAL = ("completed", "uncertain", "rejected", "failed", "cancelled")
 MAX_WORKERS = int(os.environ.get("COSMO_JOB_WORKERS", "2"))
 MAX_QUEUED = int(os.environ.get("COSMO_JOB_QUEUE_MAX", "50"))
 MAX_PER_USER = int(os.environ.get("COSMO_JOB_PER_USER", "4"))
-TIMEOUTS = {"research_predict": 120, "image_check": 60, "document_process": 180, "speech_transcribe": 180, "assistant_answer": 150}
+TIMEOUTS = {"research_predict": 120, "image_check": 60, "photo_analysis": 90, "document_process": 180, "speech_transcribe": 180, "assistant_answer": 150}
 JOB_DIR = UPLOAD_DIR / "_jobs"
 JOB_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -28,6 +28,8 @@ _pool = cf.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix="job")
 _inner = cf.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix="job-inner")   # runs handlers so the outer thread can enforce timeouts
 _handlers: dict = {}
 _lock = threading.Lock()
+# What a running job is doing RIGHT NOW, reported by the handler itself (ctx["stage"](name)). In memory only: it describes work in this process, and a restart fails running jobs anyway.
+_STAGES: dict[str, str] = {}
 
 
 class QueueFull(Exception):
@@ -52,7 +54,7 @@ def ensure_schema():
 
 
 def _public(j: dict) -> dict:
-    return {"id": j["id"], "task": j["task"], "status": j["status"], "request_id": j["request_id"], "created_at": j["created_at"], "started_at": j["started_at"],
+    return {"id": j["id"], "task": j["task"], "status": j["status"], "stage": _STAGES.get(j["id"]) if j["status"] not in TERMINAL else None, "request_id": j["request_id"], "created_at": j["created_at"], "started_at": j["started_at"],
             "finished_at": j["finished_at"], "queue_ms": round((j["started_at"] - j["created_at"]) * 1000) if j["started_at"] else None,
             "processing_ms": round((j["finished_at"] - j["started_at"]) * 1000) if j["finished_at"] and j["started_at"] else None,
             "result": json.loads(j["result"]) if j["result"] else None, "error": j["error"]}
@@ -109,6 +111,7 @@ def _finish(job_id: str, status: str, result: dict | None, error: str | None):
     if j and j["status"] in TERMINAL:     # first terminal state wins (e.g. cancelled before a late result arrives)
         return
     db.x("UPDATE jobs SET status=?, result=?, error=?, finished_at=? WHERE id=?", (status, json.dumps(result) if result is not None else None, error, db.now(), job_id))
+    _STAGES.pop(job_id, None)
     if j and j["input_path"]:
         Path(j["input_path"]).unlink(missing_ok=True)   # data minimisation
 
@@ -119,7 +122,8 @@ def _run(job_id: str):
         return
     db.x("UPDATE jobs SET status='processing', started_at=? WHERE id=? AND status='queued'", (db.now(), job_id))
     data = Path(j["input_path"]).read_bytes() if j["input_path"] and Path(j["input_path"]).exists() else None
-    ctx = {"request_id": j["request_id"], "job_id": job_id, "cancelled": lambda: bool((db.q1("SELECT cancel_requested c FROM jobs WHERE id=?", (job_id,)) or {"c": 0})["c"])}
+    ctx = {"request_id": j["request_id"], "job_id": job_id, "cancelled": lambda: bool((db.q1("SELECT cancel_requested c FROM jobs WHERE id=?", (job_id,)) or {"c": 0})["c"]),
+           "stage": lambda name: _STAGES.__setitem__(job_id, str(name)[:40])}
     fut = _inner.submit(contextvars.copy_context().run, _handlers[j["task"]], j["owner_id"], json.loads(j["params"]), data, ctx)
     try:
         status, result = fut.result(timeout=TIMEOUTS.get(j["task"], 120))

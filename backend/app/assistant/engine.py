@@ -64,13 +64,24 @@ def _quotes(owner_id: str) -> list[dict]:
     return out
 
 
-def answer(owner_id: str, conversation_id: str, question: str) -> dict:
+def answer(owner_id: str, conversation_id: str, question: str, context: dict | None = None) -> dict:
+    """`context`: {"analysis_id", "observation_id"?, "intent"?} ties the question to ONE photo-analysis session (photo_analysis/answers.py); a ContextError is raised for a session that is not this person's."""
     history = db.q("SELECT role,content FROM messages WHERE conversation_id=? ORDER BY created_at DESC LIMIT 4", (conversation_id,))
     policy = clinical_content.urgent_policy()
     if policy.regex.search(question):
         return {"answer": policy.message, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "urgent"}
     if REFUSE.search(question) or safety.classify_request(question).refuse:        # this assistant's own pattern, and the shared classification every other surface uses
         return {"answer": REFUSE_MSG, "sources": [], "status": "clinician_review_required", "abstained": True, "reason": "clinical_decision"}
+
+    extra: list[dict] = []                                      # the photo the question is about: answered from its own measured data, or its observations become citable passages
+    general = False
+    if context and context.get("analysis_id"):
+        from ..photo_analysis import answers as photo
+        res = photo.answer(owner_id, question, context)
+        if res is not None:
+            return res
+        extra = photo.passages(owner_id, context)
+        general = context.get("intent") == "care"               # a general skin-care question is answered ONLY from clinic-approved material and labelled as general
 
     # follow-ups: short questions borrow the previous patient question as context
     query, prev = question, ""
@@ -82,6 +93,7 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
         query = f"{prev} {question}".strip()
 
     pool, quarantined = injection.partition(_passages(owner_id))     # text that addresses software is data we do not use: not retrieved, not quoted, not sent to a model
+    pool = [p for p in pool if p["kind"] not in ("document", "photo_analysis")] if general else pool + extra
     notice = ({"notice": "Some text in your documents looks like instructions to software, so it was not used in this answer.", "quarantined_text": len(quarantined)} if quarantined else {})
     if QUOTE_Q.search(question):
         qp = _quotes(owner_id)
@@ -137,13 +149,16 @@ def answer(owner_id: str, conversation_id: str, question: str) -> dict:
         seen.add(key)
         if p["kind"] == "document":
             bullets.append(f'Your document "{p["filename"]}" (page {p["page"]}) says: "{p["text"][:300]}"')
+        elif p["kind"] == "photo_analysis":
+            bullets.append(f'Your photo check, "{p["label"]}": {p["text"][:300]}')
         else:
             bullets.append(f'Clinic-approved information, "{p["title"]}": "{p["passage"].text[:400]}"')
-        sources.append(_source(p, s, "report_fact" if p["kind"] == "document" else "approved_reference"))
-    return _screen({"answer": "Here is what I found that relates to your question:\n- " + "\n- ".join(bullets)
+        sources.append(_source(p, s, "report_fact" if p["kind"] == "document" else "photo_measurement" if p["kind"] == "photo_analysis" else "approved_reference"))
+    lead = "General information from clinic-approved material (not about your photo):\n- " if general else "Here is what I found that relates to your question:\n- "
+    return _screen({"answer": lead + "\n- ".join(bullets)
                     + "\nThis repeats what the sources say; it is not a diagnosis. Your doctor can explain what it means for you.",
                     "sources": sources, "status": "clinician_review_required", "abstained": False, "mode": "extractive", **notice, **llm_note},
-                   [p["text"] for p, _ in hits] + [p["passage"].text for p, _ in hits if p["kind"] != "document"])
+                   [p["text"] for p, _ in hits] + [p["passage"].text for p, _ in hits if p["kind"] not in ("document", "photo_analysis")])
 
 
 def _screen(out: dict, evidence: list[str]) -> dict:
@@ -162,5 +177,7 @@ def _source(p: dict, score: float, provenance: str) -> dict:
     if p["kind"] == "document":
         return {"kind": "document", "document_id": p["document_id"], "page": p["page"], "excerpt": p["text"][:300], "score": round(score, 2), "provenance": provenance,
                 "citation": document_citation(p["document_id"], page=p["page"], excerpt=p["text"], item="text")}
+    if p["kind"] == "photo_analysis":
+        return {"kind": "photo_analysis", "analysis_id": p["analysis_id"], "observation_id": p["observation_id"], "label": p["label"], "excerpt": p["text"][:300], "score": round(score, 2), "provenance": provenance}
     return {"kind": "knowledge_base", "article_id": p["article_id"], "title": p["title"], "version": p["version"], "score": round(score, 2), "provenance": provenance,
             "citation": p["passage"].citation(score)}

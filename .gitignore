@@ -22,3 +22,13 @@ backend/content/urgent_policy.approved.json
 *.gguf
 *.onnx
 frontend/tsconfig.tsbuildinfo
+
+# Android release signing: the keystore, its passwords and any signing configuration never belong in Git (frontend/scripts/make-release-keystore.mjs keeps them in ~/.cosmo-signing)
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore.properties
+release-signing*.properties
+.cosmo-signing/
+frontend/out-android/

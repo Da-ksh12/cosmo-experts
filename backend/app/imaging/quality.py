@@ -80,9 +80,10 @@ def _block_mean(a: np.ndarray, b: int) -> np.ndarray:
     return a[:h, :w].reshape(h // b, b, w // b, b).mean(axis=(1, 3))
 
 
-def obstruction_fraction(img: np.ndarray) -> float:
-    """Largest frame-edge-touching region (as a fraction of the frame) made of blocks that are very dark, very bright and colourless, or far less textured than the rest of the
-    photo. A finger over the lens, a lens cap or a flash-glare patch produces such a region; ordinary skin, hair and backgrounds usually do not."""
+def obstruction_region(img: np.ndarray) -> tuple[float, list | None]:
+    """Largest frame-edge-touching region made of blocks that are very dark, very bright and colourless, or far less textured than the rest of the photo, as (fraction of the frame,
+    bounding box [x, y, w, h] normalised to the photo, or None when there is no such region). A finger over the lens, a lens cap or a flash-glare patch produces such a region;
+    ordinary skin, hair and backgrounds usually do not. The box is the measured extent of that region on an 8-pixel block grid, not an estimate."""
     g = cv2.cvtColor(_small(img, 192), cv2.COLOR_BGR2GRAY)
     hsv = cv2.cvtColor(_small(img, 192), cv2.COLOR_BGR2HSV)
     gx, gy = cv2.Sobel(g, cv2.CV_32F, 1, 0), cv2.Sobel(g, cv2.CV_32F, 0, 1)
@@ -93,12 +94,17 @@ def obstruction_fraction(img: np.ndarray) -> float:
     mask = (mean < 35) | ((mean > 240) & (sat < 30)) | (tex < 0.12 * med)
     n, lab, stats, _ = cv2.connectedComponentsWithStats(mask.astype(np.uint8), connectivity=4)
     H, W = mask.shape
-    best = 0
+    best, box = 0, None
     for i in range(1, n):
         x, y, w, h, area = stats[i]
-        if x == 0 or y == 0 or x + w == W or y + h == H:
-            best = max(best, area)
-    return round(best / float(H * W), 4)
+        if (x == 0 or y == 0 or x + w == W or y + h == H) and area > best:
+            best, box = int(area), [round(float(x) / W, 4), round(float(y) / H, 4), round(float(w) / W, 4), round(float(h) / H, 4)]
+    return round(best / float(H * W), 4), box
+
+
+def obstruction_fraction(img: np.ndarray) -> float:
+    """The share of the frame covered by the largest frame-edge-touching region (see obstruction_region)."""
+    return obstruction_region(img)[0]
 
 
 def center_skin_fraction(img: np.ndarray) -> float:
@@ -139,8 +145,11 @@ def document_words(img: np.ndarray) -> int:
 
 
 # ---------------------------------------------------------------- assessment
-def check(cid: str, label: str, status: str, value, threshold, basis: str, validated: bool, message: str = "") -> dict:
-    return {"id": cid, "label": label, "status": status, "value": value, "threshold": threshold, "basis": basis, "validated": validated, "message": message}
+def check(cid: str, label: str, status: str, value, threshold, basis: str, validated: bool, message: str = "", region: list | None = None) -> dict:
+    out = {"id": cid, "label": label, "status": status, "value": value, "threshold": threshold, "basis": basis, "validated": validated, "message": message}
+    if region is not None:
+        out["region"] = {"box": region}                                 # normalised [x, y, w, h] of the photo as displayed; present only where the check located something
+    return out
 
 
 @dataclass
@@ -192,13 +201,14 @@ def assess(data: bytes, category: str, legacy: "suitability.Report | None" = Non
     extra.append(check("compression", "Compression", "warn" if comp_warn else "pass", {"estimated_jpeg_quality": q, "blockiness": block},
                        {"min_quality": JPEG_QUALITY_WARN, "max_blockiness": suitability.BLOCKINESS_WARN}, "advisory defaults; estimator error measured in docs/eval/quality_v2.json", False,
                        "This photo looks heavily compressed; the clinic may ask for the original." if comp_warn else "Compression looks acceptable."))
-    obs = obstruction_fraction(img)
+    obs, obs_box = obstruction_region(img)
     obs_thr = cal.get("obstruction", {}).get("threshold", OBSTRUCTION_WARN)
     # validated on lesion close-ups only: for any other category (wider body shots, faces, hair) the same measurement is an advisory warning, never a rejection
     obs_val = bool(cal.get("obstruction", {}).get("validated")) and category == "skin_lesion"
     extra.append(check("obstruction", "Something covering part of the frame", "fail" if (obs >= obs_thr and obs_val) else "warn" if obs >= obs_thr else "pass", obs, obs_thr,
                        cal.get("obstruction", {}).get("basis", "advisory default"), obs_val,
-                       "Part of the photo looks covered (for example by a finger, a lens cover or glare). Please retake it." if obs >= obs_thr else "Nothing appears to cover the frame."))
+                       "Part of the photo looks covered (for example by a finger, a lens cover or glare). Please retake it." if obs >= obs_thr else "Nothing appears to cover the frame.",
+                       region=obs_box if obs >= obs_thr else None))
     if category == "face":
         ff = face_framing(img, suitability.detect_faces(img))
         extra.append(check("framing", "Face inside the frame", "warn" if ff["cut_off"] or (ff["offset"] or 0) > 0.28 else "pass", ff, {"max_offset": 0.28},

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, BarChart3, Check, ChevronDown, ExternalLink, FileText, FlagTriangleRight, Globe, Lightbulb, MessageCircle, MessagesSquare, ScrollText } from "lucide-react";
+import { AlertTriangle, BarChart3, Check, ChevronDown, ExternalLink, FileText, FlagTriangleRight, Globe, MessageCircle, MessagesSquare, ScrollText } from "lucide-react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -50,7 +50,7 @@ export default function ReportPage() {
   useEffect(() => { api<Explanation>(`/api/documents/${id}/explanation?lang=${lang}`).then(setEx).catch((e) => setErr(e.message)); }, [id, lang]);
 
   async function flag(f: Field) {
-    try { await post(`/api/documents/${id}/fields/${f.id}/flag`, { reason: "Patient thinks this value was read incorrectly" }); toast("Thanks. This value is flagged for your clinician to check."); load(); }
+    try { await post(`/api/documents/${id}/fields/${f.id}/flag`, { reason: "Patient thinks this value was read incorrectly" }); load(); }
     catch (e) { toast(e instanceof Error ? e.message : "Could not flag this value.", "bad"); }
   }
 
@@ -67,7 +67,7 @@ export default function ReportPage() {
   return (
     <div className="space-y-6">
       <ScreenBar back="/reports" />
-      <PageHeading eyebrow="Report analysis" title="Your Report Summary" subtitle="A simple explanation of what your report says, in easy language." />
+      <PageHeading eyebrow="Report analysis" title="Your Report Summary" />
 
       <section className="card flex flex-wrap items-center gap-4 !p-4" aria-label="Report">
         <AuthImage src={`/api/documents/${id}/thumbnail`} alt="" className="h-20 w-16 rounded-xl border border-line" fallback={<FileText className="h-6 w-6" />} />
@@ -137,10 +137,6 @@ export default function ReportPage() {
           <Link className="btn btn-primary" href="/ask"><MessageCircle className="h-5 w-5" aria-hidden /> Ask a follow-up question</Link>
         </section>
       )}
-
-      <section className="card-sage flex flex-wrap items-center gap-4"><Lightbulb className="h-9 w-9 text-gold" strokeWidth={1.4} aria-hidden />
-        <div className="min-w-[min(12rem,100%)] flex-1 basis-48"><h3>What this generally means</h3><p className="text-muted">Clinic-approved explanations of common terms are available in the assistant.</p></div>
-        <Link className="btn btn-primary" href="/ask?q=What%20is%20a%20reference%20range%3F">Read explanation</Link></section>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Link className="btn !py-3" href="/ask"><MessageCircle className="h-5 w-5" aria-hidden /> Ask a Question</Link>

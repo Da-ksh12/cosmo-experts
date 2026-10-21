@@ -85,15 +85,14 @@ export function Note({ tone = "info", children, className = "" }: { tone?: keyof
 export function LoadingState({ label = "Loading…" }: { label?: string }) {
   return <div role="status" className="flex items-center justify-center gap-3 py-16 text-muted"><Loader2 className="spin h-5 w-5" aria-hidden />{label}</div>;
 }
-const CONNECTION_MESSAGE = /can't reach the server|took too long|no internet|offline|could not connect/i;
+const CONNECTION_MESSAGE = /can't reach|took too long|no internet|offline|could not connect/i;
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
-  if (CONNECTION_MESSAGE.test(message)) {          // no connection or server down: say so calmly, say what still works, and offer a retry
+  if (CONNECTION_MESSAGE.test(message)) {          // no connection or server down: say so calmly and offer a retry
     return (
       <div className="card space-y-2 text-center" role="alert">
         <WifiOff className="mx-auto h-9 w-9 text-teal" aria-hidden />
         <h3 className="!text-lg">We can&apos;t connect right now</h3>
         <p className="text-muted">{message}</p>
-        <p className="text-xs text-muted">The screens are saved in the app. Your information and the assistant come from your clinic&apos;s server and will be back as soon as the connection is.</p>
         {onRetry && <button className="btn btn-primary mt-2" onClick={onRetry}>Try again</button>}
       </div>
     );
@@ -174,21 +173,30 @@ export function ConfirmDialog({ title, message, confirmLabel = "Confirm", danger
 type Toast = { id: number; tone: "ok" | "bad" | "info"; text: string };
 const ToastCtx = createContext<(text: string, tone?: Toast["tone"]) => void>(() => {});
 export const useToast = () => useContext(ToastCtx);
+/** Non-blocking feedback: a small line at the TOP of the screen (below the status bar) that never covers the navigation, the keyboard or the composer, never takes a tap, and goes away by itself
+ *  (2.5 s for a confirmation, 6 s for a problem). Use it only for what has no visible effect on the screen; anything that changes the screen speaks for itself. */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<Toast[]>([]);
   const push = useCallback((text: string, tone: Toast["tone"] = "ok") => {
     const id = Date.now() + Math.random();
-    setItems((i) => [...i, { id, tone, text }]);
-    setTimeout(() => setItems((i) => i.filter((t) => t.id !== id)), 4500);
+    setItems((i) => [...i.slice(-2), { id, tone, text }]);
+    setTimeout(() => setItems((i) => i.filter((t) => t.id !== id)), tone === "bad" ? 6000 : 2500);
   }, []);
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div className="fixed left-1/2 z-[60] flex w-[min(92vw,420px)] -translate-x-1/2 flex-col gap-2" style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)" }} aria-live="polite">
-        {items.map((t) => <div key={t.id} className={`pop note ${t.tone === "bad" ? "note-bad" : t.tone === "info" ? "note-info" : "note-good"} shadow-lg`}>{t.text}</div>)}
+      <div className="pointer-events-none fixed left-1/2 z-[60] flex w-[min(92vw,420px)] -translate-x-1/2 flex-col gap-2" style={{ top: "calc(env(safe-area-inset-top) + 10px)" }} aria-live="polite">
+        {items.map((t) => <div key={t.id} className={`pop note !py-2 text-sm ${t.tone === "bad" ? "note-bad" : t.tone === "info" ? "note-info" : "note-good"} shadow-md`} role={t.tone === "bad" ? "alert" : "status"}>{t.text}</div>)}
       </div>
     </ToastCtx.Provider>
   );
+}
+
+/* ───────── a picture that is on this device ───────── */
+/** A photo the person chose or took, shown from its object URL exactly as it is (no resizing or optimisation service: it never leaves the phone for this). */
+export function LocalImage({ alt, ...rest }: React.ImgHTMLAttributes<HTMLImageElement> & { alt: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img alt={alt} {...rest} />;
 }
 
 /* ───────── authenticated image ───────── */

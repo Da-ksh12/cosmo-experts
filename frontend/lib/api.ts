@@ -4,6 +4,11 @@ import { apiUrl, IS_APP, serverLabel } from "@/lib/config";
 import { connection } from "@/lib/connection";
 import { isPreview, PREVIEW_MESSAGE, previewBody, setPreview } from "@/lib/preview";
 
+// These two are local constants ON PURPOSE. process.env.NEXT_PUBLIC_* is replaced by a literal at build time, so the bundler folds them and, in a release build, removes everything behind them
+// (the server dialog, preview mode, demo accounts). A flag imported from another module would not be folded. lib/config.ts defines the same flags for code that does not need to disappear.
+const IS_RELEASE = process.env.NEXT_PUBLIC_TARGET === "android" && process.env.NEXT_PUBLIC_RELEASE === "1";
+const DEV_TOOLS = process.env.NEXT_PUBLIC_TARGET === "android" && process.env.NEXT_PUBLIC_RELEASE !== "1";
+
 export type User = { id: string; name: string; role: "patient" | "doctor" | "admin" };
 
 const KEY = "cosmo.session";
@@ -62,7 +67,8 @@ function messageFrom(detail: unknown, fallback: string): string {
 
 const CSRF = { "X-Requested-With": "cosmo-web" };
 const TIMEOUT_MS = 90_000;      // an answer from the assistant can take a while on a small server; beyond this the request is abandoned and the person is told so
-const OFFLINE = () => IS_APP ? `We can't reach the server (${serverLabel()}). Check your internet connection, or the server address in Settings.` : "We can't reach the server right now. Please check your connection and try again.";
+const OFFLINE = () => IS_RELEASE ? "We can't reach Cosmo Experts. Please check your internet connection and try again."
+  : IS_APP ? `We can't reach the server (${serverLabel()}). Check your internet connection, or the server address in Settings.` : "We can't reach the server right now. Please check your connection and try again.";
 
 /** fetch() with a time limit that also honours a caller's own abort signal. A timeout is reported as a timeout, not as "offline". */
 async function fetchTimed(url: string, init: RequestInit, ms = TIMEOUT_MS): Promise<Response> {
@@ -94,8 +100,8 @@ export function refreshSession(): Promise<boolean> {
 
 export async function signOutEverywhere(): Promise<void> {
   const s = getSession();
-  const wasPreview = isPreview();
-  setPreview(false);
+  const wasPreview = DEV_TOOLS && isPreview();
+  if (DEV_TOOLS) setPreview(false);
   setSession(null);
   if (wasPreview) return;                                  // a preview has no server session to end
   try {
@@ -104,7 +110,7 @@ export async function signOutEverywhere(): Promise<void> {
 }
 
 async function request(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
-  if (isPreview()) {                                       // preview mode: no network at all; empty neutral bodies or an honest refusal (lib/preview.ts)
+  if (DEV_TOOLS && isPreview()) {                          // developer-build preview mode: no network at all; empty neutral bodies or an honest refusal (lib/preview.ts)
     const body = previewBody(path, (init.method ?? "GET").toUpperCase());
     if (body === undefined) throw new ApiError(0, PREVIEW_MESSAGE);
     return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -179,18 +185,23 @@ export const DOC_TYPE_LABEL: Record<string, string> = {
   other_uncertain: "Other / uncertain",
 };
 
-/** Multipart upload with real progress (fetch cannot report upload progress). */
-export function uploadWithProgress<T = unknown>(path: string, form: FormData, onProgress: (fraction: number) => void): Promise<T> {
+/** Multipart upload with real progress (fetch cannot report upload progress). `signal` cancels the upload; `timeoutMs` bounds it (default 5 minutes). */
+export function uploadWithProgress<T = unknown>(path: string, form: FormData, onProgress: (fraction: number) => void,
+  opts: { signal?: AbortSignal; timeoutMs?: number; headers?: Record<string, string> } = {}): Promise<T> {
   return new Promise((resolve, reject) => {
-    if (isPreview()) { reject(new ApiError(0, PREVIEW_MESSAGE)); return; }
+    if (DEV_TOOLS && isPreview()) { reject(new ApiError(0, PREVIEW_MESSAGE)); return; }
+    if (opts.signal?.aborted) { reject(new ApiError(0, "Cancelled.")); return; }
     const s = getSession();
     const xhr = new XMLHttpRequest();
     xhr.open("POST", apiUrl(path));
-    xhr.timeout = 300_000;
+    xhr.timeout = opts.timeoutMs ?? 300_000;
     if (s) xhr.setRequestHeader("Authorization", `Bearer ${s.token}`);
+    for (const [k, v] of Object.entries(opts.headers ?? {})) xhr.setRequestHeader(k, v);
     xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
     xhr.onerror = () => { connection.markDown("unreachable"); reject(new ApiError(0, OFFLINE())); };
     xhr.ontimeout = () => { connection.markDown("timeout"); reject(new ApiError(0, "The upload took too long and was stopped. Please try again on a stronger connection.")); };
+    xhr.onabort = () => reject(new ApiError(0, "Cancelled."));
+    opts.signal?.addEventListener("abort", () => xhr.abort(), { once: true });
     xhr.onload = () => {
       connection.markUp();
       let body: { detail?: unknown } & Record<string, unknown> = {};

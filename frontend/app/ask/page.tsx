@@ -1,114 +1,186 @@
 "use client";
 
-import { Bot, FileText, History, Lightbulb, Mic, Send, Sparkles, Stethoscope, Trash2, UserRound, MessageCircle } from "lucide-react";
+import { Bot, Crosshair, FileText, History, Loader2, Send, Sparkles, Stethoscope, Trash2, UserRound, X } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import AgentActions from "@/components/AgentActions";
 import AudioPlayer from "@/components/AudioPlayer";
+import PhotoAnalysisCard, { AskRequest, FocusInfo, Highlight, PendingUpload } from "@/components/PhotoAnalysisCard";
 import { ScreenBar } from "@/components/Shell";
 import VoiceInput from "@/components/VoiceInput";
 import { ConfirmDialog, Dialog, Note, PageHeading, StatusBadge, fmtDateTime, useToast } from "@/components/ui";
-import { api, del, post } from "@/lib/api";
+import { analysisStore, useActivePending, usePending } from "@/lib/analysisStore";
+import { api, ApiError, del, post } from "@/lib/api";
 import { reportHref } from "@/lib/links";
+import { getAnalysis, nextNonce, TERMINAL } from "@/lib/photoAnalysis";
 
-type Source = { kind: string; document_id?: string; page?: number; excerpt?: string; title?: string; quote_id?: string };
-type Msg = { role: "patient" | "assistant"; content: string; sources?: Source[]; status?: string; abstained?: boolean; notice?: string; failed?: string };
+type Source = { kind: string; document_id?: string; page?: number; excerpt?: string; title?: string; quote_id?: string; analysis_id?: string; observation_id?: string; label?: string; index?: number };
+type Action = { label: string; route: string };
+/** Ties a question to one photo assessment (and, if the person selected one, to one area of it). The server checks that it is theirs. */
+type PhotoCtx = { analysis_id: string; observation_id?: string; intent?: string };
+type Msg = { role: "patient" | "assistant"; content: string; sources?: Source[]; status?: string; abstained?: boolean; notice?: string; failed?: string; photoIds?: string[]; actions?: Action[]; ctx?: PhotoCtx };
 type Conv = { id: string; created_at: number; preview: string };
+type Row = { role: "patient" | "assistant"; content: string; sources: Source[] };
+type Reply = { answer: string; sources: Source[]; status: string; abstained: boolean; notice?: string; highlight?: string[]; actions?: Action[]; analysis_id?: string };
 
-// Shown when the server has no report-based suggestions yet. They are only questions to ask: whatever the assistant answers (or declines to answer) comes from the real server.
-const STARTERS = ["Explain my latest report in simple words", "How do I take a clear photo of my skin for my doctor?", "What does \"outside the printed range\" mean on a lab result?", "What should I ask my doctor at my next visit?"];
-
-const MODES = [
-  { Icon: MessageCircle, title: "Ask Anything", sub: "Get clear answers", key: "ask", href: "" },
-  { Icon: Mic, title: "Voice Mode", sub: "Speak naturally", key: "voice", href: "" },
-  { Icon: Lightbulb, title: "Suggested", sub: "Quick help", key: "suggested", href: "" },
-  { Icon: Stethoscope, title: "Doctor Review", sub: "Care plan", key: "care", href: "/care" },
-];
+/** The assessment message the server records when photos are sent has one source per photo with its position; answers about a photo have sources without one. */
+const assessmentIds = (sources?: Source[]) => (sources ?? []).filter((s) => s.kind === "photo_analysis" && typeof s.index === "number" && s.analysis_id).sort((a, b) => a.index! - b.index!).map((s) => s.analysis_id!);
+const toMsg = (r: Row): Msg => { const ids = r.role === "assistant" ? assessmentIds(r.sources) : []; return ids.length ? { role: "assistant", content: r.content, photoIds: ids } : { role: r.role, content: r.content, sources: r.sources }; };
+const RESTORE_MS = 15 * 60_000;
 
 function Chat() {
   const toast = useToast();
+  const router = useRouter();
   const params = useSearchParams();
+  const cp = params.get("c"), pendingId = params.get("pending"), qp = params.get("q");
   const [cid, setCid] = useState("");
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [busyPhoto, setBusyPhoto] = useState(false);
   const [suggest, setSuggest] = useState<string[]>([]);
   const [convs, setConvs] = useState<Conv[] | null>(null);
   const [showHist, setShowHist] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const [voiceTrig, setVoiceTrig] = useState(0);
   const [voiceNote, setVoiceNote] = useState("");
+  const [focus, setFocus] = useState<FocusInfo>(null);
+  const [highlight, setHighlight] = useState<Highlight>(null);
+  const [opening, setOpening] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [missing, setMissing] = useState(false);
+  const [watching, setWatching] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const sent = useRef(false);
+  const loaded = useRef("");
+  const restored = useRef(false);
+
+  const pending = usePending(pendingId ?? watching);
+  const pStage = pending?.stage, pConv = pending?.conversationId;
+  const act = useActivePending();
+  const sending = pStage === "uploading";
 
   useEffect(() => {
     let live = true;
-    post<{ id: string }>("/api/conversations").then((c) => live && setCid(c.id)).catch((e) => toast(e.message, "bad"));
     api<string[]>("/api/assistant/suggestions").then((s) => live && setSuggest(s)).catch(() => {});
     return () => { live = false; };
-  }, [toast]);
-  useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, busy]);
+  }, []);
+  useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, busy, pStage]);
 
-  const send = useCallback(async (q: string, id = cid) => {
+  const openConversation = useCallback(async (id: string) => {
+    const rows = await api<Row[]>(`/api/conversations/${encodeURIComponent(id)}`);
+    setCid(id); setMsgs(rows.map(toMsg)); setFocus(null); setHighlight(null);
+  }, []);
+
+  // 1) a conversation named in the address (a reload, a link, or the place a finished upload moves to)
+  useEffect(() => {
+    if (!cp || loaded.current === cp) return;
+    loaded.current = cp;
+    setOpening(true); setLoadError("");
+    openConversation(cp).catch((e) => { loaded.current = ""; setLoadError(e instanceof Error ? e.message : "We couldn't open this conversation."); }).finally(() => setOpening(false));
+  }, [cp, reload, openConversation]);
+
+  // 2) photos on their way: once the server has accepted them, the conversation with the assessment exists there, and this screen moves into it
+  useEffect(() => {
+    if (pStage !== "submitted" || !pConv || loaded.current === pConv) return;
+    const id = pConv;
+    loaded.current = id;
+    setOpening(true); setLoadError("");
+    openConversation(id).then(() => { setWatching(null); router.replace(`/ask?c=${encodeURIComponent(id)}`); })
+      .catch((e) => { loaded.current = ""; setLoadError(e instanceof Error ? e.message : "We couldn't open your conversation."); }).finally(() => setOpening(false));
+  }, [pStage, pConv, reload, openConversation, router]);
+
+  // 3) the app does not know this upload (it was restarted): if the server has just recorded one, open that; otherwise say so rather than show something unrelated
+  useEffect(() => {
+    if (!pendingId || analysisStore.get(pendingId)) return;
+    let live = true;
+    (async () => {
+      try {
+        const c = (await api<Conv[]>("/api/conversations"))[0];
+        if (!c || Date.now() / 1000 - c.created_at > RESTORE_MS / 1000) { if (live) setMissing(true); return; }
+        const rows = await api<Row[]>(`/api/conversations/${encodeURIComponent(c.id)}`);
+        if (!live) return;
+        if (!rows.some((r) => r.role === "assistant" && assessmentIds(r.sources).length)) { setMissing(true); return; }
+        loaded.current = c.id; setCid(c.id); setMsgs(rows.map(toMsg)); router.replace(`/ask?c=${encodeURIComponent(c.id)}`);
+      } catch { if (live) setMissing(true); }
+    })();
+    return () => { live = false; };
+  }, [pendingId, router]);
+
+  // 4) coming back with nothing in the address: an upload that is still on its way, or an assessment that is still running, is where the person left it
+  if (!cp && !pendingId && !watching && !qp && act) setWatching(act.id);                                  // follow that upload from here on (it leaves the "on its way" list once the server has it)
+  useEffect(() => {
+    if (cp || pendingId || qp || restored.current) return;
+    restored.current = true;
+    const last = analysisStore.lastSubmitted(RESTORE_MS);
+    if (!last?.conversationId || !last.analysisIds[0]) return;
+    const id = last.conversationId;
+    getAnalysis(last.analysisIds[0]).then((a) => { if (!TERMINAL.includes(a.status)) { loaded.current = id; return openConversation(id).then(() => router.replace(`/ask?c=${encodeURIComponent(id)}`)); } }).catch(() => {});
+  }, [cp, pendingId, qp, openConversation, router]);
+
+  const send = useCallback(async (q: string, o: { ctx?: PhotoCtx | null } = {}) => {
     if (!q.trim()) return;
-    setBusy(true); setText("");
+    const ctx: PhotoCtx | null = o.ctx !== undefined ? o.ctx : focus ? { analysis_id: focus.analysisId, ...(focus.observationId ? { observation_id: focus.observationId } : {}) } : null;
+    setBusy(true); setBusyPhoto(!!ctx); setText("");
     if (input.current) input.current.style.height = "auto";
-    setMsgs((m) => [...m, { role: "patient", content: q }]);
+    setMsgs((m) => [...m, { role: "patient", content: q, ctx: ctx ?? undefined }]);
     try {
-      let conv = id;
-      if (!conv) { conv = (await post<{ id: string }>("/api/conversations")).id; setCid(conv); }          // the conversation could not be created earlier (no connection): try again now
-      const r = await post<{ answer: string; sources: Source[]; status: string; abstained: boolean; notice?: string }>(`/api/conversations/${conv}/messages`, { text: q });
-      setMsgs((m) => [...m, { role: "assistant", content: r.answer, sources: r.sources, status: r.status, abstained: r.abstained, notice: r.notice }]);
+      let conv = cid;
+      if (!conv) { conv = (await post<{ id: string }>("/api/conversations")).id; setCid(conv); }          // the conversation is created when the first question is sent (an empty one is never left behind)
+      const r = await post<Reply>(`/api/conversations/${conv}/messages`, ctx ? { text: q, context: ctx } : { text: q });
+      setMsgs((m) => [...m, { role: "assistant", content: r.answer, sources: r.sources, status: r.status, abstained: r.abstained, notice: r.notice, actions: r.actions }]);
+      if (r.highlight?.length && r.analysis_id) setHighlight({ analysisId: r.analysis_id, observationIds: r.highlight, nonce: nextNonce() });
     } catch (e) {
       const why = e instanceof Error ? e.message : "Something went wrong. Please try again.";
+      if (ctx && e instanceof ApiError && e.status === 404) setFocus(null);                                  // the photo assessment is gone: stop attaching it
       setMsgs((m) => m.map((x, i) => (i === m.length - 1 && x.role === "patient" ? { ...x, failed: why } : x)));      // the question stays visible and is marked NOT sent (announced to screen readers); nothing pretends to have been answered
     }
     finally { setBusy(false); }
-  }, [cid]);
-  const retry = (i: number) => { const q = msgs[i]?.content; if (!q) return; setMsgs((m) => m.filter((_, j) => j !== i)); void send(q); };
+  }, [cid, focus]);
+  const retry = (i: number) => { const m = msgs[i]; if (!m?.content) return; setMsgs((x) => x.filter((_, j) => j !== i)); void send(m.content, { ctx: m.ctx ?? null }); };
+  const ask = useCallback((q: AskRequest) => { void send(q.text, { ctx: { analysis_id: q.analysisId, ...(q.observationId ? { observation_id: q.observationId } : {}), intent: q.intent } }); }, [send]);
 
-  const qp = params.get("q");
-  useEffect(() => { if (qp && cid && !sent.current) { sent.current = true; void send(qp, cid); } }, [qp, cid, send]);
+  useEffect(() => { if (qp && !sent.current) { sent.current = true; void send(qp); } }, [qp, send]);
+
+  /** "Shows on the photo": selects the area the answer is about (or only brings the photo into view) and zooms to it. */
+  function showOnPhoto(s: Source) {
+    if (!s.analysis_id) return;
+    setHighlight({ analysisId: s.analysis_id, observationIds: s.observation_id ? [s.observation_id] : [], nonce: nextNonce() });
+    const el = document.querySelector(`[data-photo-assessment*="${CSS.escape(s.analysis_id)}"]`);
+    el?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
 
   async function loadHistory() { setShowHist(true); setConvs(null); try { setConvs(await api<Conv[]>("/api/conversations")); } catch { setConvs([]); } }
   async function resume(c: Conv) {
-    try {
-      const rows = await api<{ role: "patient" | "assistant"; content: string; sources: Source[] }[]>(`/api/conversations/${c.id}`);
-      setCid(c.id); setMsgs(rows.map((r) => ({ role: r.role, content: r.content, sources: r.sources }))); setShowHist(false);
-    } catch (e) { toast(e instanceof Error ? e.message : "Could not open the conversation.", "bad"); }
+    try { loaded.current = c.id; await openConversation(c.id); setWatching(null); setShowHist(false); router.replace(`/ask?c=${encodeURIComponent(c.id)}`); }
+    catch (e) { loaded.current = ""; toast(e instanceof Error ? e.message : "Could not open the conversation.", "bad"); }
   }
   async function clear() {
     setConfirm(false);
-    try { await del(`/api/conversations/${cid}`); setMsgs([]); setCid((await post<{ id: string }>("/api/conversations")).id); toast("Conversation deleted."); } catch (e) { toast(e instanceof Error ? e.message : "Could not delete.", "bad"); }
+    try { await del(`/api/conversations/${cid}`); setMsgs([]); setCid(""); setFocus(null); setHighlight(null); loaded.current = ""; if (cp) router.replace("/ask"); } catch (e) { toast(e instanceof Error ? e.message : "Could not delete.", "bad"); }
   }
 
   const firstDoc = msgs.flatMap((m) => m.sources ?? []).find((s) => s.kind === "document");
-  const runMode = (key: string) => {
-    if (key === "ask") input.current?.focus();
-    else if (key === "voice") setVoiceTrig((n) => n + 1);
-    else document.getElementById("suggested")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const hasPhoto = msgs.some((m) => m.photoIds);
 
   return (
     <div className="space-y-5">
       <ScreenBar back="/" right={<button className="btn btn-icon" onClick={loadHistory} aria-label="Conversation history"><History className="h-5 w-5" /></button>} />
-      <div className="flex items-start justify-between gap-3"><div className="min-w-0 flex-1"><PageHeading eyebrow="AI consultation" title="Let's Understand Together" subtitle="Ask about your reports in simple language. Every answer shows where it came from." /></div>
+      <div className="flex items-start justify-between gap-3"><div className="min-w-0 flex-1"><PageHeading eyebrow="AI consultation" title="Let's Understand Together" /></div>
         <button className="btn hidden md:inline-flex" onClick={loadHistory}><History className="h-5 w-5" aria-hidden /> History</button></div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {MODES.map(({ Icon, title, sub, key, href }) => {
-          const body = <><Icon className="h-6 w-6 text-teal" strokeWidth={1.5} aria-hidden /><span className="font-semibold">{title}</span><span className="text-xs text-muted">{sub}</span></>;
-          return href ? <Link key={title} href={href} className="card flex flex-col items-center gap-1 !p-3 text-center">{body}</Link>
-            : <button key={title} className="card flex flex-col items-center gap-1 !p-3 text-center" onClick={() => runMode(key)}>{body}</button>;
-        })}
-      </div>
-
-      <Note tone="info">I answer from your uploaded reports and the clinic&apos;s approved information. I can&apos;t diagnose or choose medicines. Your doctor does that.</Note>
+      <Note tone="info">I answer from your uploaded reports and the clinic&apos;s approved information, and every answer shows its source. I can&apos;t diagnose or choose medicines. Your doctor does that.</Note>
 
       <section className="space-y-4" aria-live="polite" aria-label="Conversation">
-        {msgs.map((m, i) => m.role === "patient" ? (
+        {opening && msgs.length === 0 && !pending && <div className="flex items-center gap-2 text-muted" role="status"><Loader2 className="spin h-5 w-5" aria-hidden /> Opening your conversation…</div>}
+        {loadError && <Note tone="bad"><p>{loadError}</p><button type="button" className="btn btn-sm mt-2" onClick={() => { setLoadError(""); loaded.current = ""; setReload((n) => n + 1); }}>Try again</button></Note>}
+        {missing && !loadError && <Note tone="warn"><p>We couldn&apos;t find that photo upload. If it didn&apos;t finish, please take the photo again.</p><Link href="/photo" className="btn btn-sm mt-2">Take a photo</Link></Note>}
+
+        {msgs.map((m, i) => m.photoIds ? (
+          <div key={i} className="rise w-full max-w-3xl"><PhotoAnalysisCard ids={m.photoIds} onAsk={ask} onFocus={setFocus} highlight={highlight} /></div>
+        ) : m.role === "patient" ? (
           <div key={i} className="rise ml-auto flex max-w-[88%] items-end gap-2 sm:max-w-[70%]">
             <div className="min-w-0"><div className={`rounded-[22px] rounded-br-md px-4 py-3 text-white ${m.failed ? "bg-[var(--bad-ink)]" : "bg-teal"}`}><p className="whitespace-pre-wrap">{m.content}</p></div>
               {m.failed && <p className="mt-1 text-right text-xs text-[var(--bad-ink)]" role="alert">Not sent. {m.failed} <button type="button" className="font-semibold underline" onClick={() => retry(i)} disabled={busy}>Try again</button></p>}</div>
@@ -123,38 +195,46 @@ function Chat() {
                 <div className="flex flex-wrap gap-2">{m.sources.map((s, j) => s.kind === "document" ? (
                   <Link key={j} href={reportHref(s.document_id)} className="badge note-info no-underline"><FileText className="h-3.5 w-3.5" aria-hidden /> Your report · page {s.page}</Link>)
                   : s.kind === "knowledge_base" ? <span key={j} className="badge note-gold">Clinic-approved: {s.title}</span>
+                  : s.kind === "photo_analysis" ? <button key={j} type="button" className="badge note-info" data-source="photo_analysis" onClick={() => showOnPhoto(s)}><Crosshair className="h-3.5 w-3.5" aria-hidden /> {s.observation_id ? "Show on photo" : "Photo assessment"}: {s.label ?? "your photo"}</button>
                   : <Link key={j} href="/quote" className="badge note-info no-underline">Your approved quotation</Link>)}</div>)}
+              {m.actions && m.actions.length > 0 && <div className="flex flex-wrap gap-2">{m.actions.map((a) => <Link key={a.route} href={a.route} className="chip no-underline">{a.label}</Link>)}</div>}
               {m.notice && <Note tone="warn">{m.notice}</Note>}
               <div className="flex flex-wrap items-center gap-2">{m.status && <StatusBadge status={m.status} />}{m.abstained && <span className="text-sm text-muted">You can ask the clinic team to review this.</span>}</div>
               <AudioPlayer compact text={m.content.slice(0, 1500)} />
             </div>
           </div>))}
-        {busy && <div className="flex items-center gap-2 text-muted" role="status"><Sparkles className="spin h-5 w-5" aria-hidden /> Looking through your documents…</div>}
+        {pending && <div className="w-full max-w-3xl"><PendingUpload pending={pending} onDismiss={() => analysisStore.dismiss(pending.id)} /></div>}
+        {busy && <div className="flex items-center gap-2 text-muted" role="status"><Sparkles className="spin h-5 w-5" aria-hidden /> {busyPhoto ? "Looking at your photo assessment…" : "Looking through your documents…"}</div>}
         <div ref={end} aria-hidden style={{ scrollMarginBottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 230px)" }} />      {/* keeps the newest message clear of the sticky composer */}
       </section>
 
       <div className="flex flex-wrap gap-2" aria-label="Quick actions">
         {firstDoc && <Link href={reportHref(firstDoc.document_id)} className="chip"><FileText className="h-4 w-4" aria-hidden /> View Report</Link>}
-        <button className="chip" onClick={() => send("What questions should I ask my doctor?")}><Stethoscope className="h-4 w-4" aria-hidden /> Questions for my doctor</button>
         <Link href="/care" className="chip"><Stethoscope className="h-4 w-4" aria-hidden /> Doctor Review</Link>
       </div>
 
       <AgentActions />
 
-      <section id="suggested" aria-label="Suggested questions" className="space-y-2">
-        <h3 className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-gold" aria-hidden /> Suggested Questions</h3>
-        {suggest.length === 0 && <p className="text-sm text-muted">General starters. Upload a report to get questions based on it.</p>}
-        <div className="grid gap-2 sm:grid-cols-3">{(suggest.length ? suggest : STARTERS).map((s) => <button key={s} className="card !rounded-2xl !p-3 text-left text-sm" disabled={busy} onClick={() => send(s)}>{s}</button>)}</div>
-      </section>
+      {suggest.length > 0 && !hasPhoto && !pending && (
+        <section id="suggested" aria-label="Suggested questions" className="space-y-2">
+          <h3 className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-gold" aria-hidden /> Suggested questions</h3>
+          <div className="grid gap-2 sm:grid-cols-3">{suggest.map((s) => <button key={s} className="card !rounded-2xl !p-3 text-left text-sm" disabled={busy} onClick={() => send(s)}>{s}</button>)}</div>
+        </section>)}
 
       <form onSubmit={(e) => { e.preventDefault(); void send(text); }} className="card sticky z-20 space-y-2 !p-3" style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 8px)" }}>
+        {focus && (
+          <div className="flex items-center gap-2 rounded-2xl bg-sage px-3 py-2 text-sm" data-context-chip={focus.observationId ?? "photo"}>
+            <Crosshair className="h-4 w-4 shrink-0 text-teal" aria-hidden />
+            <span className="min-w-0 flex-1 truncate">Asking about {focus.observationId ? <b>{focus.label ?? "the selected area"}</b> : "your photo"}</span>
+            <button type="button" className="btn btn-icon btn-sm" onClick={() => setFocus(null)} aria-label="Stop asking about this photo"><X className="h-4 w-4" aria-hidden /></button>
+          </div>)}
         <label htmlFor="q" className="sr-only">Your question</label>
         <textarea id="q" ref={input} className="input !rounded-2xl" rows={1} maxLength={1000} value={text}
             onChange={(e) => { setText(e.target.value); const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 132)}px`; }}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(text); } }} placeholder="Ask in English, Hindi or Hinglish…" />
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sending) void send(text); } }} placeholder={focus ? "Ask about this photo…" : "Ask in English, Hindi or Hinglish…"} />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <VoiceInput trigger={voiceTrig} onText={(t, note) => { setText(t); setVoiceNote(note ?? "Please check the words and correct them if needed before sending."); input.current?.focus(); }} onState={(s, m) => { if (s === "error") setVoiceNote(m ?? ""); else if (s !== "idle") setVoiceNote(""); }} />
-          <button className="btn btn-primary shrink-0" type="submit" disabled={busy || !text.trim()} aria-label="Send question"><Send className="h-5 w-5" aria-hidden /> Send</button>
+          <VoiceInput onText={(t, note) => { setText(t); setVoiceNote(note ?? "Please check the words and correct them if needed before sending."); input.current?.focus(); }} onState={(s, m) => { if (s === "error") setVoiceNote(m ?? ""); else if (s !== "idle") setVoiceNote(""); }} />
+          <button className="btn btn-primary shrink-0" type="submit" disabled={busy || sending || !text.trim()} aria-label="Send question"><Send className="h-5 w-5" aria-hidden /> Send</button>
         </div>
         {voiceNote && <p className="text-sm text-[var(--warn-ink)]" role="status">{voiceNote}</p>}
         <div className="flex justify-between text-xs text-muted"><span>Not for emergencies. If you feel very unwell, contact emergency services.</span>

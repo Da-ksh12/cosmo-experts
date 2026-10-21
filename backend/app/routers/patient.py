@@ -2,6 +2,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import Response
@@ -195,8 +196,16 @@ def delete_document(doc_id: str, user=Depends(require("patient"))):
 
 # ---------------- conversation ----------------
 
+class PhotoContext(BaseModel):
+    """Ties a question to ONE photo-analysis session, and optionally to the observation the person selected on the photo."""
+    analysis_id: str = Field(min_length=1, max_length=64)
+    observation_id: str | None = Field(default=None, max_length=48)
+    intent: Literal["measurements", "observation", "better_photo", "what_next", "summary", "compare", "capabilities", "care"] | None = None
+
+
 class Msg(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
+    context: PhotoContext | None = None
 
 
 @router.post("/conversations")
@@ -216,8 +225,17 @@ def _conv(cid, user):
 @router.post("/conversations/{cid}/messages")
 def ask(cid: str, body: Msg, user=Depends(consent.patient_consented)):
     _conv(cid, user)
-    db.x("INSERT INTO messages VALUES(?,?,?,?,?,?)", (db.uid(), cid, "patient", body.text, "[]", db.now()))
-    out = engine.answer(user["id"], cid, body.text)
+    ctx = body.context.model_dump(exclude_none=True) if body.context else None
+    refs = "[]"
+    if ctx:                                                                    # the question is about one photo assessment: it must be this person's, and the message remembers which
+        from ..photo_analysis import answers as photo
+        try:
+            photo.load(user["id"], ctx)
+        except photo.ContextError as e:
+            raise HTTPException(404, str(e)) from None
+        refs = json.dumps([{k: v for k, v in {"kind": "photo_analysis", "analysis_id": ctx["analysis_id"], "observation_id": ctx.get("observation_id")}.items() if v is not None}])
+    db.x("INSERT INTO messages VALUES(?,?,?,?,?,?)", (db.uid(), cid, "patient", body.text, refs, db.now()))
+    out = engine.answer(user["id"], cid, body.text, ctx)
     db.x("INSERT INTO messages VALUES(?,?,?,?,?,?)", (db.uid(), cid, "assistant", out["answer"], json.dumps(out["sources"]), db.now() + 0.001))
     db.audit(user["id"], "assistant.ask", cid, {"abstained": out["abstained"], "reason": out.get("reason")})
     return out

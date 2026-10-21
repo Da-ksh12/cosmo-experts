@@ -25,14 +25,14 @@ export default function PrivacyPage() {
   async function withdraw() {
     if (!window.confirm("Withdraw your consent? You will not be able to upload photos or reports, use the assistant or request a quotation until you accept the notice again. Information you already shared stays on your record until you ask the clinic to delete it.")) return;
     setBusy(true);
-    try { await post("/api/consent/withdraw"); toast("Your consent has been withdrawn.", "ok"); load(); }
+    try { await post("/api/consent/withdraw"); load(); }
     catch (e) { toast(e instanceof Error ? e.message : "Could not withdraw your consent.", "bad"); }
     setBusy(false);
   }
   return (
     <div className="space-y-5">
       <ScreenBar />
-      <PageHeading eyebrow="Your information" title="Privacy and consent" subtitle="What you agreed to, and when." art={false} />
+      <PageHeading eyebrow="Your information" title="Privacy and consent" art={false} />
       {err ? <ErrorState message={err} onRetry={load} /> : !status || !events ? <LoadingState /> : (
         <>
           <div className="card flex items-start gap-3">

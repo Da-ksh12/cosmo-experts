@@ -24,6 +24,7 @@ export default function QuotePage() {
   const [sel, setSel] = useState<Record<string, number>>({});
   const [pay, setPay] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sentNote, setSentNote] = useState("");
 
   const load = useCallback(() => {
     Promise.all([api<Price[]>("/api/price-items"), api<Cfg>("/api/quote-config"), api<Care>("/api/care-plan"), api<Quote[]>("/api/quotes")])
@@ -51,10 +52,10 @@ export default function QuotePage() {
   const step = (p: Price, d: number) => setSel((s) => ({ ...s, [p.id]: Math.max(1, Math.min(100, (s[p.id] || p.sessions) + d)) }));
 
   async function submit() {
-    setBusy(true);
+    setBusy(true); setSentNote("");
     try {
       await post("/api/quotes", { items: chosen.map((p) => ({ item_id: p.id, qty: sel[p.id] })), notes: pay ? `Payment preference: ${pay}` : "" });
-      toast("Sent. The clinic will review your estimate and approve a quotation."); setSel({}); load();
+      setSentNote("Sent. The clinic will review your estimate and approve a quotation."); setSel({}); load();
     } catch (e) { toast(e instanceof Error ? e.message : "Could not send your request.", "bad"); }
     finally { setBusy(false); }
   }
@@ -71,10 +72,10 @@ export default function QuotePage() {
   return (
     <div className="space-y-6">
       <ScreenBar back="/care" />
-      <PageHeading eyebrow="Your care plan" title="Treatment Quotation Builder" subtitle="Choose items from the clinic's price list to see an estimate. Your doctor decides what is right for you." />
+      <PageHeading eyebrow="Your care plan" title="Treatment Quotation Builder" />
 
       {prices.length === 0 ? (
-        <EmptyState icon={<Tag className="h-7 w-7" />} title="No price list yet">The clinic hasn&apos;t published its approved price list, so no estimate can be built. Please ask the clinic team.</EmptyState>
+        <EmptyState icon={<Tag className="h-7 w-7" />} title="No price list yet">The clinic hasn&apos;t published its price list yet. Please ask the clinic team.</EmptyState>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <div className="space-y-4">
@@ -133,6 +134,7 @@ export default function QuotePage() {
       )}
 
       <section className="space-y-3" aria-label="Your quotations"><h2>Your Quotations</h2>
+        {sentNote && <p className="text-sm font-semibold text-[var(--good-ink)]" role="status">{sentNote}</p>}
         {quotes.length === 0 ? <p className="text-muted">You haven&apos;t requested a quotation yet.</p> : quotes.map((q) => (
           <article key={q.id} className="card flex flex-wrap items-center justify-between gap-3">
             <div><p className="font-semibold">Quotation {q.id.slice(0, 8)}</p><p className="text-sm text-muted">{q.lines.map((l) => `${l.name} × ${l.qty}`).join(", ")}</p></div>

@@ -23,11 +23,19 @@ export async function pollJob<R>(id: string, onStatus?: (j: Job<R>) => void, opt
   }
 }
 
-/** Upload to a /api/v1 endpoint (202 + job) and wait for the real outcome. */
-export async function runUploadJob<R>(path: string, form: FormData, handlers: { onUpload?: (fraction: number) => void; onStatus?: (j: Job<R>) => void } = {}): Promise<Job<R>> {
-  const created = await uploadWithProgress<Job<R>>(path, form, handlers.onUpload ?? (() => {}));
+/** Upload to a /api/v1 endpoint (202 + job) and wait for the real outcome. `signal` cancels: an upload in flight is aborted, a job already queued is cancelled on the server.
+ *  `idempotencyKey` makes a retry of the SAME upload safe: the server returns the job it already has instead of processing (and saving) the file twice. */
+export async function runUploadJob<R>(path: string, form: FormData,
+  handlers: { onUpload?: (fraction: number) => void; onStatus?: (j: Job<R>) => void; signal?: AbortSignal; uploadTimeoutMs?: number; idempotencyKey?: string } = {}): Promise<Job<R>> {
+  const created = await uploadWithProgress<Job<R>>(path, form, handlers.onUpload ?? (() => {}),
+    { signal: handlers.signal, timeoutMs: handlers.uploadTimeoutMs, headers: handlers.idempotencyKey ? { "Idempotency-Key": handlers.idempotencyKey } : undefined });
   handlers.onStatus?.(created);
-  return TERMINAL.includes(created.status) ? created : pollJob<R>(created.id, handlers.onStatus);
+  if (TERMINAL.includes(created.status)) return created;
+  try { return await pollJob<R>(created.id, handlers.onStatus, { signal: handlers.signal }); }
+  catch (e) {
+    if (handlers.signal?.aborted) void cancelJob(created.id).catch(() => { /* the job finishes on its own if it cannot be cancelled */ });
+    throw e;
+  }
 }
 
 export const cancelJob = (id: string) => api(`/api/v1/jobs/${id}/cancel`, { method: "POST" });

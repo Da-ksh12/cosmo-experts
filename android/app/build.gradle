@@ -1,13 +1,18 @@
 apply plugin: 'com.android.application'
 
-// the APK is named after the product: app/build/outputs/apk/debug/cosmo-experts-ai-debug.apk
+// the APK is named after the product: app/build/outputs/apk/debug/cosmo-experts-ai-debug.apk, app/build/outputs/apk/release/cosmo-experts-ai-release.apk
 base {
     archivesName = 'cosmo-experts-ai'
 }
 
 // the version comes from frontend/android.config.json through scripts/build-android.mjs (-PcosmoVersionCode / -PcosmoVersionName)
-def cosmoVersionCode = Integer.parseInt((project.findProperty("cosmoVersionCode") ?: "2").toString())
-def cosmoVersionName = (project.findProperty("cosmoVersionName") ?: "0.2.0-standalone").toString()
+def cosmoVersionCode = Integer.parseInt((project.findProperty("cosmoVersionCode") ?: "3").toString())
+def cosmoVersionName = (project.findProperty("cosmoVersionName") ?: "1.0.0").toString()
+
+// RELEASE SIGNING. The release keystore and its passwords are never in the repository: scripts/build-android.mjs --release reads them from a local, git-ignored properties file
+// (frontend/scripts/make-release-keystore.mjs creates it) and passes them to Gradle in these environment variables, never on a command line.
+def signingEnv = ['COSMO_KEYSTORE_FILE', 'COSMO_KEYSTORE_PASSWORD', 'COSMO_KEY_ALIAS', 'COSMO_KEY_PASSWORD'].collectEntries { [(it): System.getenv(it)] }
+def releaseSigningConfigured = signingEnv.values().every { it }
 
 android {
     namespace = "ai.cosmoexperts.app"
@@ -25,11 +30,33 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (releaseSigningConfigured) {
+                storeFile file(signingEnv.COSMO_KEYSTORE_FILE)
+                storePassword signingEnv.COSMO_KEYSTORE_PASSWORD
+                keyAlias signingEnv.COSMO_KEY_ALIAS
+                keyPassword signingEnv.COSMO_KEY_PASSWORD
+                enableV1Signing = false     // minSdk 24: APK Signature Scheme v2/v3 only
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
     buildTypes {
         release {
+            debuggable false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (releaseSigningConfigured) signingConfig signingConfigs.release
         }
+    }
+}
+
+// A release build is never produced unsigned or debug-signed: without the keystore the build stops here with instructions.
+gradle.taskGraph.whenReady { graph ->
+    if (!releaseSigningConfigured && graph.allTasks.any { it.project == project && it.name =~ /(?i)(assemble|bundle|package)Release/ }) {
+        throw new GradleException("Release signing is not configured. Run 'node scripts/make-release-keystore.mjs' once (frontend/), then build with 'node scripts/build-android.mjs --release'. See docs/PRODUCTION_RELEASE.md.")
     }
 }
 

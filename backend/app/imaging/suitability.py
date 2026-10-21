@@ -82,6 +82,7 @@ class Report:
     warnings: list = field(default_factory=list)
     version: str = VERSION
     checks: list = field(default_factory=list)
+    regions: list = field(default_factory=list)      # located areas the checks were measured on: {"id","kind":"face","box_px":[x,y,w,h]} in pixels of the photo as displayed (EXIF orientation applied)
 
     def to_dict(self):
         return asdict(self)
@@ -242,6 +243,7 @@ def assess(data: bytes, region: str) -> Report:
     if m["blockiness"] >= BLOCKINESS_WARN:
         rep.warnings.append("This photo looks heavily compressed (for example re-saved or sent through a messaging app). The clinic may ask for the original photo.")
     rep.checks = _checklist(m, region, faces, big_face, rep.verdict, rep.reason)
+    rep.regions = [{"id": f"face-{i + 1}", "kind": "face", "box_px": [max(0, int(x)), max(0, int(y)), int(min(w, img.shape[1] - x)), int(min(h, img.shape[0] - y))]} for i, (x, y, w, h) in enumerate(faces)]
     return rep
 
 

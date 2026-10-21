@@ -63,11 +63,14 @@ def image_file(iid: str, thumb: int = 0, user=Depends(current_user)):
         data = storage.read(r["stored_path"])
     except storage.StorageError:
         raise HTTPException(404, "Photo not found.")
+    mime = "image/png" if data[:8] == b"\x89PNG\r\n\x1a\n" else "image/webp" if data[:4] == b"RIFF" and data[8:12] == b"WEBP" else "image/jpeg"     # the stored file is exactly what was sent: say what it is
     if thumb:
-        data = _thumb_png(data, "image/jpeg") or data
+        t = _thumb_png(data, "image/jpeg")
+        if t:
+            data, mime = t, "image/jpeg"
     if user["id"] != r["owner_id"]:
         db.audit(user["id"], "image.staff_access", iid, {"owner": r["owner_id"]})
-    return Response(data, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff"})
+    return Response(data, media_type=mime, headers={"Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff"})
 
 
 # ---------- patient flags a doubtful extracted value ----------

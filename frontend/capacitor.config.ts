@@ -8,6 +8,7 @@ const c = { appId: "ai.cosmoexperts.app", appName: "Cosmo Experts AI", androidSc
 };
 
 const IVORY = "#faf7f1";
+const release = process.env.COSMO_RELEASE === "1";        // set by scripts/build-android.mjs --release
 
 const config: CapacitorConfig = {
   appId: c.appId,
@@ -17,6 +18,8 @@ const config: CapacitorConfig = {
     path: "../android",                        // the Android project lives at the repository root, next to frontend/
     backgroundColor: IVORY,
     allowMixedContent: false,                  // an https page never talks to http, and the http scheme below never loads https content insecurely
+    // A release app can not be inspected through Chrome DevTools and writes nothing from the web view to the device log (patient data must not end up in logcat).
+    ...(release ? { webContentsDebuggingEnabled: false, loggingBehavior: "none" as const } : {}),
   },
   server: {
     // The app's screens are served from the APK itself at https://localhost (an internal address that never touches the network), so it opens with no server running anywhere.

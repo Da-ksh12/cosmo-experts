@@ -32,7 +32,7 @@ export default function CarePage() {
   return (
     <div className="space-y-6">
       <ScreenBar back="/" />
-      <PageHeading eyebrow="Doctor review" title="Expert Review & Care Plan" subtitle={plan ? "A clinician has reviewed your photos and reports. Here is the plan they approved." : "Your care plan will appear here once a clinician has reviewed and approved it."} />
+      <PageHeading eyebrow="Doctor review" title="Expert Review & Care Plan" />
 
       {doctor && (
         <section className="card flex flex-wrap items-center gap-4 !p-4" aria-label="Reviewing clinician">
@@ -46,7 +46,7 @@ export default function CarePage() {
       {!plan && (
         <EmptyState icon={<ClipboardList className="h-7 w-7" />} title="No approved care plan yet"
           action={<Link href="/photo" className="btn btn-primary">Add a photo</Link>}>
-          {c.awaiting_review ? "Your submissions are waiting for clinician review. A plan is only shown after a doctor approves it." : "Upload a photo or a report so your care team can review them."}
+          {c.awaiting_review ? "A plan appears here once a doctor has reviewed and approved your submissions." : "Add a photo or a report and your care team will review it."}
         </EmptyState>
       )}
 

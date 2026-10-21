@@ -1,13 +1,13 @@
-import { IS_APP } from "@/lib/config";
+import { DEV_TOOLS } from "@/lib/config";
 
-/** PREVIEW MODE (Android app only): lets a person look at the real screens when no server is available.
+/** PREVIEW MODE (Android DEVELOPER builds only; a release build has none): lets a person look at the real screens when no server is available.
  *  It is explicitly a preview, never a simulation of care: every screen receives EMPTY lists and neutral status objects, never an example record, report, answer, result or prediction,
  *  and anything that would create, send, upload or analyse something fails with PREVIEW_MESSAGE. No network request is made. The flag lives in session storage, so it ends with the session. */
 const KEY = "cosmo.preview";
 let memory = false;
 
 export function isPreview(): boolean {
-  if (!IS_APP) return false;
+  if (!DEV_TOOLS) return false;
   try { return sessionStorage.getItem(KEY) === "1" || memory; } catch { return memory; }
 }
 

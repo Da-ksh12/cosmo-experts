@@ -1,11 +1,13 @@
 "use client";
 
-import { Check, Flower2, Grid2x2Plus, Image as ImageIcon, ScanFace, Sun, User, X, Focus, Glasses } from "lucide-react";
+import { Camera, Check, Flower2, Focus, Glasses, Grid2x2Plus, Image as ImageIcon, Loader2, ScanFace, Sun, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import CameraPanel from "@/components/CameraPanel";
 import { ScreenBar } from "@/components/Shell";
-import { Note, PageHeading, ProgressSteps, useToast } from "@/components/ui";
+import { Note, PageHeading, ProgressSteps } from "@/components/ui";
+import { chooseNativePhotos, MAX_PHOTOS, NATIVE_PHOTOS, Picked, screenPhotos, takeNativePhoto } from "@/lib/nativePhoto";
 import { Region, usePhotoFlow } from "@/lib/photoFlow";
 
 const REGIONS: { id: Region; label: string; Icon: typeof ScanFace; hint: string; tips: { Icon: typeof Sun; title: string; sub: string }[] }[] = [
@@ -26,26 +28,41 @@ const REGIONS: { id: Region; label: string; Icon: typeof ScanFace; hint: string;
 function Capture() {
   const router = useRouter();
   const params = useSearchParams();
-  const toast = useToast();
   const flow = usePhotoFlow();
-  const [cam, setCam] = useState(false);
+  const [cam, setCam] = useState(false);                         // web only: the inline browser camera
+  const [busy, setBusy] = useState<"" | "camera" | "gallery">("");
+  const [problem, setProblem] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const qp = params.get("region") as Region | null;
   useEffect(() => { if (qp && REGIONS.some((r) => r.id === qp)) flow.setRegion(qp); }, [qp]); // eslint-disable-line react-hooks/exhaustive-deps
   const cur = REGIONS.find((r) => r.id === flow.region)!;
+  const room = MAX_PHOTOS - flow.shots.length;
 
-  function take(f: File) {
-    if (!/^image\/(jpeg|png)$/.test(f.type)) { toast("Please choose a JPG or PNG photo.", "bad"); return; }
-    if (f.size > 15 * 1024 * 1024) { toast("That photo is larger than 15 MB. Please choose a smaller one.", "bad"); return; }
-    flow.add(f);
+  /** Validate on the phone first (type, size, readable), then hand the good photos to the adjust screen. A problem is shown here, in place, with what to do next. */
+  async function accept(files: File[]) {
+    setProblem("");
+    if (!files.length) return;
+    if (room <= 0) { setProblem(`You can add up to ${MAX_PHOTOS} photos at a time. Continue with the photos you have, or remove one first.`); return; }
+    const { good, problem: p } = await screenPhotos(files.slice(0, room));
+    if (!good.length) { setProblem(p || "We couldn't use that photo. Please try another."); return; }
+    good.forEach((f) => flow.add(f));
     router.push("/photo/adjust");
   }
+  async function native(kind: "camera" | "gallery") {
+    setProblem(""); setBusy(kind);
+    const r: Picked = kind === "camera" ? await takeNativePhoto() : await chooseNativePhotos(Math.max(1, room));
+    setBusy("");
+    if (r.kind === "error") setProblem(r.message);
+    else if (r.kind === "photos") await accept(r.files);                     // "cancelled" (the person backed out) is not an error: nothing to say
+  }
+  const takePhoto = () => { setProblem(""); if (NATIVE_PHOTOS) void native("camera"); else setCam(true); };
+  const fromGallery = () => { setProblem(""); if (NATIVE_PHOTOS) void native("gallery"); else fileRef.current?.click(); };
 
   return (
-    <div className="space-y-6">
-      <ScreenBar back="/" right={<ProgressSteps step={1} total={3} />} />
-      <div className="hidden justify-end md:flex"><ProgressSteps step={1} total={3} /></div>
-      <PageHeading eyebrow="Photo capture" title="Take a Clear Photo" subtitle="Follow the simple guide below so the clinic can use your photo." />
+    <div className="space-y-5">
+      <ScreenBar back="/" right={<ProgressSteps step={1} total={2} />} />
+      <div className="hidden justify-end md:flex"><ProgressSteps step={1} total={2} /></div>
+      <PageHeading eyebrow="Photo capture" title="Take a Clear Photo" />
 
       <div className="scroll-x" role="group" aria-label="Which area is the photo of?">
         {REGIONS.map(({ id, label, Icon }) => (
@@ -53,27 +70,29 @@ function Capture() {
             <Icon className="h-7 w-7" strokeWidth={1.5} aria-hidden />{label}{flow.region === id && <Check className="absolute right-2 top-2 h-4 w-4" aria-hidden />}
           </button>))}
       </div>
+      <p className="-mt-1 text-sm text-muted">{cur.hint}.</p>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="card space-y-4" aria-label="Photo tips">
-          <div><h2>Photo Tips</h2><p className="text-sm text-muted">For the most useful photo</p></div>
-          <ul className="space-y-3">{cur.tips.map(({ Icon, title, sub }) => (
-            <li key={title} className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gold-soft text-gold"><Icon className="h-5 w-5" aria-hidden /></span>
-              <span><span className="block font-semibold">{title}</span><span className="block text-sm text-muted">{sub}</span></span></li>))}</ul>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl bg-sage p-3"><p className="flex items-center gap-1 font-semibold text-[var(--good-ink)]"><Check className="h-4 w-4" aria-hidden /> Good</p><p className="text-muted">Clear, well lit, area fully visible</p></div>
-            <div className="rounded-2xl bg-[var(--bad-bg)] p-3"><p className="flex items-center gap-1 font-semibold text-[var(--bad-ink)]"><X className="h-4 w-4" aria-hidden /> Not good</p><p className="text-[var(--bad-ink)]">Dark, blurry, filtered or cropped</p></div>
-          </div>
-        </section>
-        <section aria-label="Camera" className="order-first md:order-none"><CameraPanel key={flow.region} hint={cur.hint} active={cam} onActiveChange={setCam} onCapture={take} /></section>
-      </div>
+      {!NATIVE_PHOTOS && cam && <section aria-label="Camera"><CameraPanel key={flow.region} hint={cur.hint} active={cam} onActiveChange={setCam} onCapture={(f) => { void accept([f]); }} /></section>}
 
-      <div className="card flex flex-wrap items-center justify-between gap-3">
-        <button className="btn !rounded-2xl" onClick={() => fileRef.current?.click()}><ImageIcon className="h-5 w-5" aria-hidden /> Upload Photo <span className="hidden text-sm font-normal text-muted sm:inline">from your gallery</span></button>
-        <input ref={fileRef} type="file" accept="image/jpeg,image/png" className="sr-only" aria-label="Upload a photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) take(f); e.target.value = ""; }} />
-        <button className="btn btn-primary" onClick={() => setCam(true)} disabled={cam}>Take Photo</button>
+      <div className="grid gap-3">
+        <button className="btn btn-primary !py-4 text-lg" onClick={takePhoto} disabled={busy !== "" || cam}>
+          {busy === "camera" ? <Loader2 className="spin h-5 w-5" aria-hidden /> : <Camera className="h-5 w-5" aria-hidden />} {busy === "camera" ? "Opening camera…" : "Take a photo"}
+        </button>
+        <button className="btn !py-4 text-lg" onClick={fromGallery} disabled={busy !== ""}>
+          {busy === "gallery" ? <Loader2 className="spin h-5 w-5" aria-hidden /> : <ImageIcon className="h-5 w-5" aria-hidden />} {busy === "gallery" ? "Opening gallery…" : "Upload from gallery"}
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" multiple className="sr-only" aria-label="Upload a photo" onChange={(e) => { const f = Array.from(e.target.files ?? []); e.target.value = ""; void accept(f); }} />
       </div>
-      <Note tone="info">Your photo is only checked for quality here. It is private, kept on the clinic&apos;s system and reviewed by your clinician. This is not a diagnosis.</Note>
+      {problem && <Note tone="bad">{problem}</Note>}
+      {flow.shots.length > 0 && <p className="text-center text-sm"><Link href="/photo/adjust" className="font-semibold text-teal-dark underline">Continue with your {flow.shots.length} photo{flow.shots.length === 1 ? "" : "s"}</Link></p>}
+
+      <section className="card space-y-3" aria-label="Photo tips">
+        <h2 className="!text-lg">For a useful photo</h2>
+        <ul className="space-y-3">{cur.tips.map(({ Icon, title, sub }) => (
+          <li key={title} className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold-soft text-gold"><Icon className="h-5 w-5" aria-hidden /></span>
+            <span><span className="block font-semibold">{title}</span><span className="block text-sm text-muted">{sub}</span></span></li>))}</ul>
+      </section>
+      <p className="text-center text-sm text-muted">Your photo is private, kept on the clinic&apos;s system and reviewed by your clinician. This is not a diagnosis.</p>
     </div>
   );
 }
