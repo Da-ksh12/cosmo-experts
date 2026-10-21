@@ -1,0 +1,309 @@
+{
+  "suite": "assistant_guide",
+  "when": "2026-10-21T12:24:34.174Z",
+  "passed": 60,
+  "failed": 1,
+  "rows": [
+    {
+      "pass": true,
+      "check": "the empty chat welcomes the person and says what it can and cannot do, once"
+    },
+    {
+      "pass": true,
+      "check": "the old banner, the duplicate action card and the generic chips are gone"
+    },
+    {
+      "pass": true,
+      "check": "the welcome offers real suggestions",
+      "detail": {
+        "starterCount": 6
+      }
+    },
+    {
+      "pass": true,
+      "check": "some suggestions open real screens (book, photo)"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask (empty) has no WCAG A/AA violations (24 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "/ask empty at 390 px: no horizontal overflow"
+    },
+    {
+      "pass": true,
+      "check": "a skincare question is answered as an education card"
+    },
+    {
+      "pass": true,
+      "check": "no 'nothing found' and no 'clinician review required' on a normal skincare question"
+    },
+    {
+      "pass": true,
+      "check": "the answer has structured sections"
+    },
+    {
+      "pass": true,
+      "check": "the answer says whether the clinic has reviewed the wording (one honest label)"
+    },
+    {
+      "pass": true,
+      "check": "the answer lists its sources"
+    },
+    {
+      "pass": true,
+      "check": "the answer offers a real next step (book)"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask (education card) has no WCAG A/AA violations (27 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "/ask with an answer at 390 px: no horizontal overflow"
+    },
+    {
+      "pass": true,
+      "check": "a concern gets guidance and one or two follow-up questions"
+    },
+    {
+      "pass": true,
+      "check": "answering a follow-up is acknowledged and remembered",
+      "detail": {
+        "t": "Thanks, I have noted that This helps me keep the answer about acne and pimples relevant to you. It does not change what a photo can show. What you told me: present for about 4 week(s) What stays the s"
+      }
+    },
+    {
+      "pass": true,
+      "check": "a follow-up question keeps the topic (no need to repeat 'acne')",
+      "detail": {
+        "t": "Skincare habits that can worsen irritation Many skin problems get worse because of how the skin is treated, not because of dirt. The main culprits are scrubbing, washing too often, picking, hot water,"
+      }
+    },
+    {
+      "pass": true,
+      "check": "a request to diagnose is declined with a reason and a way forward, not a bare refusal"
+    },
+    {
+      "pass": true,
+      "check": "the decline does not use the generic 'clinician review required'"
+    },
+    {
+      "pass": true,
+      "check": "a possible emergency raises a clear banner"
+    },
+    {
+      "pass": true,
+      "check": "the banner carries the clinic's own urgent-symptom message",
+      "detail": {
+        "want": "This may be urgent. Please contact your local emergency number or go to the near"
+      }
+    },
+    {
+      "pass": true,
+      "check": "...and says why it was raised"
+    },
+    {
+      "pass": true,
+      "check": "a same-day sign says so, with the reason"
+    },
+    {
+      "pass": false,
+      "check": "an ordinary dryness question raises no banner (escalation is not the default)"
+    },
+    {
+      "pass": true,
+      "check": "a synthetic report is uploaded",
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "pass": true,
+      "check": "a report is explained as a list of its printed values"
+    },
+    {
+      "pass": true,
+      "check": "a value is called low only because the report marked it, with its printed range",
+      "detail": {
+        "t": "Ferritin 8 ng/mL Printed range: 15 - 150 Marked low by the report page 1 Hemoglobin 13.5 g/dL Printed range: 12.0 - 15.5 Within the printed range page 1 TSH 2.1 mIU/L No range printed No range printed: it cannot be compared page 1"
+      }
+    },
+    {
+      "pass": true,
+      "check": "a value without a printed range says so instead of being judged"
+    },
+    {
+      "pass": true,
+      "check": "the full explanation is one tap away"
+    },
+    {
+      "pass": true,
+      "check": "a proposal alone notified nobody"
+    },
+    {
+      "pass": true,
+      "check": "confirming asked the clinic exactly once",
+      "detail": {
+        "before": 0,
+        "after": 1
+      }
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask (report card) has no WCAG A/AA violations (27 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "the chat does not pretend to book: it explains the request step",
+      "detail": {
+        "t": "Book a dermatologist appointment Live appointment times are not connected here, so I can't show or book a slot. You can send the clinic a request: the team contacts you to agree a time. A request is not a confirmed appoi"
+      }
+    },
+    {
+      "pass": true,
+      "check": "the booking screen says availability is not connected and a request is not a booking"
+    },
+    {
+      "pass": true,
+      "check": "an unconfigured clinic is shown honestly (no invented phone number or hours)"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /book has no WCAG A/AA violations (25 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "/book at 390 px: no horizontal overflow"
+    },
+    {
+      "pass": true,
+      "check": "after sending, the screen says it is not a confirmed appointment"
+    },
+    {
+      "pass": true,
+      "check": "the request is listed as waiting for the clinic"
+    },
+    {
+      "pass": true,
+      "check": "the clinic sees the request in its queue"
+    },
+    {
+      "pass": true,
+      "check": "confirming needs a typed day and time"
+    },
+    {
+      "pass": true,
+      "check": "axe: doctor1 /clinic (appointment queue) has no WCAG A/AA violations (30 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "the patient sees the time the clinic recorded"
+    },
+    {
+      "pass": true,
+      "check": "the clinic's own contact details appear once the clinic has entered them"
+    },
+    {
+      "pass": true,
+      "check": "the assistant quotes the clinic's own number, from its configuration"
+    },
+    {
+      "pass": true,
+      "check": "a clear face photo completes the assessment",
+      "detail": {
+        "state": "completed"
+      }
+    },
+    {
+      "pass": true,
+      "check": "the guidance never says the skin is fine: it says what the check cannot tell"
+    },
+    {
+      "pass": true,
+      "check": "no condition is claimed from the photo"
+    },
+    {
+      "pass": true,
+      "check": "the assistant asks what the person is noticing, as real choices"
+    },
+    {
+      "pass": true,
+      "check": "no skin finding, spot or mark is claimed (no approved skin-analysis model exists)",
+      "detail": {
+        "kinds": [
+          "photo_quality",
+          "photo_quality",
+          "photo_quality",
+          "framing",
+          "framing",
+          "photo_quality",
+          "photo_quality",
+          "photo_quality",
+          "photo_quality",
+          "photo_quality",
+          "photo_quality",
+          "face_region"
+        ]
+      }
+    },
+    {
+      "pass": true,
+      "check": "the guidance block says it rests on photo quality only"
+    },
+    {
+      "pass": true,
+      "check": "axe: patient1 /ask (photo assessment) has no WCAG A/AA violations (29 rules passed)",
+      "detail": []
+    },
+    {
+      "pass": true,
+      "check": "after choosing a concern, the guidance is the library's and says it is not a finding from the photo",
+      "detail": {
+        "t": "Acne and pimples You asked about acne and pimples. This is general information from the library, not a finding from your photo. Acne is a very common skin condition in which pores get blocked and inflamed. It causes spot"
+      }
+    },
+    {
+      "pass": true,
+      "check": "the summary is a factual hand-over, not a diagnosis"
+    },
+    {
+      "pass": true,
+      "check": "booking from a conversation with a photo carries the assessment"
+    },
+    {
+      "pass": true,
+      "check": "sharing the photo summary is an explicit choice, off by default"
+    },
+    {
+      "pass": true,
+      "check": "the clinic can open the summary the patient chose to share (and nothing else of the photos)"
+    },
+    {
+      "pass": true,
+      "check": "a picture without a face is not accepted (retake, with the reason)"
+    },
+    {
+      "pass": true,
+      "check": "a photo question never ends in 'nothing found in your documents'"
+    },
+    {
+      "pass": true,
+      "check": "choosing a concern after an unusable photo still gets help (retake advice and the library), not a dead end",
+      "detail": {
+        "t": "Acne and pimples You asked about acne and pimples. This is general information from the library, not a finding from your photo. Acne is a very common skin condition in which pores get blocked and infl"
+      }
+    },
+    {
+      "pass": true,
+      "check": "no page errors and no 5xx responses during the journey",
+      "detail": []
+    }
+  ]
+}
