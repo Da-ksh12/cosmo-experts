@@ -1,3 +1,5 @@
+// LEGACY (written for the P1-P11 baseline; not maintained since). The photo flow now ends in the chat (no /photo/check page) and the chat screen changed (answer cards, no suggestion chips,
+// no Voice Mode button), so parts of this script no longer match the app. The maintained browser journeys are assistant-guide.mjs, phase3-ui.mjs, p11-a11y.mjs and android-standalone.mjs.
 // Run: node clinical-journey.mjs <fixtures-dir>   (stack on :3000/:8000, FRESH database; Playwright installed)
 // Fixtures: lab.pdf (Hemoglobin 10.2 g/dL 12.0-15.5 / Ferritin 8 ng/mL 15-150 L / TSH 2.1), face_crop.jpg (a sharp face photo you may use).
 // Drives BOTH sides through the real UI: patient submits -> clinician reviews and approves in the browser -> patient sees the results.

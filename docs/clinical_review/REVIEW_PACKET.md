@@ -11,6 +11,7 @@ Prepared for: a qualified clinician (the clinic's medical lead or a delegate) wh
 3. Tell us which languages must be supported and who verifies Hindi/Hinglish wording (Part C).
 
 How approval is recorded and enforced: see `APPROVAL_PROCEDURE.md`. Sign-off page: `SIGNOFF_TEMPLATE.md`. Spreadsheet versions: `kb_review.csv`, `urgent_policy_review.csv`.
+The skin and skincare education library and its warning-sign rules are reviewed in their own packet: `DERM_REVIEW_PACKET.md`.
 
 Files reviewed (hashes identify the exact draft version):
 

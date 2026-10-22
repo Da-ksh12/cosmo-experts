@@ -131,8 +131,8 @@ written by one author; real patients will phrase things differently. English onl
 * Intent accuracy is ~90% on one fresh set of 39 (see section 6), English only. There is no multi-turn memory: each turn stands alone (this also keeps history from becoming an attack path).
 * Patients only: there is no clinician or administrator agent. No tool deletes anything.
 * The measurements concern synthetic people and documents; nothing here is validated on real patients or real attackers.
-* The Ask screen has a small assistant-actions card (`frontend/components/AgentActions.tsx`): quick actions, a text box, answers whose sources link to the report page, and proposed changes shown with
-  "Yes, do this" / "No, don't". Driven in a real browser (`e2e/phase3-ui.mjs`): a proposal alone notifies nobody; cancelling changes nothing and leaves nothing pending; confirming asks the clinic exactly
+* The agent's answers and proposals now appear **inside the chat** (the separate actions card on the Ask screen was removed; `frontend/components/AgentActions.tsx` is no longer used): the dispatcher
+  (`docs/ASSISTANT_ARCHITECTURE.md`) hands list/explain/propose requests to the agent, and a proposed change is an action on the answer card shown with "Yes, do this" / "No, don't". Driven in a real browser (`e2e/phase3-ui.mjs`): a proposal alone notifies nobody; cancelling changes nothing and leaves nothing pending; confirming asks the clinic exactly
   once; an urgent message and a request for a diagnosis or medicine offer no action; axe finds no WCAG A/AA violation and there is no horizontal overflow at 390 px. The card shows the latest answer only (no
   conversation view) and does not list proposals left over from earlier requests (they expire after 15 minutes).
 

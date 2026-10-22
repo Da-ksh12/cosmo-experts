@@ -16,6 +16,19 @@ built-in default, not a clinician-approved policy.
    mechanism existed, disables the article rather than silently keeping it.
 5. With `COSMO_MODE=production` the approver must also be a **verified clinician** (an administrator records credentials under "Verify a clinician").
 
+## Dermatology library (skin and skincare education)
+The 17 articles in `backend/content/derm/` are approved through the **same** workflow as above: at start-up each is inserted into the review table as a draft (`derm.*`, never overwriting a
+clinician's work), shown in the workspace under "Clinically reviewed knowledge base" with its sources and "statements to verify", and approved by a signed-in doctor with the attestation. The
+workspace panel "Dermatology library and warning-sign rules" shows the state of the whole library (how many are approved, which sources are overdue for a re-check, the rules awaiting review).
+* **Until an article is approved** the assistant may show it only in the *reference* tier, with the label "General information based on the sources listed below. The clinic's dermatologist has not
+  reviewed this wording yet." This tier is **on** by default in development and **off** by default with `COSMO_MODE=production`; `COSMO_KB_REFERENCE=labelled|off` overrides either default.
+  With it off and nothing approved, patients are told plainly that the clinic's reviewed skin library has not been published yet, and photos, reports and booking still work.
+* **After approval** the article is shown as "Reviewed and approved by the clinic." If the doctor rewrote it, the doctor's approved text is what patients see. An approval lapses on its
+  re-review date and when the stored text no longer matches the approved hash: the article then falls back to the reference tier (or is hidden in production).
+* The **warning-sign rules** (`backend/app/derm/triage.py`) are reviewed on paper with `DERM_REVIEW_PACKET.md` Part B and `derm_rules_review.csv`; a changed rule is a code change reviewed like any
+  other. Their status is shown by `GET /api/clinic/derm-library` (`pending_clinician_review` until the clinic records otherwise in its change control). Emergency wording is never theirs: it is the
+  urgent-symptom policy message below, shown exactly.
+
 ## Urgent-symptom policy
 * The application never reads `content/urgent_policy.draft.json`.
 * Without an approved file it uses the built-in default (chest pain, breathing difficulty, severe bleeding, unconsciousness, suicide, anaphylaxis, facial/throat swelling, high fever, fainting).
@@ -32,3 +45,4 @@ Keyword matching cannot understand context; a non-match is never evidence that a
 
 ## Regenerating the review packet
 `cd backend && python -m scripts.export_review_packet` rewrites `REVIEW_PACKET.md`, `kb_review.csv` and `urgent_policy_review.csv`.
+`cd backend && python -m scripts.export_derm_review` rewrites `DERM_REVIEW_PACKET.md`, `derm_library_review.csv` and `derm_rules_review.csv` (the hash printed for each article is the one approval binds).

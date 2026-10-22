@@ -134,10 +134,10 @@ try {
   await page.locator('input[aria-label="Upload a photo"]').setInputFiles({ name: "skin.png", mimeType: "image/png", buffer: png(420, 420, [200, 160, 140]) });
   await page.waitForURL(/\/photo\/adjust\/?/, { timeout: 20000 });
   await page.getByRole("button", { name: /continue/i }).first().click();
-  await page.waitForURL(/\/photo\/check\/?/, { timeout: 20000 });
+  await page.waitForURL(/\/ask\/?\?pending=/, { timeout: 20000 });
   await page.getByText(/Preview mode: no server is connected/).first().waitFor({ timeout: 20000 });
-  r.ok(true, "photo flow in preview: choose, adjust, check works up to the server step, which says plainly that nothing can be analysed without a server");
-  await shot("s06-photo-check-preview");
+  r.ok(true, "photo flow in preview: choose, adjust and send works up to the server step, which says plainly that nothing can be analysed without a server");
+  await shot("s06-photo-send-preview");
   await page.goto(ORIGIN + "/reports/");
   await settle();
   await page.locator('input[aria-label="Choose report files"]').setInputFiles({ name: "report.txt", mimeType: "text/plain", buffer: Buffer.from("Hemoglobin 13.5 g/dL") });

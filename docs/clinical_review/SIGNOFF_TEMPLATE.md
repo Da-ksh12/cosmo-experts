@@ -3,6 +3,8 @@
 | Item | Version / hash reviewed | Decision | Date |
 |---|---|---|---|
 | Knowledge-base articles (`kb_review.csv`) | | | |
+| Dermatology library articles (`derm_library_review.csv`, `DERM_REVIEW_PACKET.md` Part A) | | | |
+| Warning-sign rules (`derm_rules_review.csv`, `DERM_REVIEW_PACKET.md` Part B) | | | |
 | Urgent-symptom policy (`urgent_policy_review.csv`) | | | |
 | Hindi / Hinglish wording | | | |
 

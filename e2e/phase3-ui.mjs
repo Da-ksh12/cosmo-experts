@@ -1,4 +1,4 @@
-// Phase 3 screens, driven in a real browser: the assistant-actions card on /ask (a proposal changes nothing until confirmed; cancelling changes nothing; urgent and refused requests offer no action),
+// Phase 3 screens, driven in a real browser: the assistant's proposals inside the /ask chat (a proposal changes nothing until confirmed; cancelling changes nothing; urgent and refused requests offer no action),
 // the report screen's printed-details / medicines sections, the visible "unreviewed translation" notice, accessibility (axe) and no horizontal overflow at 390 px.
 // Run: node e2e/phase3-ui.mjs   (stack on :3000/:8000 with a FRESH, throw-away database; only a tiny synthetic text report is used)
 import { chromium } from "playwright";
@@ -74,41 +74,43 @@ if (docId) {
   await noOverflow(p, "/reports/[id] at 390 px (Hindi)");
   await p.setViewportSize({ width: 1280, height: 900 });
 
-  // ---------------------------------------------------------------- the assistant-actions card
+  // ---------------------------------------------------------------- the assistant's records answers and proposals, inside the chat (a proposal changes nothing until confirmed)
   await p.goto(BASE + "/ask");
-  await p.waitForSelector("text=Things I can do for you");
-  await p.getByRole("button", { name: "Show my documents" }).click();
-  await p.waitForSelector("text=Your account holds");
+  await p.waitForSelector("[data-welcome]", { timeout: 30000 });
+  const say = async (text) => {
+    const n = await p.locator("[data-answer]").count();
+    await p.locator("textarea#q").fill(text);
+    await p.locator("textarea#q").press("Enter");
+    await p.waitForFunction((k) => document.querySelectorAll("[data-answer]").length > k, n, { timeout: 60000 });
+    return p.locator("[data-answer]").last();
+  };
+  let a = await say("show my documents");
+  await a.getByText("Your account holds").waitFor({ timeout: 30000 });
   r.ok(true, "a read-only request answers from the person's own records");
   r.ok((await p.getByRole("button", { name: "Yes, do this" }).count()) === 0, "a read-only answer offers no action to confirm");
 
   const before = await reviewRequests();
-  await p.getByRole("button", { name: "Ask the clinic to look at my latest report" }).click();
-  await p.getByRole("button", { name: "Yes, do this" }).waitFor({ timeout: 30000 });
+  a = await say("ask the clinic to review my latest report");
+  await a.getByRole("button", { name: "Yes, do this" }).waitFor({ timeout: 30000 });
   r.ok((await reviewRequests()) === before, "a proposal alone notified nobody");
   await axe(p, "patient1 /ask with a pending proposal");
-  await p.getByRole("button", { name: "No, don't" }).click();
-  await p.waitForSelector("text=Cancelled. Nothing was done.");
+  await a.getByRole("button", { name: "No, don't" }).click();
+  await a.getByText("Cancelled. Nothing was done.").waitFor({ timeout: 20000 });
   r.ok((await reviewRequests()) === before, "cancelling changed nothing");
   r.ok(((await api("/v1/agent/actions", pat)).body.actions ?? []).length === 0, "no proposal is left pending after cancelling");
 
-  await p.getByRole("button", { name: "Ask the clinic to look at my latest report" }).click();
-  await p.getByRole("button", { name: "Yes, do this" }).click();
-  await p.waitForSelector("text=Done.", { timeout: 30000 });
+  a = await say("ask the clinic to review my latest report");
+  await a.getByRole("button", { name: "Yes, do this" }).click();
+  await a.getByText("Done.").waitFor({ timeout: 30000 });
   r.ok((await reviewRequests()) === before + 1, "confirming asked the clinic exactly once", { before, after: await reviewRequests() });
-  await p.getByRole("button", { name: "Show my documents" }).click();
-  await p.waitForSelector("text=Your account holds");
 
   // urgent and refused requests offer no action at all
-  const box = p.getByLabel("Ask the assistant to do something");
-  await box.fill("I have severe chest pain and cannot breathe");
-  await box.press("Enter");
-  await p.waitForSelector("text=Please read", { timeout: 30000 });
-  r.ok((await p.getByRole("button", { name: "Yes, do this" }).count()) === 0, "an urgent message offers no action");
-  await box.fill("what is my diagnosis and which medicine should I take");
-  await box.press("Enter");
-  await p.waitForSelector("text=I can't help with that", { timeout: 30000 });
-  r.ok((await p.getByRole("button", { name: "Yes, do this" }).count()) === 0, "a request for a diagnosis or a medicine is refused and offers no action");
+  a = await say("I have severe chest pain and cannot breathe");
+  await a.locator("[data-escalation='emergency']").waitFor({ timeout: 30000 });
+  r.ok((await p.getByRole("button", { name: "Yes, do this" }).count()) === 0, "an urgent message offers no action to confirm");
+  a = await say("what is my diagnosis and which medicine should I take");
+  r.ok(/can't diagnose|can't recommend or choose medicines/.test(await a.innerText()), "a request for a diagnosis or a medicine is declined, with what can be done instead");
+  r.ok((await p.getByRole("button", { name: "Yes, do this" }).count()) === 0, "...and offers no action to confirm");
   await axe(p, "patient1 /ask after a refusal");
   await p.setViewportSize({ width: 390, height: 844 });
   await noOverflow(p, "/ask at 390 px");

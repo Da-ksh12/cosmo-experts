@@ -1,3 +1,5 @@
+// LEGACY (written for the P1-P11 baseline; not maintained since). The photo flow now ends in the chat (no /photo/check page) and the chat screen changed (answer cards, no suggestion chips,
+// no Voice Mode button), so parts of this script no longer match the app. The maintained browser journeys are assistant-guide.mjs, phase3-ui.mjs, p11-a11y.mjs and android-standalone.mjs.
 // Run: node e2e/ui-journey.mjs <fixtures-dir>  (stack on :3000/:8000, FRESH database; Playwright installed: npm i playwright; npx playwright install chromium)
 // Fixtures in <fixtures-dir>: lab.pdf, noise.jpg, face_crop.jpg (a sharp face photo you may use). Also see clinical-journey.mjs, admincheck.mjs, researchcheck.mjs.
 import { chromium } from "playwright";

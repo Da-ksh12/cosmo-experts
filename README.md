@@ -32,7 +32,7 @@ To try the **whole** app before anything is deployed, run `powershell -Execution
   tenant isolation, assistant refusal/abstention/grounding, quotations, licence gate, import/dedupe/leak-free
   splits, real PyTorch training, approval gate, rollback.
 * `cd frontend && npm run lint && npx tsc --noEmit && npm run build`.
-* Browser E2E: `e2e/ui-journey.mjs` (Playwright; 98 checks across all 10 screens, mobile + desktop). See BUILD_STATUS.md. Earlier manual run: login, photo rejection message, PDF upload,
+* Browser E2E (Playwright, fresh database): `e2e/assistant-guide.mjs` (the skin guide: education, warning-sign banners, reports, booking, and the photo journey), `e2e/phase3-ui.mjs`, `e2e/p11-a11y.mjs`, `e2e/android-standalone.mjs`. `e2e/ui-journey.mjs` and `clinical-journey.mjs` are legacy baseline scripts and no longer match the app. Earlier manual run: login, photo rejection message, PDF upload,
   exact value/unit/page citation, Hinglish toggle, audio playback, grounded answer, prescribing refusal.
 
 ## What is implemented vs. not
