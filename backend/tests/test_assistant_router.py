@@ -18,6 +18,7 @@ CASES = [
     ("which medicine is listed on my prescription", False, "report"),
     ("Book an appointment with a dermatologist", False, "booking"), ("how much does a chemical peel cost", False, "booking"), ("what are the clinic timings", False, "booking"),
     ("I would like a quotation", False, "booking"), ("show the price list", False, "booking"), ("appointment chahiye", False, "booking"),
+    ("where is the clinic located", False, "booking"), ("is the clinic open on sunday", False, "booking"), ("clinic ka address kya hai", False, "booking"), ("how do I contact the clinic", False, "booking"),
     ("What is my care plan?", False, "care_plan"), ("what did the doctor plan for me", False, "care_plan"),
     ("how am I progressing since my last visit", False, "history"), ("what have I uploaded", False, "history"),
     ("Hello", False, "general"), ("thanks", False, "general"), ("what can you do", False, "general"),

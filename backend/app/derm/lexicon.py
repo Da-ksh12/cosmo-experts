@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 CONCERN_TOPICS = ("acne", "acne-marks", "pigmentation", "redness", "rosacea", "dry-skin", "eczema", "product-reactions", "moles")
@@ -125,8 +126,14 @@ def duration_days(text: str) -> int | None:
     return best
 
 
+# Concerns that people describe as one problem ("pimples", then "the marks they leave"; "red face", then "is it rosacea?"). Moving to a concern in ANOTHER family starts a new episode.
+EPISODE_FAMILY = {"acne": "acne", "acne-marks": "acne", "pigmentation": "tone", "redness": "redness", "rosacea": "redness", "product-reactions": "redness", "dry-skin": "dry", "eczema": "dry", "moles": "moles"}
+
+
 @dataclass
 class Slots:
+    """What the person said about the concern they are talking about NOW (how long, which symptoms, which products), and about themselves (earlier reactions, pregnancy, a child).
+    The first group belongs to one concern: when the conversation moves to a different concern it starts again, so '4 weeks' said about pimples is never applied to dry hands."""
     duration_days: int | None = None
     symptoms: set[str] = field(default_factory=set)
     none_of_symptoms: bool = False
@@ -134,6 +141,10 @@ class Slots:
     prior_reaction: bool | None = None
     pregnant: bool = False
     child: bool = False
+    topic: str | None = None                  # the concern the facts above are about (the latest concern the person named)
+
+    def forget_concern_facts(self) -> None:
+        self.duration_days, self.symptoms, self.none_of_symptoms, self.products = None, set(), False, False
 
     def known_symptoms(self) -> bool:
         return bool(self.symptoms) or self.none_of_symptoms
@@ -159,12 +170,21 @@ class Slots:
         return out
 
 
-def extract_slots(texts: list[str]) -> Slots:
-    """Facts the person stated in their own messages (the most recent ones). A negated mention is not a symptom; nothing is inferred beyond the words."""
+def extract_slots(texts: list[str], topic_of: Callable[[str], str | None] | None = None) -> Slots:
+    """Facts the person stated in their own messages (the most recent ones). A negated mention is not a symptom; nothing is inferred beyond the words.
+    `topic_of(text)` names the concern a message is about (or None): when it moves to a concern of another family, what was said about the earlier concern (how long, symptoms, products) is
+    dropped, while what the person said about themselves (earlier reactions, pregnancy, a child) stays."""
     s = Slots()
+    family: str | None = None
     for text in texts:
         if not text:
             continue
+        tp = topic_of(text) if topic_of else None
+        fam = EPISODE_FAMILY.get(tp) if tp else None
+        if fam:
+            if family is not None and fam != family:
+                s.forget_concern_facts()
+            family, s.topic = fam, tp
         d = duration_days(text)
         if d is not None:
             s.duration_days = d if s.duration_days is None else max(s.duration_days, d)

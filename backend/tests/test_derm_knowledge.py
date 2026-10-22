@@ -193,7 +193,7 @@ def test_the_clinic_can_see_every_article_its_sources_and_what_to_confirm(client
     assert r["usable"] and len(r["articles"]) == len(pack.load().articles) and r["policy"]["status"] == "pending_clinician_review"
     a = next(x for x in r["articles"] if x["id"] == "derm.sun-protection")
     assert a["claims_to_verify"] and a["tier"] == "reference" and a["review_status"] == "draft" and any(s["url"].startswith("https://www.nhs.uk/") for s in a["sources"])
-    assert len(r["triage_rules"]) == len(triage.RULES) and all(x["status"] == "pending_clinician_review" for x in r["triage_rules"])
+    assert len(r["triage_rules"]) == len(triage.RULES) + 1 and all(x["status"] == "pending_clinician_review" for x in r["triage_rules"])
     assert client.get("/api/clinic/derm-library", headers=tok(client, "patient1")).status_code == 403
     st = client.get("/api/clinic/content-status", headers=tok(client, "doctor1")).json()
     assert st["derm_library"]["usable"] and st["derm_library"]["awaiting_review"] == len(r["articles"])
@@ -297,7 +297,8 @@ def test_the_emergency_wording_is_always_the_clinics_policy_message_and_the_reas
 
 def test_every_rule_is_described_for_the_reviewers_and_points_at_real_sources_and_articles():
     sheet = triage.review_sheet()
-    assert len(sheet) == len(triage.RULES) and len({r["id"] for r in sheet}) == len(sheet)
+    assert len(sheet) == len(triage.RULES) + 1 and len({r["id"] for r in sheet}) == len(sheet)           # the phrase rules and the one duration rule: all of them reach the clinician
+    assert "P-persistent-rash" in {r["id"] for r in sheet} and triage.policy_status()["rules"] == len(sheet)
     p = pack.load()
     for r in sheet:
         assert r["trigger"] and r["reason_shown"] and r["status"] == "pending_clinician_review" and r["level"] in ("emergency", "urgent", "prompt")
@@ -314,3 +315,22 @@ def test_slots_are_read_from_the_persons_own_words_and_a_negated_symptom_is_not_
     assert lexicon.extract_slots(["I have never reacted to skincare products."]).prior_reaction is False
     assert lexicon.extract_slots(["mere beta ko khujli hai"]).symptoms == {"itch"} and lexicon.extract_slots(["my baby has dry skin"]).child is True
     assert lexicon.duration_days("4 hafte se") == 28 and lexicon.duration_days("for a few months") == 90 and lexicon.duration_days("hello") is None
+
+
+def _concern(text: str):
+    t = text.lower()
+    return "acne" if "pimple" in t else "acne-marks" if "marks" in t else "dry-skin" if "dry skin" in t else "redness" if "red " in t else None
+
+
+def test_what_was_said_about_one_concern_is_not_carried_to_the_next_but_what_was_said_about_the_person_is():
+    said = ["I am pregnant and I have never reacted to skincare products", "I have pimples on my cheeks", "It has been there for about 4 weeks.", "it is itchy and I use a vitamin c serum"]
+    s = lexicon.extract_slots(said, _concern)
+    assert s.topic == "acne" and s.duration_days == 28 and s.symptoms == {"itch"} and s.products
+    s = lexicon.extract_slots(said + ["I have dry skin on my hands"], _concern)                       # a different concern: a new episode
+    assert s.topic == "dry-skin" and s.duration_days is None and s.symptoms == set() and s.products is False and not s.known_symptoms()
+    assert s.pregnant and s.prior_reaction is False                                                  # about the person, not the concern: stays
+    s = lexicon.extract_slots(said + ["and the marks they leave behind"], _concern)                  # pimples and the marks they leave are one story
+    assert s.topic == "acne-marks" and s.duration_days == 28
+    s = lexicon.extract_slots(said + ["I have dry skin on my hands", "it has been there for 2 days"], _concern)
+    assert s.duration_days == 2                                                                      # and the new concern collects its own facts
+    assert lexicon.extract_slots(said).duration_days == 28 and lexicon.extract_slots(said, None).duration_days == 28    # without a topic reader nothing is dropped (old behaviour)

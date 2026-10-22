@@ -32,7 +32,9 @@ def _r(p: str) -> re.Pattern:
 GREETING = _r(r"^\s*(?:hi|hii+|hello|hey|namaste|namaskar|good (?:morning|afternoon|evening)|thanks?|thank you|thx|ok(?:ay)?|got it|great|nice|bye|goodbye|नमस्ते|धन्यवाद|शुक्रिया)\b[\s!.,?]*$")
 HELP = _r(r"\b(?:what can you do|what do you do|who are you|help me|how can you help|how do you work|what are you|what (?:else )?can i ask|your (?:capabilities|features)|madad|kya kar sakte|aap kaun)\b|मदद|आप कौन")
 BOOKING = _r(r"\b(?:book(?:ing)?|schedule|reserve|appointments?|consult(?:ation|ations)?|slots?|timings?|clinic (?:hours|timings?|address|phone|number|location|contact)|opening hours|working hours|"
-             r"call (?:me|the clinic)|contact (?:the )?clinic|phone number|visit the clinic|meet (?:a |the )?(?:doctor|dermatologist)|see (?:a |the )?(?:doctor|dermatologist) (?:today|tomorrow|this week|soon|on)|"
+             r"call (?:me|the clinic)|contact (?:the )?clinic|phone number|visit the clinic|where (?:is|are) (?:the |your )?(?:clinic|centre|center|office)|(?:clinic|centre|center|office) (?:is |are )?(?:located|open|closed)|"
+             r"(?:is|are) (?:the clinic|the centre|the center|you) (?:open|closed)|(?:your|the clinic'?s?) (?:address|hours|phone|whatsapp|e-?mail|location)|directions to|how (?:do|can) i (?:reach|contact|get to)|whatsapp|"
+             r"clinic ka|kahan hai|kab khula|meet (?:a |the )?(?:doctor|dermatologist)|see (?:a |the )?(?:doctor|dermatologist) (?:today|tomorrow|this week|soon|on)|"
              r"talk to (?:a |the )?(?:doctor|dermatologist|someone)|speak to (?:a |the )?(?:doctor|dermatologist)|video (?:call|consult\w*)|dikhana hai|milna hai|appointment chahiye)\b|अपॉइंटमेंट|बुकिंग|समय")
 SERVICES = _r(r"\b(?:prices?|price ?list|costs?|how much|charges?|fees?|rates?|services?|treatments? (?:do you|you) (?:offer|provide|have)|what (?:do you|treatments) (?:offer|provide)|procedures?|packages?|quotations?|quotes?|estimates?|"
               r"laser|facial|peel|chemical peel|prp|mesotherapy|hydrafacial)\b|कीमत|फीस|खर्च")

@@ -140,6 +140,11 @@ RULES: tuple[Rule, ...] = (
 )
 BY_ID = {r.id: r for r in RULES}
 
+# A duration rule (not a phrase rule): what the person says has lasted weeks. It is listed with the others for the clinicians who review the rules (review_sheet).
+PERSISTENT_RASH = Rule("P-persistent-rash", "prompt", "A rash, itch, patch, redness, bumps or dryness that the person says has lasted three weeks or more (acne has its own rule and time frame).",
+                       "You said this has lasted for weeks. A rash or patch that has not settled after a few weeks is worth having looked at.", (), None, "derm.when-to-see",
+                       ("nhs-contact-dermatitis", "nhs-atopic-eczema"))
+PERSIST_DAYS, ACNE_DAYS = 21, 56
 _PERSIST_WORDS = re.compile(r"rash|itch\w*|patch(?:es)?|flak\w+|redness|bumps?|dry|scaly|blotch\w*", re.I)
 _ACNE_WORDS = re.compile(r"acne|pimples?|breakouts?|zits?", re.I)
 
@@ -183,10 +188,9 @@ def assess(text: str, *, prior: str = "", duration_days: int | None = None) -> T
         before = {r.id for r in RULES if _fires(r, prior)}
         fired = [r for r in fired if r.id in now or r.id not in before]
     # a rash or irritation that has lasted weeks is worth a clinician's look even when no single warning word appears (acne has its own rule with its own time frame)
-    if duration_days is not None and duration_days >= 21 and _PERSIST_WORDS.search(joined) and not _ACNE_WORDS.search(joined) and not any(r.level in ("emergency", "urgent") for r in fired):
-        fired.append(Rule("P-persistent-rash", "prompt", "A rash, itch, patch or dryness that has lasted three weeks or more.",
-                          "You said this has lasted for weeks. A rash or patch that has not settled after a few weeks is worth having looked at.", (), None, "derm.when-to-see", ("nhs-contact-dermatitis", "nhs-atopic-eczema")))
-    if duration_days is not None and duration_days >= 56 and _ACNE_WORDS.search(joined) and not any(r.id == "P-acne-needs-clinician" for r in fired):
+    if duration_days is not None and duration_days >= PERSIST_DAYS and _PERSIST_WORDS.search(joined) and not _ACNE_WORDS.search(joined) and not any(r.level in ("emergency", "urgent") for r in fired):
+        fired.append(PERSISTENT_RASH)
+    if duration_days is not None and duration_days >= ACNE_DAYS and _ACNE_WORDS.search(joined) and not any(r.id == "P-acne-needs-clinician" for r in fired):
         fired.append(BY_ID["P-acne-needs-clinician"])
     if not fired:
         return t
@@ -220,9 +224,9 @@ def message(t: Triage) -> str:
 
 def review_sheet() -> list[dict]:
     """Every rule in words, for the clinicians who must approve them (docs/clinical_review/DERM_REVIEW_SHEET.md is generated from this)."""
-    return [{"id": r.id, "level": r.level, "trigger": r.trigger, "reason_shown": r.reason, "article": r.article, "sources": list(r.sources), "status": "pending_clinician_review"} for r in RULES]
+    return [{"id": r.id, "level": r.level, "trigger": r.trigger, "reason_shown": r.reason, "article": r.article, "sources": list(r.sources), "status": "pending_clinician_review"} for r in (*RULES, PERSISTENT_RASH)]
 
 
 def policy_status() -> dict:
     p = clinical_content.urgent_policy()
-    return {"version": VERSION, "rules": len(RULES), "status": "pending_clinician_review", "emergency_message_source": p.source, "emergency_message_approved": p.approved}
+    return {"version": VERSION, "rules": len(RULES) + 1, "status": "pending_clinician_review", "emergency_message_source": p.source, "emergency_message_approved": p.approved}

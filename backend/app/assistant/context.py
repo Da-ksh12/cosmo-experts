@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass, field
 
 from .. import db
-from ..derm import lexicon
+from ..derm import lexicon, reference
 
 MAX_HISTORY = 40            # messages read
 MAX_TEXTS = 8               # earlier patient messages used for the facts the person stated
@@ -83,5 +83,10 @@ def derive(conversation_id: str, current_text: str, explicit: dict | None = None
     if not c.analysis_id and c.analysis_ids:
         c.analysis_id = c.analysis_ids[0]
     c.has_photo = bool(c.analysis_ids or c.analysis_id)
-    c.slots = lexicon.extract_slots(c.texts + [current_text])
+    c.slots = lexicon.extract_slots(c.texts + [current_text], concern_of)
     return c
+
+
+def concern_of(text: str) -> str | None:
+    """The skin concern a message names (acne, dry skin, ...), if any: what separates one problem from the next in the same conversation."""
+    return next((t for t, _ in reference.topics_in(text) if t in lexicon.CONCERN_TOPICS), None)

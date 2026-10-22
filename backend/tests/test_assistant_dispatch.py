@@ -196,6 +196,24 @@ def test_a_same_day_sign_leads_with_the_reason_and_the_next_step_and_still_expla
     assert "urgent" in ids(r["card"]) and r["card"]["escalation"]["sources"]
 
 
+def test_how_long_one_concern_has_lasted_is_not_applied_to_the_next_concern(client, fresh):
+    """Found by the browser journey: '4 weeks' said about pimples raised a 'worth booking soon' banner on a later, different question about dry hands."""
+    h = tok(client, "dermfresh1", PW)
+    cid = conv(client, h)
+    say(client, h, cid, "I have pimples on my cheeks")
+    ack = say(client, h, cid, "It has been there for about 4 weeks.")
+    assert "noted that" in ack["answer"] and ack["card"]["noted"] and "escalation" not in ack["card"]
+    dry = say(client, h, cid, "I have dry skin on my hands")
+    assert dry["route"]["kind"] == "education" and dry["route"]["triage"] == "routine" and "escalation" not in dry["card"]
+    assert "noted" not in dry["card"] or not any("week" in n for n in dry["card"]["noted"])                      # nothing about the pimples is listed as what they said about this
+    assert "duration" in [q["id"] for q in dry["card"].get("follow_ups", [])]                                      # so the new concern is asked about on its own
+    # the same concern keeps what was said about it: dryness that has lasted weeks IS worth a clinician (the rule's own purpose)
+    cid2 = conv(client, h)
+    say(client, h, cid2, "I have dry skin on my hands")
+    same = say(client, h, cid2, "It has been there for about 4 weeks.")
+    assert same["route"]["triage"] == "prompt" and same["card"]["escalation"]["level"] == "prompt" and "P-persistent-rash" in same["card"]["escalation"]["rules"]
+
+
 def test_a_diagnosis_or_a_medicine_is_never_given_but_the_answer_is_still_useful(client, fresh):
     h = tok(client, "dermfresh1", PW)
     d = say(client, h, conv(client, h), "Do I have acne? Diagnose me")
